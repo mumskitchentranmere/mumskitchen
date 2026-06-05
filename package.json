@@ -1,0 +1,45 @@
+{
+  "name": "mumskitchen",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node --require ./scripts/polyfill-localstorage.cjs node_modules/.bin/next dev",
+    "build": "next build",
+    "start": "node --require ./scripts/polyfill-localstorage.cjs node_modules/.bin/next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@stripe/react-stripe-js": "^2.7.3",
+    "@stripe/stripe-js": "^3.5.0",
+    "@tailwindcss/postcss": "^4.3.0",
+    "@types/lru-cache": "^7.10.9",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.0",
+    "axios": "^1.7.2",
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^2.4.0",
+    "lru-cache": "^11.5.1",
+    "lucide-react": "^0.383.0",
+    "mongoose": "^8.24.0",
+    "next": "15.3.2",
+    "next-auth": "^5.0.0-beta.19",
+    "rate-limiter-flexible": "^11.1.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-hot-toast": "^2.4.1",
+    "resend": "^3.4.0",
+    "stripe": "^16.2.0",
+    "zod": "^4.4.3",
+    "zustand": "^4.5.4"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "15.3.2",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

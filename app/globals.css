@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+:root {
+  --cream: #FAF7F2;
+  --warm-white: #FDF9F4;
+  --brown-dark: #2C1A0E;
+  --brown-mid: #6B3A1F;
+  --brown-accent: #A0522D;
+  --gold: #C8922A;
+  --gold-light: #E8B84B;
+  --red-korean: #C0392B;
+  --stone-light: #E8E0D5;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Outfit', sans-serif; background: var(--cream); color: var(--brown-dark); }
+.font-display { font-family: 'Cormorant Garamond', serif; }
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--cream); }
+::-webkit-scrollbar-thumb { background: var(--brown-accent); border-radius: 3px; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes shimmer { 0%,100%{background-position:-200% 0} 50%{background-position:200% 0} }
+.animate-fade-up { animation: fadeUp 0.7s ease forwards; }
+.skeleton { background: linear-gradient(90deg,#e8e0d5 25%,#f0e8de 50%,#e8e0d5 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; }
