@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "node --require ./scripts/polyfill-localstorage.cjs node_modules/.bin/next dev",
-    "build": "next build",
-    "start": "node --require ./scripts/polyfill-localstorage.cjs node_modules/.bin/next start",
-    "lint": "next lint"
-  },
+  "dev": "node --require ./scripts/polyfill-localstorage.cjs node_modules/.bin/next dev",
+  "build": "next build && cp -r public .next/standalone/public && cp -r .next/static .next/standalone/.next/static",
+  "start": "HOSTNAME=0.0.0.0 PORT=${PORT:-3000} node .next/standalone/server.js",
+  "lint": "next lint"
+},
   "dependencies": {
     "@stripe/react-stripe-js": "^2.7.3",
     "@stripe/stripe-js": "^3.5.0",

@@ -4,7 +4,9 @@ import { Order } from '@/models/Order';
 import { auth } from '@/lib/auth';
 import { rateLimit, LIMITS } from '@/lib/rateLimit';
 import { validateBody, CreateOrderSchema } from '@/lib/validation';
-export async function GET(req: NextRequest) {
+import { sendOrderConfirmation, sendOrderNotificationToRestaurant } from '@/lib/email';
+
+export async function GET(_req: NextRequest) {
   try {
     const session = await auth();
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -14,6 +16,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(orders);
   } catch { return NextResponse.json({ error: 'Failed to fetch orders' }, { status: 500 }); }
 }
+
 export async function POST(req: NextRequest) {
   const limited = rateLimit(req, LIMITS.order);
   if (limited) return limited;
@@ -24,6 +27,24 @@ export async function POST(req: NextRequest) {
     await connectDB();
     const session = await auth();
     const order = await Order.create({ ...v.data, userId: session?.user ? (session.user as any).id : undefined });
+
+    // Send confirmation email to customer + notification to restaurant (fire and forget)
+    const emailData = {
+      orderId:             order._id.toString(),
+      customerName:        order.customerName,
+      customerEmail:       order.customerEmail,
+      orderType:           order.orderType,
+      items:               order.items,
+      subtotal:            order.subtotal,
+      deliveryFee:         order.deliveryFee || 0,
+      total:               order.total,
+      deliveryAddress:     order.deliveryAddress,
+      pickupTime:          order.pickupTime,
+      specialInstructions: order.specialInstructions,
+    };
+    sendOrderConfirmation(emailData).catch(() => {});
+    sendOrderNotificationToRestaurant(emailData).catch(() => {});
+
     return NextResponse.json(order, { status: 201 });
   } catch { return NextResponse.json({ error: 'Failed to create order' }, { status: 500 }); }
 }
