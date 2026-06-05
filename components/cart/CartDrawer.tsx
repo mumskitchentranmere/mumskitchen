@@ -6,7 +6,7 @@ import Link from 'next/link';
 
 export function CartDrawer() {
   const [open, setOpen] = useState(false);
-  const { items, removeItem, updateQuantity, total, itemCount, orderType } = useCartStore();
+  const { items, removeItem, updateQuantity, total, itemCount } = useCartStore();
   useEffect(() => { const h = () => setOpen(true); window.addEventListener('open-cart', h); return () => window.removeEventListener('open-cart', h); }, []);
 
   const drawerStyle: React.CSSProperties = { position: 'fixed', top: 0, right: 0, height: '100%', width: '100%', maxWidth: '400px', background: 'var(--warm-white)', zIndex: 200, transform: open ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.3s ease', boxShadow: '-8px 0 40px rgba(44,26,14,0.15)', display: 'flex', flexDirection: 'column' };
@@ -35,7 +35,7 @@ export function CartDrawer() {
             <div style={{ flex: 1, overflowY: 'auto', padding: '16px 24px' }}>
               <div style={{ background: 'var(--stone-light)', borderRadius: '10px', padding: '8px 14px', fontSize: '12px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: 'var(--brown-mid)' }}>Order type:</span>
-                <span style={{ fontWeight: 600, color: 'var(--red-korean)', textTransform: 'capitalize' }}>{orderType}</span>
+                <span style={{ fontWeight: 600, color: 'var(--red-korean)' }}>🥡 Takeaway</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {items.map(item => (

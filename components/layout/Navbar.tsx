@@ -21,7 +21,6 @@ export function Navbar() {
   const links = [
     { href: '/menu', label: 'Menu' },
     { href: '/order', label: 'Order Online' },
-    { href: '/dine-in', label: 'Book a Table' },
     { href: '/contact', label: 'Contact' },
     { href: '/reviews', label: 'Reviews' },
   ];

@@ -1,13 +1,24 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
-import { Plus, Edit, Trash2, X, Check, Upload, Images } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Check, Upload, Images, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 const EMPTY = { name:'', description:'', price:'', category:'snack', cuisine:'korean', tags:'', images:[] as string[], primaryImage:'', isAvailable:true, isFeatured:false, sizes:'' };
 const CATS = ['snack','rice-bowl','noodle','bibimbap','soup','fried-chicken','side','drink','set-menu','bangladeshi-main','bangladeshi-snack','biryani','curry'];
 export default function AdminMenuPage() {
-  const [items, setItems] = useState<any[]>([]); const [loading, setLoading] = useState(true); const [modal, setModal] = useState(false); const [editing, setEditing] = useState<any>(null); const [form, setForm] = useState<any>(EMPTY); const [uploading, setUploading] = useState(false);
+  const [items, setItems] = useState<any[]>([]); const [loading, setLoading] = useState(true); const [modal, setModal] = useState(false); const [editing, setEditing] = useState<any>(null); const [form, setForm] = useState<any>(EMPTY); const [uploading, setUploading] = useState(false); const [syncing, setSyncing] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const load = () => fetch('/api/menu').then(r=>r.json()).then(d=>{ setItems(Array.isArray(d)?d:[]); setLoading(false); });
+
+  const syncEpos = async () => {
+    setSyncing(true);
+    try {
+      const res  = await fetch('/api/epos/sync', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) { toast.success(data.message); load(); }
+      else toast.error(data.error || 'Sync failed');
+    } catch { toast.error('Sync failed — check EPOSNOW_API_TOKEN in .env.local'); }
+    setSyncing(false);
+  };
   useEffect(()=>{ load(); },[]);
   const openAdd = () => { setEditing(null); setForm(EMPTY); setModal(true); };
   const openEdit = (item: any) => { setEditing(item); setForm({ ...item, price:item.price.toString(), tags:item.tags?.join(', ')||'', sizes:item.sizes?.map((s:any)=>`${s.label}:${s.price}`).join(', ')||'' }); setModal(true); };
@@ -48,9 +59,14 @@ export default function AdminMenuPage() {
 
   return (
     <div>
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'24px' }}>
-        <div><h1 className="font-display" style={{ fontSize:'28px', fontWeight:700, color:'var(--brown-dark)' }}>Menu Items</h1><p style={{ fontSize:'13px', color:'var(--brown-mid)' }}>{items.length} items</p></div>
-        <button onClick={openAdd} style={{ display:'flex', alignItems:'center', gap:'6px', background:'var(--red-korean)', color:'white', border:'none', borderRadius:'12px', padding:'10px 20px', cursor:'pointer', fontFamily:'Outfit, sans-serif', fontSize:'13px', fontWeight:600 }}><Plus size={15}/>Add Item</button>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'24px', flexWrap:'wrap', gap:'12px' }}>
+        <div><h1 className="font-display" style={{ fontSize:'28px', fontWeight:700, color:'var(--brown-dark)' }}>Menu Items</h1><p style={{ fontSize:'13px', color:'var(--brown-mid)' }}>{items.length} items · {items.filter(i=>i.syncedFromEpos).length} from Epos Now</p></div>
+        <div style={{ display:'flex', gap:'10px' }}>
+          <button onClick={syncEpos} disabled={syncing} style={{ display:'flex', alignItems:'center', gap:'6px', background:'var(--brown-dark)', color:'white', border:'none', borderRadius:'12px', padding:'10px 16px', cursor:syncing?'wait':'pointer', fontFamily:'Outfit, sans-serif', fontSize:'13px', fontWeight:500, opacity:syncing?0.7:1 }}>
+            <RefreshCw size={14} style={{ animation:syncing?'spin 1s linear infinite':'none' }}/>{syncing?'Syncing…':'Sync from Epos'}
+          </button>
+          <button onClick={openAdd} style={{ display:'flex', alignItems:'center', gap:'6px', background:'var(--red-korean)', color:'white', border:'none', borderRadius:'12px', padding:'10px 20px', cursor:'pointer', fontFamily:'Outfit, sans-serif', fontSize:'13px', fontWeight:600 }}><Plus size={15}/>Add Item</button>
+        </div>
       </div>
 
       {loading?<p style={{color:'var(--brown-mid)'}}>Loading…</p>:(
@@ -65,7 +81,13 @@ export default function AdminMenuPage() {
                   <td style={{ padding:'12px 14px' }}>
                     <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
                       {item.primaryImage&&<img src={item.primaryImage} alt={item.name} style={{ width:'40px', height:'40px', borderRadius:'8px', objectFit:'cover', flexShrink:0 }}/>}
-                      <div><div style={{ fontWeight:500, color:'var(--brown-dark)' }}>{item.name}</div><div style={{ fontSize:'11px', color:'var(--brown-mid)', maxWidth:'260px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{item.description}</div></div>
+                      <div>
+                        <div style={{ display:'flex', alignItems:'center', gap:'6px' }}>
+                          <span style={{ fontWeight:500, color:'var(--brown-dark)' }}>{item.name}</span>
+                          {item.syncedFromEpos && <span style={{ fontSize:'9px', fontWeight:600, background:'#eff6ff', color:'#1d4ed8', padding:'2px 5px', borderRadius:'4px', letterSpacing:'0.04em', flexShrink:0 }}>EPOS</span>}
+                        </div>
+                        <div style={{ fontSize:'11px', color:'var(--brown-mid)', maxWidth:'260px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{item.description}</div>
+                      </div>
                     </div>
                   </td>
                   <td style={{ padding:'12px 14px', color:'var(--brown-mid)', textTransform:'capitalize' }}>{item.category}</td>
@@ -151,6 +173,7 @@ export default function AdminMenuPage() {
           </div>
         </div>
       )}
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

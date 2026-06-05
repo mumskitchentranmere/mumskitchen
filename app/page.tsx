@@ -71,8 +71,8 @@ export default function HomePage() {
             <Link href="/order" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--red-korean)', color: 'white', padding: '14px 32px', borderRadius: '14px', textDecoration: 'none', fontSize: '15px', fontWeight: 600 }}>
               Order Online <ArrowRight size={17} />
             </Link>
-            <Link href="/dine-in" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', padding: '14px 32px', borderRadius: '14px', textDecoration: 'none', fontSize: '15px', fontWeight: 500, backdropFilter: 'blur(8px)' }}>
-              Book a Table
+            <Link href="/menu" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', padding: '14px 32px', borderRadius: '14px', textDecoration: 'none', fontSize: '15px', fontWeight: 500, backdropFilter: 'blur(8px)' }}>
+              View Menu
             </Link>
           </div>
           <div style={{ display: 'flex', justifyContent: 'center', gap: '32px', marginTop: '56px', flexWrap: 'wrap' }}>
@@ -86,7 +86,7 @@ export default function HomePage() {
       {/* Quick order strip */}
       <section style={{ background: 'var(--brown-dark)', padding: '0' }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 24px' }} className="order-strip">
-          {[{ icon: '🥡', title: 'Takeaway', desc: 'Order & pick up fresh', href: '/order' }, { icon: '🚚', title: 'Delivery', desc: 'To your door across Adelaide', href: '/order' }, { icon: '🍽️', title: 'Dine In', desc: 'Book your table now', href: '/dine-in' }].map(s => (
+          {[{ icon: '🥡', title: 'Order Online', desc: 'Order & pick up fresh', href: '/order' }, { icon: '📋', title: 'Full Menu', desc: 'Browse all our dishes', href: '/menu' }, { icon: '📞', title: 'Call to Order', desc: 'Speak to us directly', href: 'tel:+61406878202' }].map(s => (
             <Link key={s.title} href={s.href} style={{ padding: '28px 24px', display: 'flex', alignItems: 'center', gap: '16px', borderRight: '1px solid rgba(255,255,255,0.06)', textDecoration: 'none' }}>
               <span style={{ fontSize: '28px' }}>{s.icon}</span>
               <div>

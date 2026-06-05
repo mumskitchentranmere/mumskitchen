@@ -31,8 +31,11 @@ export async function POST(req: NextRequest) {
         const base = process.env.NEXTAUTH_URL || 'http://localhost:3000';
         await fetch(`${base}/api/epos/push-order`, {
           method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ orderId: pi.metadata.orderId }),
+          headers: {
+            'Content-Type': 'application/json',
+            ...(process.env.INTERNAL_API_SECRET ? { 'x-internal-secret': process.env.INTERNAL_API_SECRET } : {}),
+          },
+          body: JSON.stringify({ orderId: pi.metadata.orderId }),
         });
       } catch (eposError) {
         console.error('[Stripe Webhook] Epos push failed (non-critical):', eposError);

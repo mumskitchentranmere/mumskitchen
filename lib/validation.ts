@@ -50,7 +50,7 @@ export const CreateOrderSchema = z.object({
   customerName:        z.string().min(1).max(200),
   customerEmail:       z.string().email(),
   customerPhone:       z.string().max(20).optional(),
-  orderType:           z.enum(['takeaway','delivery','dinein']),
+  orderType:           z.enum(['takeaway','delivery','dinein']), // delivery/dinein kept for legacy orders
   items:               z.array(OrderItemSchema).min(1).max(50),
   subtotal:            z.number().positive(),
   deliveryFee:         z.number().min(0).optional().default(0),

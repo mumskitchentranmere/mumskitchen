@@ -1,8 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { MenuCard } from '@/components/menu/MenuCard';
-import { useCartStore } from '@/lib/cartStore';
-import { ShoppingBag, Truck, CheckCircle } from 'lucide-react';
+import { ShoppingBag } from 'lucide-react';
 
 const CUISINES = [
   { id: 'all',         label: 'All',        flag: '🍽️' },
@@ -39,7 +38,6 @@ export default function OrderPage() {
   const [loading, setLoading] = useState(true);
   const [cuisine, setCuisine] = useState('all');
   const [cat,     setCat]     = useState('all');
-  const { orderType, setOrderType } = useCartStore();
 
   const selectCuisine = (c: string) => { setCuisine(c); setCat('all'); };
 
@@ -54,15 +52,6 @@ export default function OrderPage() {
       .then(d => { setItems(Array.isArray(d) ? d : []); setLoading(false); });
   }, [cuisine, cat]);
 
-  const orderBtn = (active: boolean): React.CSSProperties => ({
-    flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-    padding: '16px', borderRadius: '14px',
-    border: `2px solid ${active ? 'var(--red-korean)' : 'var(--stone-light)'}`,
-    background: active ? '#fdf0ee' : 'white', cursor: 'pointer',
-    transition: 'all 0.15s', fontFamily: 'Outfit, sans-serif',
-    color: 'var(--brown-dark)', fontSize: '14px', fontWeight: active ? 600 : 400,
-  });
-
   const tabBtn = (active: boolean): React.CSSProperties => ({
     padding: '7px 16px', borderRadius: '20px', border: '1.5px solid',
     borderColor: active ? 'var(--red-korean)' : 'var(--stone-light)',
@@ -73,25 +62,16 @@ export default function OrderPage() {
   });
 
   return (
-    <div style={{ minHeight: 'calc(100vh)', background: 'var(--cream)', paddingTop: '68px' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--cream)', paddingTop: '68px' }}>
 
-      {/* Order type header */}
+      {/* Header */}
       <div style={{ background: 'var(--brown-dark)', padding: '40px 24px' }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
-          <h1 className="font-display" style={{ fontSize: 'clamp(28px,4vw,44px)', fontWeight: 700, color: 'white', marginBottom: '6px' }}>Order Online</h1>
-          <p style={{ fontSize: '14px', color: 'rgba(232,224,213,0.6)', marginBottom: '24px' }}>Choose your order type, then build your order.</p>
-          <div style={{ display: 'flex', gap: '12px', maxWidth: '600px' }}>
-            <button style={orderBtn(orderType === 'takeaway')} onClick={() => setOrderType('takeaway')}>
-              <ShoppingBag size={18} />
-              <div><div>Takeaway</div><div style={{ fontSize: '11px', opacity: 0.6 }}>Pick up at the restaurant</div></div>
-              {orderType === 'takeaway' && <CheckCircle size={16} color="var(--red-korean)" />}
-            </button>
-            <button style={orderBtn(orderType === 'delivery')} onClick={() => setOrderType('delivery')}>
-              <Truck size={18} />
-              <div><div>Delivery</div><div style={{ fontSize: '11px', opacity: 0.6 }}>To your door (+$4.99)</div></div>
-              {orderType === 'delivery' && <CheckCircle size={16} color="var(--red-korean)" />}
-            </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+            <ShoppingBag size={22} color="var(--gold)" />
+            <h1 className="font-display" style={{ fontSize: 'clamp(28px,4vw,44px)', fontWeight: 700, color: 'white' }}>Takeaway Order</h1>
           </div>
+          <p style={{ fontSize: '14px', color: 'rgba(232,224,213,0.6)' }}>Add items to your cart, then proceed to checkout.</p>
         </div>
       </div>
 

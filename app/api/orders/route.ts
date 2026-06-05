@@ -12,7 +12,10 @@ export async function GET(_req: NextRequest) {
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     await connectDB();
     const isAdmin = (session.user as any)?.role === 'admin';
-    const orders = await Order.find(isAdmin ? {} : { userId: (session.user as any).id }).sort({ createdAt: -1 });
+    const userId  = (session.user as any)?.id;
+    const email   = session.user?.email;
+    const query   = isAdmin ? {} : { $or: [{ userId }, { customerEmail: email }] };
+    const orders  = await Order.find(query).sort({ createdAt: -1 });
     return NextResponse.json(orders);
   } catch { return NextResponse.json({ error: 'Failed to fetch orders' }, { status: 500 }); }
 }
