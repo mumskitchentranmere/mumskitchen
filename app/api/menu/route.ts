@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     const featured = searchParams.get('featured');
     const query: any = { isAvailable: true };
     if (category && category !== 'all') query.category = category;
-    if (cuisine && cuisine !== 'all') query.cuisine = cuisine;
+    if (cuisine && cuisine !== 'all') query.cuisine = { $in: [cuisine, 'both'] };
     if (featured === 'true') query.isFeatured = true;
     const session = await auth();
     if ((session?.user as any)?.role === 'admin') delete query.isAvailable;
