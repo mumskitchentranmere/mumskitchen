@@ -1,0 +1,44 @@
+{
+  "name": "Mum's Kitchen",
+  "short_name": "Mum's Kitchen",
+  "description": "Authentic Korean & Bangladeshi Cuisine in Tranmere SA — Order Online for Takeaway",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAF7F2",
+  "theme_color": "#2C1A0E",
+  "orientation": "portrait-primary",
+  "lang": "en-AU",
+  "categories": ["food", "restaurant"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Order Now",
+      "short_name": "Order",
+      "description": "Start a takeaway order",
+      "url": "/order",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "View Menu",
+      "short_name": "Menu",
+      "description": "Browse our full menu",
+      "url": "/menu",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}
