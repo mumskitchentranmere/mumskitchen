@@ -94,7 +94,7 @@ export default function CheckoutPage() {
       <div style={{ maxWidth: '1024px', margin: '0 auto', padding: '36px 24px' }}>
         <h1 className="font-display" style={{ fontSize: 'clamp(28px,4vw,42px)', fontWeight: 700, color: 'var(--brown-dark)', marginBottom: '32px' }}>Checkout</h1>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '24px', alignItems: 'start' }}>
+        <div className="checkout-grid">
           <div>
             {/* Steps */}
             <div style={{ display: 'flex', gap: '6px', marginBottom: '28px', alignItems: 'center' }}>

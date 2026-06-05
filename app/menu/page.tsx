@@ -4,10 +4,20 @@ import { MenuCard } from '@/components/menu/MenuCard';
 import { Search } from 'lucide-react';
 
 const CATS = [
-  { id:'all', label:'All' }, { id:'snack', label:'Snacks & Street Food' },
-  { id:'rice-bowl', label:'Rice Bowls' }, { id:'noodle', label:'Noodles & Rice' },
-  { id:'bibimbap', label:'Bibimbap' }, { id:'soup', label:'Soups & Stews' },
-  { id:'fried-chicken', label:'Korean Fried Chicken' }, { id:'side', label:'Side Dishes' },
+  { id:'all', label:'All' },
+  { id:'snack', label:'Snacks & Street Food' },
+  { id:'rice-bowl', label:'Rice Bowls' },
+  { id:'noodle', label:'Noodles & Rice' },
+  { id:'bibimbap', label:'Bibimbap' },
+  { id:'soup', label:'Soups & Stews' },
+  { id:'fried-chicken', label:'Korean Fried Chicken' },
+  { id:'side', label:'Side Dishes' },
+  { id:'bangladeshi-main', label:'Bangladeshi Mains' },
+  { id:'bangladeshi-snack', label:'Bangladeshi Snacks' },
+  { id:'biryani', label:'Biryani' },
+  { id:'curry', label:'Curry' },
+  { id:'drink', label:'Drinks' },
+  { id:'set-menu', label:'Set Menu' },
 ];
 
 export default function MenuPage() {

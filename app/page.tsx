@@ -67,7 +67,7 @@ export default function HomePage() {
           <p style={{ fontSize: 'clamp(15px, 2vw, 18px)', color: 'rgba(232,224,213,0.8)', lineHeight: 1.7, marginBottom: '40px', maxWidth: '540px', margin: '0 auto 40px' }}>
             Korean traditional authentic food — freshly prepared to order. Fried Chicken, Bibimbap, Rice Bowls, Soups & more.
           </p>
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <div className="hero-btns" style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link href="/order" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--red-korean)', color: 'white', padding: '14px 32px', borderRadius: '14px', textDecoration: 'none', fontSize: '15px', fontWeight: 600 }}>
               Order Online <ArrowRight size={17} />
             </Link>
@@ -85,7 +85,7 @@ export default function HomePage() {
 
       {/* Quick order strip */}
       <section style={{ background: 'var(--brown-dark)', padding: '0' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 24px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}>
+        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 24px' }} className="order-strip">
           {[{ icon: '🥡', title: 'Takeaway', desc: 'Order & pick up fresh', href: '/order' }, { icon: '🚚', title: 'Delivery', desc: 'To your door across Adelaide', href: '/order' }, { icon: '🍽️', title: 'Dine In', desc: 'Book your table now', href: '/dine-in' }].map(s => (
             <Link key={s.title} href={s.href} style={{ padding: '28px 24px', display: 'flex', alignItems: 'center', gap: '16px', borderRight: '1px solid rgba(255,255,255,0.06)', textDecoration: 'none' }}>
               <span style={{ fontSize: '28px' }}>{s.icon}</span>
@@ -132,7 +132,7 @@ export default function HomePage() {
 
       {/* About */}
       <section style={{ background: 'var(--warm-white)', padding: '80px 24px' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '64px', alignItems: 'center' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }} className="about-grid">
           <div>
             <p style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--red-korean)', marginBottom: '12px' }}>About Us</p>
             <h2 className="font-display" style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 700, color: 'var(--brown-dark)', lineHeight: 1.2, marginBottom: '20px' }}>Korean Traditional Authentic Food</h2>

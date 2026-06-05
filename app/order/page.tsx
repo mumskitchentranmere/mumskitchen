@@ -3,7 +3,22 @@ import { useState, useEffect } from 'react';
 import { MenuCard } from '@/components/menu/MenuCard';
 import { useCartStore } from '@/lib/cartStore';
 import { ShoppingBag, Truck, CheckCircle } from 'lucide-react';
-const CATS = [{ id:'all',label:'All' },{ id:'snack',label:'Snacks' },{ id:'rice-bowl',label:'Rice Bowls' },{ id:'noodle',label:'Noodles & Rice' },{ id:'bibimbap',label:'Bibimbap' },{ id:'soup',label:'Soups' },{ id:'fried-chicken',label:'Fried Chicken' },{ id:'side',label:'Sides' }];
+const CATS = [
+  { id:'all',label:'All' },
+  { id:'snack',label:'Snacks' },
+  { id:'rice-bowl',label:'Rice Bowls' },
+  { id:'noodle',label:'Noodles & Rice' },
+  { id:'bibimbap',label:'Bibimbap' },
+  { id:'soup',label:'Soups' },
+  { id:'fried-chicken',label:'Fried Chicken' },
+  { id:'side',label:'Sides' },
+  { id:'bangladeshi-main',label:'Bangladeshi Mains' },
+  { id:'bangladeshi-snack',label:'Bangladeshi Snacks' },
+  { id:'biryani',label:'Biryani' },
+  { id:'curry',label:'Curry' },
+  { id:'drink',label:'Drinks' },
+  { id:'set-menu',label:'Set Menu' },
+];
 export default function OrderPage() {
   const [items, setItems] = useState<any[]>([]); const [loading, setLoading] = useState(true); const [cat, setCat] = useState('all');
   const { orderType, setOrderType } = useCartStore();

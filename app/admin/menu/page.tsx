@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Plus, Edit, Trash2, X, Check, Upload, Images } from 'lucide-react';
 import toast from 'react-hot-toast';
 const EMPTY = { name:'', description:'', price:'', category:'snack', cuisine:'korean', tags:'', images:[] as string[], primaryImage:'', isAvailable:true, isFeatured:false, sizes:'' };
-const CATS = ['snack','rice-bowl','noodle','bibimbap','soup','fried-chicken','side','drink','set-menu'];
+const CATS = ['snack','rice-bowl','noodle','bibimbap','soup','fried-chicken','side','drink','set-menu','bangladeshi-main','bangladeshi-snack','biryani','curry'];
 export default function AdminMenuPage() {
   const [items, setItems] = useState<any[]>([]); const [loading, setLoading] = useState(true); const [modal, setModal] = useState(false); const [editing, setEditing] = useState<any>(null); const [form, setForm] = useState<any>(EMPTY); const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -54,8 +54,8 @@ export default function AdminMenuPage() {
       </div>
 
       {loading?<p style={{color:'var(--brown-mid)'}}>Loading…</p>:(
-        <div style={{ background:'white', borderRadius:'14px', border:'1px solid var(--stone-light)', overflow:'hidden' }}>
-          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'13px' }}>
+        <div className="table-scroll" style={{ background:'white', borderRadius:'14px', border:'1px solid var(--stone-light)', overflow:'hidden' }}>
+          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'13px', minWidth:'600px' }}>
             <thead style={{ background:'#f9f5f0' }}>
               <tr>{['Item','Category','Price','Images','Available','Actions'].map(h=><th key={h} style={{ padding:'12px 14px', textAlign:'left', fontSize:'11px', fontWeight:600, color:'var(--brown-mid)', letterSpacing:'0.06em', textTransform:'uppercase' }}>{h}</th>)}</tr>
             </thead>

@@ -18,7 +18,7 @@ export default function ContactPage() {
         <p style={{ fontSize:'15px', color:'rgba(232,224,213,0.6)' }}>We'd love to hear from you</p>
       </div>
       <div style={{ maxWidth:'1100px', margin:'0 auto', padding:'48px 24px' }}>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1.5fr', gap:'40px', alignItems:'start' }}>
+        <div className="contact-grid">
           <div style={{ display:'flex', flexDirection:'column', gap:'16px' }}>
             <a href="tel:+61XXXXXXXX" style={{ display:'flex', alignItems:'center', gap:'14px', background:'var(--red-korean)', color:'white', borderRadius:'16px', padding:'18px 20px', textDecoration:'none' }}>
               <div style={{ width:'40px', height:'40px', background:'rgba(255,255,255,0.15)', borderRadius:'10px', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}><Phone size={20}/></div>
@@ -51,7 +51,7 @@ export default function ContactPage() {
             </div>:(
               <form onSubmit={handleSubmit} style={{ background:'white', borderRadius:'16px', padding:'28px', border:'1px solid var(--stone-light)' }}>
                 <h2 className="font-display" style={{ fontSize:'24px', fontWeight:600, color:'var(--brown-dark)', marginBottom:'20px' }}>Send Us a Message</h2>
-                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'14px', marginBottom:'14px' }}>
+                <div className="contact-name-email">
                   {([['Your Name *','name','text'],['Email *','email','email']] as [string,string,string][]).map(([l,f,t])=>(
                     <div key={f}><label style={{ fontSize:'12px', fontWeight:500, color:'var(--brown-mid)', display:'block', marginBottom:'5px' }}>{l}</label><input type={t} required value={(form as any)[f]} onChange={e=>setForm(ff=>({...ff,[f]:e.target.value}))} style={inp}/></div>
                   ))}

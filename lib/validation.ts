@@ -24,7 +24,7 @@ export const MenuItemSchema = z.object({
   description:     z.string().max(2000).optional().default(''),
   richDescription: z.string().max(10000).optional().default(''),
   price:           z.number().positive().max(9999),
-  category:        z.enum(['snack','rice-bowl','noodle','bibimbap','soup','fried-chicken','side','drink','set-menu']),
+  category:        z.enum(['snack','rice-bowl','noodle','bibimbap','soup','fried-chicken','side','drink','set-menu','bangladeshi-main','bangladeshi-snack','biryani','curry']),
   cuisine:         z.enum(['korean','bangladeshi','both']).optional().default('korean'),
   images:          z.array(z.string().url()).max(10).optional().default([]),
   primaryImage:    z.string().optional().default(''),
