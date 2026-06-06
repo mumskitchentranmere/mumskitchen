@@ -17,7 +17,10 @@ export async function GET(_req: NextRequest) {
     const query   = isAdmin ? {} : { $or: [{ userId }, { customerEmail: email }] };
     const orders  = await Order.find(query).sort({ createdAt: -1 });
     return NextResponse.json(orders);
-  } catch { return NextResponse.json({ error: 'Failed to fetch orders' }, { status: 500 }); }
+  } catch (err) {
+    console.error('[Orders GET]', err);
+    return NextResponse.json({ error: 'Failed to fetch orders' }, { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -57,5 +60,8 @@ export async function POST(req: NextRequest) {
     sendOrderNotificationToRestaurant(emailData).catch(() => {});
 
     return NextResponse.json(order, { status: 201 });
-  } catch { return NextResponse.json({ error: 'Failed to create order' }, { status: 500 }); }
+  } catch (err) {
+    console.error('[Orders POST]', err);
+    return NextResponse.json({ error: 'Failed to create order' }, { status: 500 });
+  }
 }

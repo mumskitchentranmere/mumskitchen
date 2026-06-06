@@ -1,5 +1,5 @@
 import { Schema, model, models } from 'mongoose';
-const ItemSchema = new Schema({ menuItemId: { type: Schema.Types.ObjectId, ref: 'MenuItem' }, name: String, price: Number, quantity: Number, image: String, selectedSize: String });
+const ItemSchema = new Schema({ menuItemId: String, name: String, price: Number, quantity: Number, image: String, selectedSize: String });
 const OrderSchema = new Schema({
   userId: { type: Schema.Types.ObjectId, ref: 'User' },
   customerName: { type: String, required: true },
