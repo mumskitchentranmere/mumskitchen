@@ -8,7 +8,7 @@ export function Footer() {
   return (
     <footer style={{ background: 'var(--brown-dark)', color: 'var(--stone-light)', marginTop: '80px' }}>
       <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '64px 24px 32px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '40px', marginBottom: '48px' }}>
+        <div className="footer-grid">
 
           {/* Brand column */}
           <div>

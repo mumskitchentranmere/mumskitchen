@@ -125,7 +125,7 @@ export default function MenuPage() {
 
         {/* Results */}
         {loading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px' }}>
+          <div className="menu-grid">
             {[...Array(8)].map((_, i) => <div key={i} className="skeleton" style={{ borderRadius: '16px', height: '280px' }} />)}
           </div>
         ) : filtered.length === 0 ? (
@@ -134,7 +134,7 @@ export default function MenuPage() {
             <p>No dishes found. Try a different category or search term.</p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px' }}>
+          <div className="menu-grid">
             {filtered.map(item => <MenuCard key={item._id} item={item} />)}
           </div>
         )}

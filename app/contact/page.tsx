@@ -35,9 +35,14 @@ export default function ContactPage() {
             ))}
             <div style={{ background:'white', borderRadius:'14px', padding:'16px', border:'1px solid var(--stone-light)' }}>
               <div style={{ display:'flex', gap:'10px', marginBottom:'8px' }}><div style={{ width:'36px', height:'36px', background:'#fdf0ee', borderRadius:'10px', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--red-korean)', flexShrink:0 }}><Clock size={18}/></div><div style={{ fontSize:'11px', fontWeight:600, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--brown-mid)', paddingTop:'10px' }}>Hours</div></div>
-              {[['Monday','Closed'],['Tue – Thu','5:00 pm – 10:00 pm'],['Fri – Sun','10:00 am – 3:00 pm, 5:00 pm – 10:00 pm']].map(([d,h])=>(
-                <div key={d} style={{ display:'flex', justifyContent:'space-between', fontSize:'13px', padding:'4px 0', borderBottom:'1px solid var(--stone-light)' }}>
-                  <span style={{ color:'var(--brown-mid)' }}>{d}</span><span style={{ fontWeight:500, color:'var(--brown-dark)' }}>{h}</span>
+              {[
+                ['Monday',   'Closed'],
+                ['Tue – Thu','5:00 pm – 10:00 pm'],
+                ['Fri – Sun','10 am – 3 pm\n5 pm – 10 pm'],
+              ].map(([d,h])=>(
+                <div key={d} className="hours-row">
+                  <span className="hours-day">{d}</span>
+                  <span className="hours-time" style={{ whiteSpace:'pre-line', textAlign:'right' }}>{h}</span>
                 </div>
               ))}
             </div>

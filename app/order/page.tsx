@@ -112,7 +112,7 @@ export default function OrderPage() {
 
         {/* Grid */}
         {loading
-          ? <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px,1fr))', gap: '20px' }}>
+          ? <div className="menu-grid">
               {[...Array(6)].map((_, i) => <div key={i} className="skeleton" style={{ borderRadius: '16px', height: '280px' }} />)}
             </div>
           : items.length === 0
@@ -120,7 +120,7 @@ export default function OrderPage() {
               <div style={{ fontSize: '40px', marginBottom: '12px' }}>🍽️</div>
               <p>No dishes found in this category yet.</p>
             </div>
-          : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px,1fr))', gap: '20px' }}>
+          : <div className="menu-grid">
               {items.map(item => <MenuCard key={item._id} item={item} />)}
             </div>
         }

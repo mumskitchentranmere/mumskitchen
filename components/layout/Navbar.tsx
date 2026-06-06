@@ -68,10 +68,10 @@ export function Navbar() {
               priority
             />
             <div>
-              <div className="font-display" style={{ fontSize: '19px', fontWeight: 700, color: brandColor, lineHeight: 1.1, transition: 'color 0.3s ease' }}>
+              <div className="font-display nav-brand-name" style={{ fontSize: '19px', fontWeight: 700, color: brandColor, lineHeight: 1.1, transition: 'color 0.3s ease' }}>
                 Mum's Kitchen
               </div>
-              <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: subColor, transition: 'color 0.3s ease' }}>
+              <div className="nav-brand-sub" style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: subColor, transition: 'color 0.3s ease' }}>
                 Tranmere · Authentic Korean
               </div>
             </div>
@@ -316,14 +316,6 @@ export function Navbar() {
         </div>
       </nav>
 
-      <style>{`
-        @media (max-width: 900px) {
-          .nav-links { display: none !important; }
-        }
-        @media (max-width: 900px) {
-          .show-mobile { display: flex !important; }
-        }
-      `}</style>
     </>
   );
 }

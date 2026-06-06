@@ -75,8 +75,8 @@ export default function HomePage() {
               View Menu
             </Link>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '32px', marginTop: '56px', flexWrap: 'wrap' }}>
-            {['🕐 Open 7 days', '📍 Tranmere SA', '100% Halal', '✨ Freshly made'].map(label => (
+          <div className="hero-stats" style={{ display: 'flex', justifyContent: 'center', gap: '28px', marginTop: '56px', flexWrap: 'wrap' }}>
+            {['🕐 Open Tue–Sun', '📍 Tranmere SA', '100% Halal', '✨ Freshly made'].map(label => (
               <span key={label} style={{ fontSize: '13px', color: 'rgba(232,224,213,0.55)' }}>{label}</span>
             ))}
           </div>
