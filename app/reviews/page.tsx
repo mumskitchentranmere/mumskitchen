@@ -4,7 +4,7 @@ import { ReviewCard } from '@/components/reviews/ReviewCard';
 import { ReviewForm } from '@/components/reviews/ReviewForm';
 import { RatingSummary } from '@/components/reviews/RatingSummary';
 import { StarRating } from '@/components/reviews/StarRating';
-import { PenLine, Filter, SortDesc, ChevronLeft, ChevronRight } from 'lucide-react';
+import { PenLine, Filter, SortDesc, ChevronLeft, ChevronRight, Star, ExternalLink } from 'lucide-react';
 
 const SORT_OPTIONS = [
   { value: 'newest',  label: 'Most Recent' },
@@ -20,6 +20,7 @@ export default function ReviewsPage() {
   const [page, setPage]         = useState(1);
   const [filterRating, setFilterRating] = useState(0);  // 0 = all
   const [sort, setSort]         = useState('newest');
+  const [googleData, setGoogleData] = useState<any>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -37,6 +38,12 @@ export default function ReviewsPage() {
   }, [page, filterRating, sort]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    fetch('/api/places').then(r => r.ok ? r.json() : null).then(d => {
+      if (d && !d.error) setGoogleData(d);
+    }).catch(() => {});
+  }, []);
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--cream)', paddingTop: '68px' }}>
@@ -127,6 +134,67 @@ export default function ReviewsPage() {
           </div>
         )}
       </div>
+
+      {/* Google Reviews section */}
+      {googleData && googleData.reviews?.length > 0 && (
+        <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 24px 48px' }}>
+          <div style={{ borderTop: '1px solid var(--stone-light)', paddingTop: '40px' }}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#4285f4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <span style={{ color: 'white', fontSize: '18px', fontWeight: 700, lineHeight: 1 }}>G</span>
+                </div>
+                <div>
+                  <h2 className="font-display" style={{ fontSize: '20px', fontWeight: 700, color: 'var(--brown-dark)', marginBottom: '2px' }}>Google Reviews</h2>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--brown-dark)' }}>{googleData.rating?.toFixed(1)}</span>
+                    <div style={{ display: 'flex', gap: '2px' }}>
+                      {[1,2,3,4,5].map(n => (
+                        <Star key={n} size={13} fill={n <= Math.round(googleData.rating) ? '#f59e0b' : 'none'} color={n <= Math.round(googleData.rating) ? '#f59e0b' : '#d1d5db'} />
+                      ))}
+                    </div>
+                    <span style={{ fontSize: '12px', color: 'var(--brown-mid)' }}>({googleData.user_ratings_total?.toLocaleString()} reviews)</span>
+                  </div>
+                </div>
+              </div>
+              <a
+                href={`https://www.google.com/maps/place/?q=place_id:ChIJxX-fLjDJsGoR2Ss1GWbuWqcS`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, color: '#4285f4', textDecoration: 'none', padding: '8px 16px', border: '1.5px solid #4285f4', borderRadius: '10px', transition: 'all 0.2s' }}
+              >
+                View on Google <ExternalLink size={13} />
+              </a>
+            </div>
+
+            {/* Google review cards */}
+            <div style={{ display: 'grid', gap: '14px', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+              {googleData.reviews.map((review: any, i: number) => (
+                <div key={i} style={{ background: 'white', borderRadius: '16px', padding: '18px 20px', border: '1px solid var(--stone-light)', boxShadow: '0 1px 4px rgba(44,26,14,0.05)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                    <img src={review.profile_photo_url || '/logo.png'} alt={review.author_name} width={36} height={36} style={{ borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--brown-dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{review.author_name}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--brown-mid)' }}>{review.relative_time_description}</div>
+                    </div>
+                    <div style={{ marginLeft: 'auto', display: 'flex', gap: '2px', flexShrink: 0 }}>
+                      {[1,2,3,4,5].map(n => (
+                        <Star key={n} size={11} fill={n <= review.rating ? '#f59e0b' : 'none'} color={n <= review.rating ? '#f59e0b' : '#d1d5db'} />
+                      ))}
+                    </div>
+                  </div>
+                  {review.text && (
+                    <p style={{ fontSize: '13px', lineHeight: 1.6, color: 'var(--brown-mid)', margin: 0, display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties}>
+                      {review.text}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Write review modal */}
       {showForm && (

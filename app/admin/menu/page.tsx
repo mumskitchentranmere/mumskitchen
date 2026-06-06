@@ -26,18 +26,32 @@ export default function AdminMenuPage() {
   // Multi-image upload
   const handleImages = async (files: FileList) => {
     setUploading(true);
-    const base64s: string[] = [];
-    for (const f of Array.from(files)) {
-      const b64 = await new Promise<string>((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result as string); r.onerror = rej; r.readAsDataURL(f); });
-      base64s.push(b64);
-    }
-    const r = await fetch('/api/upload', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ images:base64s }) });
-    const data = await r.json();
-    if (data.urls) {
-      setForm((f:any) => ({ ...f, images:[...f.images, ...data.urls], primaryImage: f.primaryImage || data.urls[0] }));
-      toast.success(`${data.urls.length} image(s) uploaded`);
-    }
+    try {
+      const base64s: string[] = [];
+      for (const f of Array.from(files)) {
+        const b64 = await new Promise<string>((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result as string); r.onerror = rej; r.readAsDataURL(f); });
+        base64s.push(b64);
+      }
+      const r = await fetch('/api/upload', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ images:base64s }) });
+      const data = await r.json();
+      if (!r.ok) { toast.error(data.error || 'Upload failed'); }
+      else if (data.urls) {
+        setForm((f:any) => ({ ...f, images:[...f.images, ...data.urls], primaryImage: f.primaryImage || data.urls[0] }));
+        toast.success(`${data.urls.length} image(s) uploaded`);
+      }
+    } catch { toast.error('Upload failed — check your connection'); }
     setUploading(false);
+    if (fileRef.current) fileRef.current.value = '';
+  };
+
+  const removeImage = async (url: string, idx: number) => {
+    setForm((f:any) => {
+      const imgs = f.images.filter((_:string, j:number) => j !== idx);
+      return { ...f, images: imgs, primaryImage: imgs[0] || '' };
+    });
+    if (url.includes('cloudinary.com')) {
+      fetch(`/api/upload?url=${encodeURIComponent(url)}`, { method: 'DELETE' }).catch(() => {});
+    }
   };
 
   const save = async () => {
@@ -126,7 +140,7 @@ export default function AdminMenuPage() {
                 {form.images?.map((url: string, i: number) => (
                   <div key={i} style={{ position:'relative' }}>
                     <img src={url} alt="" style={{ width:'60px', height:'60px', borderRadius:'8px', objectFit:'cover', border: i===0?'2px solid var(--red-korean)':'2px solid var(--stone-light)' }}/>
-                    <button onClick={()=>setForm((f:any)=>({...f, images:f.images.filter((_:string,j:number)=>j!==i), primaryImage:f.images.filter((_:string,j:number)=>j!==i)[0]||''}))} style={{ position:'absolute', top:'-6px', right:'-6px', width:'18px', height:'18px', borderRadius:'50%', background:'#ef4444', border:'none', cursor:'pointer', color:'white', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'10px' }}>×</button>
+                    <button onClick={()=>removeImage(url, i)} style={{ position:'absolute', top:'-6px', right:'-6px', width:'18px', height:'18px', borderRadius:'50%', background:'#ef4444', border:'none', cursor:'pointer', color:'white', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'10px' }}>×</button>
                     {i===0&&<div style={{ position:'absolute', bottom:'-4px', left:'50%', transform:'translateX(-50%)', background:'var(--red-korean)', color:'white', fontSize:'8px', padding:'1px 4px', borderRadius:'3px', whiteSpace:'nowrap' }}>Main</div>}
                   </div>
                 ))}
