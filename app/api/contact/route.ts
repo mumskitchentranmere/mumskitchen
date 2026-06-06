@@ -3,7 +3,7 @@ import { Resend } from 'resend';
 import { rateLimit, LIMITS } from '@/lib/rateLimit';
 
 export async function POST(req: NextRequest) {
-  const limited = rateLimit(req, LIMITS.review);
+  const limited = rateLimit(req, LIMITS.contact);
   if (limited) return limited;
   try {
     const { name, email, phone, message } = await req.json();

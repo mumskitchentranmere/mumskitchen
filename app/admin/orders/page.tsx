@@ -45,7 +45,7 @@ export default function AdminOrdersPage() {
   const [updating,    setUpdating]    = useState<string | null>(null);
 
   const load = () => {
-    fetch('/api/orders').then(r => r.json()).then(d => { setOrders(Array.isArray(d) ? d : []); setLoading(false); });
+    fetch('/api/orders').then(r => r.ok ? r.json() : Promise.reject(r.status)).then(d => { setOrders(Array.isArray(d) ? d : []); setLoading(false); }).catch(() => setLoading(false));
   };
   useEffect(() => { load(); }, []);
 

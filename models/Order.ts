@@ -14,4 +14,11 @@ const OrderSchema = new Schema({
   deliveryAddress: String, pickupTime: String, specialInstructions: String,
   eposOrderId: String,   // sync with Epos Now
 }, { timestamps: true });
+
+OrderSchema.index({ userId: 1 });
+OrderSchema.index({ customerEmail: 1 });
+OrderSchema.index({ createdAt: -1 });
+OrderSchema.index({ paymentStatus: 1, createdAt: -1 });
+OrderSchema.index({ status: 1 });
+
 export const Order = models.Order || model('Order', OrderSchema);

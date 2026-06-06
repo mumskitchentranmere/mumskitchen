@@ -91,6 +91,7 @@ export default function AdminDashboard() {
         fetch('/api/menu'),
         fetch('/api/epos/sync'),
       ]);
+      if (!ordersRes.ok || !menuRes.ok) throw new Error('Failed to load dashboard data');
       const [ordersData, menuData] = await Promise.all([ordersRes.json(), menuRes.json()]);
       const epos = eposRes.ok ? await eposRes.json() : null;
       setOrders(Array.isArray(ordersData) ? ordersData : []);

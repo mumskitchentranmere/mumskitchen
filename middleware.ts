@@ -1,7 +1,11 @@
-import { getToken } from 'next-auth/jwt';
-import { NextRequest, NextResponse } from 'next/server';
+import NextAuth from 'next-auth';
+import { authConfig } from '@/lib/auth.config';
+import { NextResponse } from 'next/server';
 
-export async function middleware(req: NextRequest) {
+// Lightweight Edge-compatible auth — reads JWT cookie without hitting the DB
+const { auth } = NextAuth(authConfig);
+
+export default auth((req) => {
   const { pathname } = req.nextUrl;
 
   // Dine-in removed — redirect to home
@@ -9,24 +13,25 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL('/', req.url));
   }
 
-  const token = await getToken({ req, secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET });
+  const session = req.auth;
+  const role    = (session?.user as any)?.role;
 
-  // Admin pages: must have admin role
+  // Admin routes: require admin role
   if (pathname.startsWith('/admin')) {
-    if (!token || (token as any).role !== 'admin') {
+    if (!session || role !== 'admin') {
       return NextResponse.redirect(new URL('/login', req.url));
     }
   }
 
-  // Dashboard: must be logged in
+  // User dashboard: require any authenticated session
   if (pathname.startsWith('/dashboard')) {
-    if (!token) {
+    if (!session) {
       return NextResponse.redirect(new URL('/login', req.url));
     }
   }
 
   return NextResponse.next();
-}
+});
 
 export const config = {
   matcher: ['/admin/:path*', '/dashboard/:path*', '/dine-in', '/dine-in/:path*'],

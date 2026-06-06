@@ -35,7 +35,9 @@ export function Footer() {
             </div>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
               <Phone size={14} color="var(--gold)" style={{ flexShrink: 0, marginTop: '2px' }} />
-              <a href="tel:+61XXXXXXXX" style={{ fontSize: '13px', color: 'rgba(232,224,213,0.7)', textDecoration: 'none' }}>+61 X XXXX XXXX</a>
+              <a href={`tel:${process.env.NEXT_PUBLIC_RESTAURANT_PHONE}`} style={{ fontSize: '13px', color: 'rgba(232,224,213,0.7)', textDecoration: 'none' }}>
+                {process.env.NEXT_PUBLIC_RESTAURANT_PHONE}
+              </a>
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
               <Mail size={14} color="var(--gold)" style={{ flexShrink: 0, marginTop: '2px' }} />

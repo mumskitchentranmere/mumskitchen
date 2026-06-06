@@ -49,6 +49,7 @@ export const LIMITS = {
   register: { limit: 5,   window: 60 * 60 * 1000, message: 'Too many registrations from this IP.' },
   order:    { limit: 20,  window: 60 * 60 * 1000, message: 'Too many orders. Please slow down.' },
   review:   { limit: 5,   window: 60 * 60 * 1000, message: 'Too many reviews submitted.' },
+  contact:  { limit: 10,  window: 60 * 60 * 1000, message: 'Too many contact messages. Please try again later.' },
   api:      { limit: 100, window: 60 * 1000,       message: 'API rate limit exceeded.' },
   upload:   { limit: 20,  window: 60 * 60 * 1000, message: 'Too many uploads.' },
 };

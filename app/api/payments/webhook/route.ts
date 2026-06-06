@@ -4,18 +4,37 @@ import { connectDB } from '@/lib/mongodb';
 import { Order } from '@/models/Order';
 import { Booking } from '@/models/Booking';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
   const body = await req.text();
-  const sig  = req.headers.get('stripe-signature')!;
-  let event: any;
+  const sig  = req.headers.get('stripe-signature');
 
-  try {
-    event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!);
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 400 });
+  if (!sig) {
+    return NextResponse.json({ error: 'Missing stripe-signature header' }, { status: 400 });
   }
 
-  await connectDB();
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!webhookSecret) {
+    console.error('[Stripe Webhook] STRIPE_WEBHOOK_SECRET is not configured');
+    return NextResponse.json({ error: 'Webhook not configured' }, { status: 503 });
+  }
+
+  let event: any;
+  try {
+    event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
+  } catch (e: any) {
+    console.error('[Stripe Webhook] Signature verification failed:', e.message);
+    return NextResponse.json({ error: `Webhook signature verification failed: ${e.message}` }, { status: 400 });
+  }
+
+  try {
+    await connectDB();
+  } catch (e) {
+    console.error('[Stripe Webhook] DB connection failed:', e);
+    return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
+  }
+
   const pi = event.data?.object;
 
   if (event.type === 'payment_intent.succeeded') {
@@ -26,19 +45,21 @@ export async function POST(req: NextRequest) {
         paymentIntentId: pi.id,
       });
 
-      // Auto-push to Epos Now POS (fire and forget — don't fail payment if Epos is down)
+      // Push to Epos Now POS (fire-and-forget — kitchen docket)
       try {
-        const base = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+        const base = (process.env.NEXTAUTH_URL || 'http://localhost:3000').replace(/\/$/, '');
         await fetch(`${base}/api/epos/push-order`, {
           method:  'POST',
           headers: {
-            'Content-Type': 'application/json',
-            ...(process.env.INTERNAL_API_SECRET ? { 'x-internal-secret': process.env.INTERNAL_API_SECRET } : {}),
+            'Content-Type':     'application/json',
+            ...(process.env.INTERNAL_API_SECRET
+              ? { 'x-internal-secret': process.env.INTERNAL_API_SECRET }
+              : {}),
           },
           body: JSON.stringify({ orderId: pi.metadata.orderId }),
         });
-      } catch (eposError) {
-        console.error('[Stripe Webhook] Epos push failed (non-critical):', eposError);
+      } catch (eposErr) {
+        console.error('[Stripe Webhook] Epos push failed (non-critical):', eposErr);
       }
     }
 

@@ -23,5 +23,6 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   await connectDB();
   const body = await req.json();
   const order = await Order.findByIdAndUpdate(id, body, { new: true });
+  if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 });
   return NextResponse.json(order);
 }

@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { StarRating } from '@/components/reviews/StarRating';
-import { CheckCircle, XCircle, Star, Trash2, MessageSquare, ShieldCheck, Clock } from 'lucide-react';
+import { CheckCircle, XCircle, Star, Trash2, MessageSquare, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const STATUS_COLOR: Record<string, { bg: string; color: string }> = {
@@ -23,6 +23,7 @@ export default function AdminReviewsPage() {
     const params = new URLSearchParams({ limit: '50' });
     if (filter !== 'all') params.set('status', filter);
     const res  = await fetch(`/api/reviews?${params}`);
+    if (!res.ok) { setLoading(false); return; }
     const data = await res.json();
     setReviews(data.reviews || []);
     setStats(data.stats || {});
