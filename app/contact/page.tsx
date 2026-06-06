@@ -20,9 +20,9 @@ export default function ContactPage() {
       <div style={{ maxWidth:'1100px', margin:'0 auto', padding:'48px 24px' }}>
         <div className="contact-grid">
           <div style={{ display:'flex', flexDirection:'column', gap:'16px' }}>
-            <a href="tel:+61XXXXXXXX" style={{ display:'flex', alignItems:'center', gap:'14px', background:'var(--red-korean)', color:'white', borderRadius:'16px', padding:'18px 20px', textDecoration:'none' }}>
+            <a href={`tel:${process.env.NEXT_PUBLIC_RESTAURANT_PHONE}`} style={{ display:'flex', alignItems:'center', gap:'14px', background:'var(--red-korean)', color:'white', borderRadius:'16px', padding:'18px 20px', textDecoration:'none' }}>
               <div style={{ width:'40px', height:'40px', background:'rgba(255,255,255,0.15)', borderRadius:'10px', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}><Phone size={20}/></div>
-              <div><div style={{ fontWeight:600, fontSize:'15px' }}>Call Us Now</div><div style={{ fontSize:'13px', opacity:0.8 }}>+61 X XXXX XXXX</div></div>
+              <div><div style={{ fontWeight:600, fontSize:'15px' }}>Call Us Now</div><div style={{ fontSize:'13px', opacity:0.8 }}>{process.env.NEXT_PUBLIC_RESTAURANT_PHONE}</div></div>
             </a>
             {[
               { icon:<MapPin size={18}/>, label:'Address', body:'66 Reid Avenue\nTranmere SA 5073' },

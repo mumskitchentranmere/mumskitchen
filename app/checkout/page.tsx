@@ -12,8 +12,8 @@ const RESTAURANT = {
   name:    "Mum's Kitchen",
   tagline: 'Authentic Korean & Bangladeshi Cuisine',
   address: '66 Reid Avenue, Tranmere SA 5073',
-  phone:   '+61 406 878 202',
-  email:   'mumskitchentranmere@gmail.com',
+  phone:   process.env.NEXT_PUBLIC_RESTAURANT_PHONE || '+61406878202',
+  email:   process.env.NEXT_PUBLIC_RESTAURANT_EMAIL || 'mumskitchentranmere@gmail.com',
   halal:   true,
 };
 

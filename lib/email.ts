@@ -2,8 +2,10 @@ import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const FROM  = "Mum's Kitchen <noreply@mumskitchentranmere.com.au>";
-const PHONE = process.env.NEXT_PUBLIC_RESTAURANT_PHONE || '+61406878202';
+const FROM       = "Mum's Kitchen <noreply@mumskitchentranmere.com.au>";
+const PHONE      = process.env.NEXT_PUBLIC_RESTAURANT_PHONE || '+61406878202';
+const SITE_URL   = (process.env.NEXTAUTH_URL || 'https://mumskitchentranmere.com.au').replace(/\/$/, '');
+const LOGO_URL   = `${SITE_URL}/logo.png`;
 
 interface OrderItem { name: string; price: number; quantity: number; }
 interface OrderEmailData {
@@ -39,7 +41,8 @@ function orderHtml(d: OrderEmailData): string {
 
         <!-- Header -->
         <tr>
-          <td style="background:#2C1A0E;padding:28px 32px;text-align:center">
+          <td style="background:#2C1A0E;padding:24px 32px;text-align:center">
+            <img src="${LOGO_URL}" alt="Mum's Kitchen" width="64" height="64" style="display:inline-block;margin-bottom:10px;object-fit:contain" />
             <div style="font-size:22px;font-weight:700;color:#C8922A;letter-spacing:0.03em">Mum's Kitchen</div>
             <div style="font-size:12px;color:rgba(232,224,213,0.6);margin-top:4px;letter-spacing:0.12em;text-transform:uppercase">Tranmere · Authentic Korean</div>
           </td>

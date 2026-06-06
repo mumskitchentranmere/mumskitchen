@@ -143,7 +143,7 @@ export default function HomePage() {
               All our meat is 100% Halal certified. Dine in, takeaway, or get delivery right to your door.
             </p>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <a href="tel:+61XXXXXXXX" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--brown-dark)', color: 'white', padding: '12px 24px', borderRadius: '12px', textDecoration: 'none', fontSize: '14px', fontWeight: 600 }}>
+              <a href={`tel:${process.env.NEXT_PUBLIC_RESTAURANT_PHONE}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--brown-dark)', color: 'white', padding: '12px 24px', borderRadius: '12px', textDecoration: 'none', fontSize: '14px', fontWeight: 600 }}>
                 <Phone size={15} /> Call to Order
               </a>
               <Link href="/menu" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', border: '1.5px solid var(--stone-light)', color: 'var(--brown-dark)', padding: '12px 24px', borderRadius: '12px', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>
@@ -172,7 +172,7 @@ export default function HomePage() {
         <div style={{ maxWidth: '900px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '32px', textAlign: 'center' }}>
           {[
             { icon: <MapPin size={22} color="#C8922A" />, title: 'Address', body: '66 Reid Avenue\nTranmere SA 5073' },
-            { icon: <Phone size={22} color="#C8922A" />, title: 'Phone', body: '+61 X XXXX XXXX' },
+            { icon: <Phone size={22} color="#C8922A" />, title: 'Phone', body: process.env.NEXT_PUBLIC_RESTAURANT_PHONE || '+61406878202' },
             { icon: <Clock size={22} color="#C8922A" />, title: 'Hours', body: 'Mon–Thu 11:30am–9:30pm\nFri–Sat 11:30am–10:30pm\nSun 12:00pm–9:00pm' },
           ].map(c => (
             <div key={c.title}>

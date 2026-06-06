@@ -31,4 +31,15 @@ if (existsSync(staticSrc)) {
   console.log('✓ .next/static/ copied');
 }
 
+// Copy .env.local → .next/standalone/.env.local
+// Standalone server.js reads env files from its own directory, not the project root
+const envSrc  = join(root, '.env.local');
+const envDest = join(standalone, '.env.local');
+if (existsSync(envSrc)) {
+  cpSync(envSrc, envDest, { force: true });
+  console.log('✓ .env.local copied to standalone');
+} else {
+  console.warn('⚠ .env.local not found — server will have no env vars!');
+}
+
 console.log('✓ Standalone build assets ready');

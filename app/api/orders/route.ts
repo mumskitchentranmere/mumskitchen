@@ -45,7 +45,15 @@ export async function POST(req: NextRequest) {
       pickupTime:          order.pickupTime,
       specialInstructions: order.specialInstructions,
     };
+    // Send to the email entered in the checkout form
     sendOrderConfirmation(emailData).catch(() => {});
+
+    // If logged in and their account Gmail differs from the entered email, also send there
+    const sessionEmail = session?.user?.email;
+    if (sessionEmail && sessionEmail.toLowerCase() !== order.customerEmail.toLowerCase()) {
+      sendOrderConfirmation({ ...emailData, customerEmail: sessionEmail }).catch(() => {});
+    }
+
     sendOrderNotificationToRestaurant(emailData).catch(() => {});
 
     return NextResponse.json(order, { status: 201 });

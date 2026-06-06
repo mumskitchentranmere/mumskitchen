@@ -30,7 +30,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
           </a>
         </div>
         <p style={{ fontSize: '13px', color: 'var(--brown-mid)', marginTop: '24px' }}>
-          Need help? Call <a href="tel:+61406878202" style={{ color: 'var(--red-korean)', fontWeight: 600, textDecoration: 'none' }}>+61 406 878 202</a>
+          Need help? Call <a href={`tel:${process.env.NEXT_PUBLIC_RESTAURANT_PHONE || '+61406878202'}`} style={{ color: 'var(--red-korean)', fontWeight: 600, textDecoration: 'none' }}>{process.env.NEXT_PUBLIC_RESTAURANT_PHONE || '+61406878202'}</a>
         </p>
       </div>
     </div>
