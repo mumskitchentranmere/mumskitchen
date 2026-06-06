@@ -2,12 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Phone, MapPin, Mail } from 'lucide-react';
 import { OpenStatus } from './OpenStatus';
-
-const HOURS = [
-  { day: 'Monday – Thursday', hrs: '11:30 am – 9:30 pm' },
-  { day: 'Friday – Saturday',  hrs: '11:30 am – 10:30 pm' },
-  { day: 'Sunday',             hrs: '12:00 pm – 9:00 pm' },
-];
+import { FooterHours } from './FooterHours';
 
 export function Footer() {
   return (
@@ -74,12 +69,7 @@ export function Footer() {
           {/* Hours */}
           <div>
             <h3 style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: '18px' }}>Opening Hours</h3>
-            {HOURS.map(({ day, hrs }) => (
-              <div key={day} style={{ marginBottom: '10px' }}>
-                <div style={{ fontSize: '12px', color: 'rgba(232,224,213,0.45)', marginBottom: '2px' }}>{day}</div>
-                <div style={{ fontSize: '13px', color: 'rgba(232,224,213,0.8)', fontWeight: 500 }}>{hrs}</div>
-              </div>
-            ))}
+            <FooterHours />
           </div>
 
         </div>

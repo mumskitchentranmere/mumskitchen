@@ -1,64 +1,107 @@
 'use client';
 import { useEffect, useState } from 'react';
 
-const HOURS: Record<number, { open: number; close: number } | null> = {
-  0: { open: 12 * 60,       close: 21 * 60 },       // Sun  12:00pm – 9:00pm
-  1: { open: 11 * 60 + 30,  close: 21 * 60 + 30 },  // Mon  11:30am – 9:30pm
-  2: { open: 11 * 60 + 30,  close: 21 * 60 + 30 },  // Tue
-  3: { open: 11 * 60 + 30,  close: 21 * 60 + 30 },  // Wed
-  4: { open: 11 * 60 + 30,  close: 21 * 60 + 30 },  // Thu
-  5: { open: 11 * 60 + 30,  close: 22 * 60 + 30 },  // Fri  11:30am – 10:30pm
-  6: { open: 11 * 60 + 30,  close: 22 * 60 + 30 },  // Sat
+// Fallback hours — array per day supports split lunch/dinner sessions
+// day 0=Sun … 6=Sat, times in minutes from midnight
+const FALLBACK: Record<number, { open: number; close: number }[]> = {
+  0: [{ open: 10*60, close: 15*60 }, { open: 17*60, close: 22*60 }], // Sun  10am–3pm · 5–10pm
+  1: [],                                                               // Mon  Closed
+  2: [{ open: 17*60, close: 22*60 }],                                 // Tue  5–10pm
+  3: [{ open: 17*60, close: 22*60 }],                                 // Wed
+  4: [{ open: 17*60, close: 22*60 }],                                 // Thu
+  5: [{ open: 10*60, close: 15*60 }, { open: 17*60, close: 22*60 }], // Fri  10am–3pm · 5–10pm
+  6: [{ open: 10*60, close: 15*60 }, { open: 17*60, close: 22*60 }], // Sat
 };
+
+function fmt(mins: number) {
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  const ampm = h >= 12 ? 'pm' : 'am';
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${h12}${m ? `:${String(m).padStart(2, '0')}` : ''}${ampm}`;
+}
+
+function periodsToMap(periods: any[]): Record<number, { open: number; close: number }[]> {
+  const map: Record<number, { open: number; close: number }[]> = {
+    0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [],
+  };
+  for (const p of periods) {
+    const day = p.open?.day;
+    if (day == null) continue;
+    const ot = p.open?.time  ?? '0000';
+    const ct = p.close?.time ?? '2359';
+    map[day].push({
+      open:  parseInt(ot.slice(0, 2)) * 60 + parseInt(ot.slice(2)),
+      close: parseInt(ct.slice(0, 2)) * 60 + parseInt(ct.slice(2)),
+    });
+  }
+  for (const day of Object.values(map)) day.sort((a, b) => a.open - b.open);
+  return map;
+}
+
+function computeStatus(hours: Record<number, { open: number; close: number }[]>) {
+  const now     = new Date();
+  const day     = now.getDay();
+  const minutes = now.getHours() * 60 + now.getMinutes();
+  const today   = hours[day] ?? [];
+
+  // Currently inside a session?
+  for (const s of today) {
+    if (minutes >= s.open && minutes < s.close) {
+      const left  = s.close - minutes;
+      const label = left <= 60
+        ? `Open · Closes in ${left} min`
+        : `Open · Closes ${fmt(s.close)}`;
+      return { status: 'open' as const, label };
+    }
+  }
+
+  // Later session today?
+  const later = today.find(s => s.open > minutes);
+  if (later) {
+    return { status: 'closed' as const, label: `Closed · Opens ${fmt(later.open)} today` };
+  }
+
+  // Next open day
+  const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  for (let i = 1; i <= 7; i++) {
+    const next = hours[(day + i) % 7];
+    if (next?.length) {
+      const name = DAYS[(day + i) % 7];
+      const label = i === 1
+        ? `Closed · Opens ${fmt(next[0].open)} tomorrow`
+        : `Closed · Opens ${name} ${fmt(next[0].open)}`;
+      return { status: 'closed' as const, label };
+    }
+  }
+  return { status: 'closed' as const, label: 'Closed today' };
+}
 
 export function OpenStatus() {
   const [status, setStatus] = useState<'open' | 'closed' | null>(null);
-  const [label, setLabel]   = useState('');
+  const [label,  setLabel]  = useState('');
 
   useEffect(() => {
-    const check = () => {
-      const now     = new Date();
-      const day     = now.getDay();
-      const minutes = now.getHours() * 60 + now.getMinutes();
-      const h       = HOURS[day];
+    let hours = FALLBACK;
+    let id: ReturnType<typeof setInterval>;
 
-      if (!h) { setStatus('closed'); setLabel('Closed today'); return; }
-
-      if (minutes >= h.open && minutes < h.close) {
-        const minsLeft = h.close - minutes;
-        if (minsLeft <= 60) {
-          setLabel(`Closes in ${minsLeft} min`);
-        } else {
-          const closeH = Math.floor(h.close / 60);
-          const closeM = h.close % 60;
-          const ampm   = closeH >= 12 ? 'pm' : 'am';
-          const h12    = closeH > 12 ? closeH - 12 : closeH;
-          setLabel(`Open · Closes ${h12}${closeM ? `:${String(closeM).padStart(2,'0')}` : ''}${ampm}`);
-        }
-        setStatus('open');
-      } else {
-        // Find next open day
-        for (let i = 1; i <= 7; i++) {
-          const nextDay = (day + i) % 7;
-          const next    = HOURS[nextDay];
-          if (next) {
-            const dayName = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][nextDay];
-            const openH   = Math.floor(next.open / 60);
-            const openM   = next.open % 60;
-            const ampm    = openH >= 12 ? 'pm' : 'am';
-            const h12     = openH > 12 ? openH - 12 : openH;
-            setLabel(i === 1
-              ? `Closed · Opens ${h12}${openM ? `:${String(openM).padStart(2,'0')}` : ''}${ampm} tomorrow`
-              : `Closed · Opens ${dayName} ${h12}${openM ? `:${String(openM).padStart(2,'0')}` : ''}${ampm}`);
-            break;
-          }
-        }
-        setStatus('closed');
-      }
+    const tick = () => {
+      const { status, label } = computeStatus(hours);
+      setStatus(status);
+      setLabel(label);
     };
 
-    check();
-    const id = setInterval(check, 60_000);
+    fetch('/api/places')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.opening_hours?.periods?.length) {
+          hours = periodsToMap(data.opening_hours.periods);
+        }
+        tick();
+        id = setInterval(tick, 60_000);
+      })
+      .catch(() => { tick(); id = setInterval(tick, 60_000); });
+
     return () => clearInterval(id);
   }, []);
 
@@ -76,11 +119,8 @@ export function OpenStatus() {
       border:       `1px solid ${status === 'open' ? 'rgba(22,163,74,0.3)' : 'rgba(220,38,38,0.3)'}`,
     }}>
       <span style={{
-        width:        '7px',
-        height:       '7px',
-        borderRadius: '50%',
-        background:   status === 'open' ? '#16a34a' : '#dc2626',
-        flexShrink:   0,
+        width: '7px', height: '7px', borderRadius: '50%', flexShrink: 0,
+        background: status === 'open' ? '#16a34a' : '#dc2626',
       }} />
       <span style={{ fontSize: '12px', fontWeight: 600, color: status === 'open' ? '#4ade80' : '#f87171' }}>
         {label}

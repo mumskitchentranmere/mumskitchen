@@ -4,7 +4,7 @@ const PLACE_ID = 'ChIJxX-fLjDJsGoR2Ss1GWbuWqcS';
 
 export async function GET() {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
-  if (!apiKey) {
+  if (!apiKey || apiKey.startsWith('your_')) {
     return NextResponse.json({ error: 'Google Places API key not configured' }, { status: 503 });
   }
 

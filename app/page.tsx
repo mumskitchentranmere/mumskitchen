@@ -173,7 +173,7 @@ export default function HomePage() {
           {[
             { icon: <MapPin size={22} color="#C8922A" />, title: 'Address', body: '66 Reid Avenue\nTranmere SA 5073' },
             { icon: <Phone size={22} color="#C8922A" />, title: 'Phone', body: process.env.NEXT_PUBLIC_RESTAURANT_PHONE || '+61406878202' },
-            { icon: <Clock size={22} color="#C8922A" />, title: 'Hours', body: 'Mon–Thu 11:30am–9:30pm\nFri–Sat 11:30am–10:30pm\nSun 12:00pm–9:00pm' },
+            { icon: <Clock size={22} color="#C8922A" />, title: 'Hours', body: 'Tue–Thu: 5–10 pm\nFri–Sun: 10 am–3 pm · 5–10 pm\nMon: Closed' },
           ].map(c => (
             <div key={c.title}>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>{c.icon}</div>

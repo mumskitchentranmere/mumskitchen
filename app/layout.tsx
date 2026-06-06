@@ -115,7 +115,9 @@ const jsonLd = {
   acceptsReservations:'False',
   isAccessibleForFree: true,
   openingHoursSpecification: [
-    { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'], opens: '11:00', closes: '21:00' },
+    { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Tuesday','Wednesday','Thursday'], opens: '17:00', closes: '22:00' },
+    { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Friday','Saturday','Sunday'],     opens: '10:00', closes: '15:00' },
+    { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Friday','Saturday','Sunday'],     opens: '17:00', closes: '22:00' },
   ],
   sameAs: [],
 };
@@ -132,7 +134,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <SessionProvider>
           <Toaster position="top-right" toastOptions={{ style: { background: '#2C1A0E', color: '#FAF7F2', border: '1px solid #6B3A1F', fontFamily: 'Outfit, sans-serif' } }} />
           <Navbar />
