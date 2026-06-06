@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     if (featured === 'true') query.isFeatured = true;
     const session = await auth();
     if ((session?.user as any)?.role === 'admin') delete query.isAvailable;
-    const items = await MenuItem.find(query).sort({ sortOrder: 1, name: 1 });
+    const items = await MenuItem.find(query).sort({ name: 1 });
     return NextResponse.json(items);
   } catch { return NextResponse.json({ error: 'Failed' }, { status: 500 }); }
 }
