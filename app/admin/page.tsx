@@ -185,7 +185,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Revenue periods */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '24px' }}>
+      <div className="admin-grid-3">
         {[
           { label: 'This Week',  value: periods.week },
           { label: 'This Month', value: periods.month },
@@ -201,7 +201,7 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', marginBottom: '24px' }}>
+      <div className="admin-grid-2-1">
         {/* Revenue chart — last 14 days */}
         <div style={{ background: 'white', borderRadius: '16px', padding: '20px', border: '1px solid var(--stone-light)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
@@ -236,7 +236,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Top items + Recent orders */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+      <div className="admin-grid-2">
         {/* Top items */}
         <div style={{ background: 'white', borderRadius: '16px', padding: '20px', border: '1px solid var(--stone-light)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>

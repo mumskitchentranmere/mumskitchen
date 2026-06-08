@@ -168,7 +168,7 @@ export default function AdminMenuPage() {
                 {field==='description'?<textarea value={form[field]} onChange={e=>setForm((f:any)=>({...f,[field]:e.target.value}))} rows={2} style={{...inp,resize:'none'}}/>:<input type={type} value={form[field]} onChange={e=>setForm((f:any)=>({...f,[field]:e.target.value}))} style={inp}/>}
               </div>
             ))}
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'10px', marginBottom:'14px' }}>
+            <div className="admin-form-3">
               <div><label style={{ fontSize:'12px', fontWeight:500, color:'var(--brown-mid)', display:'block', marginBottom:'5px' }}>Price (AUD)</label><input type="number" step="0.01" value={form.price} onChange={e=>setForm((f:any)=>({...f,price:e.target.value}))} style={inp}/></div>
               <div><label style={{ fontSize:'12px', fontWeight:500, color:'var(--brown-mid)', display:'block', marginBottom:'5px' }}>Category</label><select value={form.category} onChange={e=>setForm((f:any)=>({...f,category:e.target.value}))} style={inp}>{CATS.map(c=><option key={c} value={c}>{c}</option>)}</select></div>
               <div><label style={{ fontSize:'12px', fontWeight:500, color:'var(--brown-mid)', display:'block', marginBottom:'5px' }}>Cuisine</label><select value={form.cuisine} onChange={e=>setForm((f:any)=>({...f,cuisine:e.target.value}))} style={inp}>{['korean','bangladeshi','both'].map(c=><option key={c}>{c}</option>)}</select></div>

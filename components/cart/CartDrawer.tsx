@@ -35,7 +35,7 @@ export function CartDrawer() {
             <div style={{ flex: 1, overflowY: 'auto', padding: '16px 24px' }}>
               <div style={{ background: 'var(--stone-light)', borderRadius: '10px', padding: '8px 14px', fontSize: '12px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: 'var(--brown-mid)' }}>Order type:</span>
-                <span style={{ fontWeight: 600, color: 'var(--red-korean)' }}>🥡 Takeaway</span>
+                <span style={{ fontWeight: 600, color: 'var(--red-korean)' }}>🥡 Takeaway / 🍽️ Dine-in</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {items.map(item => (
