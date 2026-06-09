@@ -207,7 +207,6 @@ export default function CheckoutPage() {
   // Receipt data
   const receiptItems    = savedOrder?.items ?? [];
   const receiptTotal    = savedOrder?.total ?? orderTotal;
-  const receiptSubtotal = savedOrder?.subtotal ?? orderTotal;
   const orderId         = savedOrder?._id ? savedOrder._id.slice(-6).toUpperCase() : '';
   const gst             = receiptTotal / 11;
   const exGst           = receiptTotal - gst;
@@ -421,10 +420,10 @@ export default function CheckoutPage() {
                   <div style={{ width: '68px', height: '68px', background: '#dcfce7', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                     <CheckCircle size={34} color="#16a34a" />
                   </div>
-                  <h2 className="font-display" style={{ fontSize: '28px', fontWeight: 700, color: 'var(--brown-dark)', marginBottom: '8px' }}>Order Confirmed!</h2>
+                  <h2 className="font-display" style={{ fontSize: '28px', fontWeight: 700, color: 'var(--brown-dark)', marginBottom: '8px' }}>Order Placed!</h2>
                   <p style={{ color: 'var(--brown-mid)', fontSize: '15px', marginBottom: '6px' }}>
                     Thank you, <strong style={{ color: 'var(--brown-dark)' }}>{form.name}</strong>!{' '}
-                    {orderType === 'dinein' ? 'Your dine-in order is being prepared.' : 'Your takeaway order is being prepared.'}
+                    Your {orderType === 'dinein' ? 'dine-in' : 'takeaway'} order is awaiting restaurant confirmation.
                   </p>
                   <p style={{ fontSize: '13px', color: 'var(--brown-mid)' }}>
                     A receipt has been sent to <strong>{form.email}</strong>

@@ -16,20 +16,15 @@ const MenuItemSchema = new Schema({
   images:          [{ type: String }],
   primaryImage:    { type: String, default: '' },
   tags:            [String],
-  sizes:           [{ label: String, price: Number }],
+  sizes:           [{ label: String, price: Number, image: { type: String, default: '' } }],
   isAvailable:     { type: Boolean, default: true },
   isFeatured:      { type: Boolean, default: false },
   sortOrder:       { type: Number, default: 0 },
   avgRating:       { type: Number, default: 0 },
   reviewCount:     { type: Number, default: 0 },
-  eposProductId:   { type: Number, default: null },
-  eposCategoryId:  { type: Number, default: null },
-  eposUpdatedAt:   { type: Date,   default: null },
-  syncedFromEpos:  { type: Boolean, default: false },
 }, { timestamps: true });
 
 MenuItemSchema.index({ category: 1, isAvailable: 1 });
 MenuItemSchema.index({ isFeatured: 1 });
-MenuItemSchema.index({ eposProductId: 1 }, { sparse: true });
 
 export const MenuItem = models.MenuItem || model('MenuItem', MenuItemSchema);

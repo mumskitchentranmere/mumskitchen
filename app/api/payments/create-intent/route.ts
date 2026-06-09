@@ -15,11 +15,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
     }
 
+    // capture_method: 'manual' — funds are authorised but NOT charged yet.
+    // Admin must call /api/payments/capture to actually take the money.
     const pi = await stripe.paymentIntents.create({
-      amount:   Math.round(amount * 100),
-      currency: 'aud',
+      amount:              Math.round(amount * 100),
+      currency:            'aud',
+      capture_method:      'manual',
+      payment_method_types: ['card'],
       metadata,
-      automatic_payment_methods: { enabled: true },
     });
 
     return NextResponse.json({ clientSecret: pi.client_secret, id: pi.id });

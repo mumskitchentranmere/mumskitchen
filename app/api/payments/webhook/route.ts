@@ -37,30 +37,24 @@ export async function POST(req: NextRequest) {
 
   const pi = event.data?.object;
 
+  // Card authorized — funds held but not captured yet.
+  // Admin must confirm the order to trigger capture.
+  if (event.type === 'payment_intent.amount_capturable_updated') {
+    if (pi.metadata?.type === 'order') {
+      await Order.findByIdAndUpdate(pi.metadata.orderId, {
+        paymentStatus:   'authorized',
+        paymentIntentId: pi.id,
+      });
+    }
+  }
+
+  // Payment captured (admin confirmed order) — mark as paid.
   if (event.type === 'payment_intent.succeeded') {
     if (pi.metadata?.type === 'order') {
       await Order.findByIdAndUpdate(pi.metadata.orderId, {
-        paymentStatus:   'paid',
-        status:          'confirmed',
-        paymentIntentId: pi.id,
+        paymentStatus: 'paid',
+        status:        'confirmed',
       });
-
-      // Push to Epos Now POS (fire-and-forget — kitchen docket)
-      try {
-        const base = (process.env.NEXTAUTH_URL || 'http://localhost:3000').replace(/\/$/, '');
-        await fetch(`${base}/api/epos/push-order`, {
-          method:  'POST',
-          headers: {
-            'Content-Type':     'application/json',
-            ...(process.env.INTERNAL_API_SECRET
-              ? { 'x-internal-secret': process.env.INTERNAL_API_SECRET }
-              : {}),
-          },
-          body: JSON.stringify({ orderId: pi.metadata.orderId }),
-        });
-      } catch (eposErr) {
-        console.error('[Stripe Webhook] Epos push failed (non-critical):', eposErr);
-      }
     }
 
     if (pi.metadata?.type === 'booking') {
@@ -68,6 +62,16 @@ export async function POST(req: NextRequest) {
         depositPaid:     true,
         status:          'confirmed',
         paymentIntentId: pi.id,
+      });
+    }
+  }
+
+  // Payment intent cancelled (admin rejected order) — refund authorisation.
+  if (event.type === 'payment_intent.canceled') {
+    if (pi.metadata?.type === 'order') {
+      await Order.findByIdAndUpdate(pi.metadata.orderId, {
+        paymentStatus: 'cancelled',
+        status:        'cancelled',
       });
     }
   }
