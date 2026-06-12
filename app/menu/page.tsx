@@ -34,11 +34,17 @@ const SUBCATS: Record<string, { id: string; label: string }[]> = {
 };
 
 export default function MenuPage() {
-  const [items,   setItems]   = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [cuisine, setCuisine] = useState('all');
-  const [cat,     setCat]     = useState('all');
-  const [search,  setSearch]  = useState('');
+  const [items,    setItems]    = useState<any[]>([]);
+  const [loading,  setLoading]  = useState(true);
+  const [cuisine,  setCuisine]  = useState('all');
+  const [cat,      setCat]      = useState('all');
+  const [search,   setSearch]   = useState('');
+  const [discount, setDiscount] = useState(0);
+
+  // Fetch global discount once on mount
+  useEffect(() => {
+    fetch('/api/settings').then(r => r.json()).then(d => setDiscount(d.globalDiscount ?? 0)).catch(() => {});
+  }, []);
 
   // Reset subcategory whenever cuisine changes
   const selectCuisine = (c: string) => { setCuisine(c); setCat('all'); };
@@ -123,6 +129,17 @@ export default function MenuPage() {
         {/* Spacer when no subcategory bar */}
         {cuisine === 'all' && <div style={{ marginBottom: '12px' }} />}
 
+        {/* Discount banner */}
+        {discount > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'linear-gradient(135deg, var(--red-korean), #e74c3c)', borderRadius: '14px', padding: '14px 20px', marginBottom: '24px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '22px' }}>🏷️</span>
+            <div>
+              <div style={{ fontSize: '15px', fontWeight: 700, color: 'white' }}>{discount}% OFF everything today!</div>
+              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)' }}>Discount automatically applied to all items at checkout</div>
+            </div>
+          </div>
+        )}
+
         {/* Results */}
         {loading ? (
           <div className="menu-grid">
@@ -135,7 +152,7 @@ export default function MenuPage() {
           </div>
         ) : (
           <div className="menu-grid">
-            {filtered.map(item => <MenuCard key={item._id} item={item} />)}
+            {filtered.map(item => <MenuCard key={item._id} item={item} discount={discount} />)}
           </div>
         )}
       </div>

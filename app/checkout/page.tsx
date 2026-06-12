@@ -116,6 +116,10 @@ export default function CheckoutPage() {
   const hoursRef = useRef(HOURS);
 
   const orderTotal = total();
+  const totalSavings = items.reduce((sum, i) => {
+    if (i.originalPrice && i.originalPrice > i.price) return sum + (i.originalPrice - i.price) * i.quantity;
+    return sum;
+  }, 0);
 
   // Check opening hours on mount + every minute
   useEffect(() => {
@@ -602,6 +606,11 @@ export default function CheckoutPage() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--brown-mid)', marginBottom: '4px' }}>
                   <span>GST (incl.)</span><span>${(orderTotal / 11).toFixed(2)}</span>
                 </div>
+                {totalSavings > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#16a34a', fontWeight: 600, marginBottom: '4px', background: '#f0fdf4', borderRadius: '6px', padding: '4px 6px' }}>
+                    <span>Discount savings</span><span>-${totalSavings.toFixed(2)}</span>
+                  </div>
+                )}
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
                   <span className="font-display" style={{ fontSize: '18px', fontWeight: 700, color: 'var(--brown-dark)' }}>Total</span>
                   <span className="font-display" style={{ fontSize: '20px', fontWeight: 700, color: 'var(--red-korean)' }}>${orderTotal.toFixed(2)}</span>

@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ShoppingBag, UtensilsCrossed, TrendingUp, DollarSign } from 'lucide-react';
+import { ShoppingBag, UtensilsCrossed, TrendingUp, DollarSign, Tag, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -76,6 +76,91 @@ function getRevenuePeriods(orders: any[]) {
   return { today: sum(startOf(0)), week: sum(startOf(7)), month: sum(startOf(30)), all: paid.reduce((s, o) => s + (o.total || 0), 0) };
 }
 
+// ── Discount widget ──────────────────────────────────────────────────────────
+function DiscountWidget() {
+  const [discount,  setDiscount]  = useState(0);
+  const [input,     setInput]     = useState('0');
+  const [saving,    setSaving]    = useState(false);
+  const [saved,     setSaved]     = useState(false);
+
+  useEffect(() => {
+    fetch('/api/settings').then(r => r.json()).then(d => {
+      setDiscount(d.globalDiscount ?? 0);
+      setInput(String(d.globalDiscount ?? 0));
+    });
+  }, []);
+
+  const apply = async (pct: number) => {
+    setSaving(true);
+    const res  = await fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ globalDiscount: pct }) });
+    const data = await res.json();
+    if (res.ok) {
+      setDiscount(data.globalDiscount);
+      setInput(String(data.globalDiscount));
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    }
+    setSaving(false);
+  };
+
+  const presets = [0, 5, 10, 15, 20, 25, 30];
+
+  return (
+    <div style={{ background: 'white', borderRadius: '16px', padding: '22px', border: discount > 0 ? '2px solid var(--red-korean)' : '1px solid var(--stone-light)', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Tag size={16} color={discount > 0 ? 'var(--red-korean)' : 'var(--brown-mid)'} />
+          <h2 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--brown-dark)' }}>Global Discount</h2>
+        </div>
+        {discount > 0 ? (
+          <span style={{ background: '#fef2f2', color: 'var(--red-korean)', fontSize: '12px', fontWeight: 700, padding: '4px 12px', borderRadius: '10px', border: '1px solid #fecaca' }}>
+            🏷️ {discount}% OFF active — all menu prices discounted
+          </span>
+        ) : (
+          <span style={{ background: '#f0fdf4', color: '#15803d', fontSize: '12px', fontWeight: 600, padding: '4px 12px', borderRadius: '10px', border: '1px solid #bbf7d0' }}>
+            No discount active
+          </span>
+        )}
+      </div>
+
+      {/* Preset quick-select buttons */}
+      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '16px' }}>
+        {presets.map(p => (
+          <button key={p} onClick={() => { setInput(String(p)); apply(p); }}
+            style={{ padding: '6px 14px', borderRadius: '8px', border: '1.5px solid', borderColor: discount === p ? 'var(--red-korean)' : 'var(--stone-light)', background: discount === p ? '#fef2f2' : 'white', color: discount === p ? 'var(--red-korean)' : 'var(--brown-mid)', fontSize: '13px', fontWeight: discount === p ? 700 : 400, cursor: 'pointer', fontFamily: 'Outfit, sans-serif', transition: 'all 0.15s' }}>
+            {p === 0 ? 'Off' : `${p}%`}
+          </button>
+        ))}
+      </div>
+
+      {/* Custom value input */}
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div style={{ position: 'relative', width: '110px' }}>
+          <input
+            type="number" min="0" max="100" value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && apply(Math.min(100, Math.max(0, Number(input) || 0)))}
+            style={{ width: '100%', background: '#f9f5f0', border: '1.5px solid var(--stone-light)', borderRadius: '10px', padding: '9px 32px 9px 12px', fontSize: '15px', fontWeight: 700, color: 'var(--brown-dark)', outline: 'none', fontFamily: 'Outfit, sans-serif', boxSizing: 'border-box' }}
+          />
+          <span style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px', fontWeight: 600, color: 'var(--brown-mid)' }}>%</span>
+        </div>
+        <button onClick={() => apply(Math.min(100, Math.max(0, Number(input) || 0)))} disabled={saving}
+          style={{ display: 'flex', alignItems: 'center', gap: '6px', background: saved ? '#16a34a' : 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '10px', padding: '9px 18px', cursor: saving ? 'wait' : 'pointer', fontSize: '13px', fontWeight: 600, fontFamily: 'Outfit, sans-serif', transition: 'background 0.2s' }}>
+          {saved ? <><Check size={14} /> Saved!</> : saving ? 'Saving…' : 'Apply'}
+        </button>
+        {discount > 0 && (
+          <button onClick={() => apply(0)} style={{ background: 'none', border: '1px solid #fecaca', borderRadius: '10px', padding: '9px 14px', cursor: 'pointer', fontSize: '12px', color: '#ef4444', fontFamily: 'Outfit, sans-serif' }}>
+            Remove discount
+          </button>
+        )}
+      </div>
+      <p style={{ fontSize: '11px', color: 'var(--brown-mid)', marginTop: '8px' }}>
+        Changes apply instantly to the menu page. Set to 0 to remove all discounts.
+      </p>
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   const [orders,    setOrders]    = useState<any[]>([]);
   const [menuCount, setMenuCount] = useState(0);
@@ -125,6 +210,9 @@ export default function AdminDashboard() {
         <h1 className="font-display" style={{ fontSize: '32px', fontWeight: 700, color: 'var(--brown-dark)' }}>Dashboard</h1>
         <p style={{ fontSize: '13px', color: 'var(--brown-mid)' }}>Mum's Kitchen — Tranmere SA</p>
       </div>
+
+      {/* Discount widget */}
+      <DiscountWidget />
 
       {/* Summary cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '14px', marginBottom: '24px' }}>

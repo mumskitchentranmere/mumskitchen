@@ -140,7 +140,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Navbar />
           <CartDrawer />
           <main>{children}</main>
-          <Footer />
+          <div id="site-footer"><Footer /></div>
         </SessionProvider>
       </body>
     </html>

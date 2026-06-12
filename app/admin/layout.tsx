@@ -11,6 +11,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <AdminSidebar />
       <OrderNotifications />
       <main className="admin-main">{children}</main>
+      <style>{`#site-footer { display: none !important; }`}</style>
     </div>
   );
 }

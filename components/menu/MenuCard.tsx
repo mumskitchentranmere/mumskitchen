@@ -16,14 +16,15 @@ const TAG_STYLES: Record<string, { bg: string; color: string }> = {
 
 const FALLBACK = 'https://images.unsplash.com/photo-1498654896293-37aacf113fd9?w=600';
 
-export function MenuCard({ item }: { item: any }) {
+export function MenuCard({ item, discount = 0 }: { item: any; discount?: number }) {
   const addItem = useCartStore(s => s.addItem);
   const [imgIndex,      setImgIndex]      = useState(0);
   const [selectedSize,  setSelectedSize]  = useState<any>(item.sizes?.[0] || null);
   const [showReview,    setShowReview]    = useState(false);
 
-  const generalImages = item.images?.length ? item.images : [item.primaryImage || FALLBACK];
-  const activePrice   = selectedSize ? selectedSize.price : item.price;
+  const generalImages  = item.images?.length ? item.images : [item.primaryImage || FALLBACK];
+  const activePrice    = selectedSize ? selectedSize.price : item.price;
+  const discountedPrice = discount > 0 ? Math.round(activePrice * (1 - discount / 100) * 100) / 100 : activePrice;
 
   // Show size-specific image if the selected size has one, otherwise show the gallery
   const sizeImage     = selectedSize?.image || null;
@@ -38,12 +39,13 @@ export function MenuCard({ item }: { item: any }) {
   const handleAdd = () => {
     const cartImage = selectedSize?.image || generalImages[imgIndex] || FALLBACK;
     addItem({
-      id:       item._id + (selectedSize?.label || ''),
-      name:     item.name + (selectedSize ? ` (${selectedSize.label})` : ''),
-      price:    activePrice,
-      quantity: 1,
-      image:    cartImage,
-      category: item.category,
+      id:            item._id + (selectedSize?.label || ''),
+      name:          item.name + (selectedSize ? ` (${selectedSize.label})` : ''),
+      price:         discountedPrice,
+      originalPrice: discount > 0 ? activePrice : undefined,
+      quantity:      1,
+      image:         cartImage,
+      category:      item.category,
     });
     toast.success('Added to cart!', { icon: '🍽️' });
     window.dispatchEvent(new Event('open-cart'));
@@ -82,6 +84,13 @@ export function MenuCard({ item }: { item: any }) {
                 ))}
               </div>
             </>
+          )}
+
+          {/* Discount badge */}
+          {discount > 0 && (
+            <div style={{ position: 'absolute', top: '8px', left: '8px', background: 'var(--red-korean)', color: 'white', fontSize: '11px', fontWeight: 700, padding: '3px 9px', borderRadius: '8px', letterSpacing: '0.02em', zIndex: 2 }}>
+              {discount}% OFF
+            </div>
           )}
 
           {/* Size image indicator */}
@@ -140,9 +149,16 @@ export function MenuCard({ item }: { item: any }) {
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <span className="font-display" style={{ fontSize: '20px', fontWeight: 700, color: 'var(--red-korean)' }}>
-                ${activePrice?.toFixed(2)}
-              </span>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
+                <span className="font-display" style={{ fontSize: '20px', fontWeight: 700, color: 'var(--red-korean)' }}>
+                  ${discountedPrice.toFixed(2)}
+                </span>
+                {discount > 0 && (
+                  <span style={{ fontSize: '13px', color: 'var(--brown-mid)', textDecoration: 'line-through' }}>
+                    ${activePrice.toFixed(2)}
+                  </span>
+                )}
+              </div>
               <button onClick={() => setShowReview(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: 'var(--brown-mid)', marginTop: '2px', padding: 0, fontFamily: 'Outfit, sans-serif', display: 'flex', alignItems: 'center', gap: '3px' }}>
                 <Star size={10} /> Rate this dish
               </button>

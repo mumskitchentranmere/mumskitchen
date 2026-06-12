@@ -11,6 +11,13 @@ export function CartDrawer() {
 
   const drawerStyle: React.CSSProperties = { position: 'fixed', top: 0, right: 0, height: '100%', width: '100%', maxWidth: '400px', background: 'var(--warm-white)', zIndex: 200, transform: open ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.3s ease', boxShadow: '-8px 0 40px rgba(44,26,14,0.15)', display: 'flex', flexDirection: 'column' };
 
+  const totalSavings = items.reduce((sum, item) => {
+    if (item.originalPrice && item.originalPrice > item.price) {
+      return sum + (item.originalPrice - item.price) * item.quantity;
+    }
+    return sum;
+  }, 0);
+
   return (
     <>
       {open && <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(44,26,14,0.4)', zIndex: 199, backdropFilter: 'blur(3px)' }} />}
@@ -43,7 +50,12 @@ export function CartDrawer() {
                     {item.image && <img src={item.image} alt={item.name} style={{ width: '52px', height: '52px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} />}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontSize: '13px', fontWeight: 500, color: 'var(--brown-dark)', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</p>
-                      <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--red-korean)' }}>${item.price.toFixed(2)}</p>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '5px' }}>
+                        <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--red-korean)' }}>${item.price.toFixed(2)}</span>
+                        {item.originalPrice && item.originalPrice > item.price && (
+                          <span style={{ fontSize: '11px', color: 'var(--brown-mid)', textDecoration: 'line-through' }}>${item.originalPrice.toFixed(2)}</span>
+                        )}
+                      </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
                         <button onClick={() => updateQuantity(item.id, item.quantity - 1)} style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'var(--stone-light)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Minus size={11} /></button>
                         <span style={{ fontSize: '13px', fontWeight: 600, minWidth: '16px', textAlign: 'center' }}>{item.quantity}</span>
@@ -59,6 +71,12 @@ export function CartDrawer() {
               </div>
             </div>
             <div style={{ padding: '20px 24px', borderTop: '1px solid var(--stone-light)' }}>
+              {totalSavings > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', background: '#e8f5e9', borderRadius: '8px', padding: '6px 10px' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#2e7d32' }}>You save</span>
+                  <span style={{ fontSize: '12px', fontWeight: 700, color: '#2e7d32' }}>-${totalSavings.toFixed(2)}</span>
+                </div>
+              )}
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
                 <span className="font-display" style={{ fontSize: '20px', fontWeight: 600 }}>Total</span>
                 <span className="font-display" style={{ fontSize: '22px', fontWeight: 700, color: 'var(--red-korean)' }}>${total().toFixed(2)}</span>

@@ -3,12 +3,13 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
 export interface CartItem {
-  id:           string;
-  name:         string;
-  price:        number;
-  quantity:     number;
-  image:        string;
-  category:     string;
+  id:            string;
+  name:          string;
+  price:         number;       // discounted price (or regular if no discount)
+  originalPrice?: number;      // set only when a discount was applied
+  quantity:      number;
+  image:         string;
+  category:      string;
   selectedSize?: string;
 }
 

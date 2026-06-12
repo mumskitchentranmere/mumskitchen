@@ -109,8 +109,10 @@ export default function HomePage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '20px' }}>
             {featured.slice(0, 6).map((item: any) => (
               <div key={item._id} style={{ background: 'white', borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--stone-light)' }}>
-                <div style={{ height: '160px', overflow: 'hidden' }}>
-                  <img src={item.primaryImage || item.images?.[0] || ''} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <div style={{ height: '160px', overflow: 'hidden', background: 'var(--stone-light)' }}>
+                  {(item.primaryImage || item.images?.[0]) && (
+                    <img src={item.primaryImage || item.images[0]} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  )}
                 </div>
                 <div style={{ padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
