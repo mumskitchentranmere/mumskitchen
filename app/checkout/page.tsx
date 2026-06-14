@@ -19,7 +19,7 @@ const RESTAURANT = {
 
 // ── Opening hours check ──────────────────────────────────────────────────────
 const HOURS: Record<number, { open: number; close: number }[]> = {
-  0: [{ open: 10 * 60, close: 15 * 60 }, { open: 17 * 60, close: 24 * 60 }],
+  0: [{ open: 10 * 60, close: 15 * 60 }, { open: 17 * 60, close: 22 * 60 }],
   1: [],
   2: [{ open: 17 * 60, close: 22 * 60 }],
   3: [{ open: 17 * 60, close: 22 * 60 }],
