@@ -168,7 +168,11 @@ export default function AdminOrdersPage() {
 
   const load = () =>
     fetch('/api/orders').then(r => r.ok ? r.json() : Promise.reject(r.status)).then(d => { setOrders(Array.isArray(d) ? d : []); setLoading(false); }).catch(() => setLoading(false));
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    const interval = setInterval(load, 30_000);
+    return () => clearInterval(interval);
+  }, []);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();

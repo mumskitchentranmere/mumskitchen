@@ -9,44 +9,44 @@ import { ShoppingBag, CreditCard, CheckCircle, Lock, Printer, MapPin, Phone, Mai
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 const RESTAURANT = {
-  name:    "Mum's Kitchen",
+  name: "Mum's Kitchen",
   tagline: 'Authentic Korean & Bangladeshi Cuisine',
   address: '66 Reid Avenue, Tranmere SA 5073',
-  phone:   process.env.NEXT_PUBLIC_RESTAURANT_PHONE || '+61406878202',
-  email:   process.env.NEXT_PUBLIC_RESTAURANT_EMAIL || 'mumskitchentranmere@gmail.com',
-  halal:   true,
+  phone: process.env.NEXT_PUBLIC_RESTAURANT_PHONE || '+61406878202',
+  email: process.env.NEXT_PUBLIC_RESTAURANT_EMAIL || 'mumskitchentranmere@gmail.com',
+  halal: true,
 };
 
 // ── Opening hours check ──────────────────────────────────────────────────────
 const HOURS: Record<number, { open: number; close: number }[]> = {
-  0: [{ open: 10*60, close: 15*60 }, { open: 17*60, close: 22*60 }],
+  0: [{ open: 10 * 60, close: 15 * 60 }, { open: 17 * 60, close: 24 * 60 }],
   1: [],
-  2: [{ open: 17*60, close: 22*60 }],
-  3: [{ open: 17*60, close: 22*60 }],
-  4: [{ open: 17*60, close: 22*60 }],
-  5: [{ open: 10*60, close: 15*60 }, { open: 17*60, close: 22*60 }],
-  6: [{ open: 10*60, close: 15*60 }, { open: 17*60, close: 22*60 }],
+  2: [{ open: 17 * 60, close: 22 * 60 }],
+  3: [{ open: 17 * 60, close: 22 * 60 }],
+  4: [{ open: 17 * 60, close: 22 * 60 }],
+  5: [{ open: 10 * 60, close: 15 * 60 }, { open: 17 * 60, close: 22 * 60 }],
+  6: [{ open: 10 * 60, close: 15 * 60 }, { open: 17 * 60, close: 22 * 60 }],
 };
 
 function fmtMin(m: number) {
   const h = Math.floor(m / 60); const mn = m % 60;
   const ap = h >= 12 ? 'pm' : 'am'; const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-  return `${h12}${mn ? `:${String(mn).padStart(2,'0')}` : ''}${ap}`;
+  return `${h12}${mn ? `:${String(mn).padStart(2, '0')}` : ''}${ap}`;
 }
 
 function periodsToMap(periods: any[]): Record<number, { open: number; close: number }[]> {
-  const map: Record<number, { open: number; close: number }[]> = { 0:[],1:[],2:[],3:[],4:[],5:[],6:[] };
+  const map: Record<number, { open: number; close: number }[]> = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
   for (const p of periods) {
     const day = p.open?.day; if (day == null) continue;
     const ot = p.open?.time ?? '0000'; const ct = p.close?.time ?? '2359';
-    map[day].push({ open: parseInt(ot.slice(0,2))*60+parseInt(ot.slice(2)), close: parseInt(ct.slice(0,2))*60+parseInt(ct.slice(2)) });
+    map[day].push({ open: parseInt(ot.slice(0, 2)) * 60 + parseInt(ot.slice(2)), close: parseInt(ct.slice(0, 2)) * 60 + parseInt(ct.slice(2)) });
   }
-  for (const d of Object.values(map)) d.sort((a,b)=>a.open-b.open);
+  for (const d of Object.values(map)) d.sort((a, b) => a.open - b.open);
   return map;
 }
 
 function getOpenStatus(hours: Record<number, { open: number; close: number }[]>) {
-  const now = new Date(); const day = now.getDay(); const mins = now.getHours()*60+now.getMinutes();
+  const now = new Date(); const day = now.getDay(); const mins = now.getHours() * 60 + now.getMinutes();
   const today = hours[day] ?? [];
   for (const s of today) {
     if (mins >= s.open && mins < s.close) {
@@ -56,43 +56,123 @@ function getOpenStatus(hours: Record<number, { open: number; close: number }[]>)
   }
   const later = today.find(s => s.open > mins);
   if (later) return { isOpen: false, label: `Closed · Opens ${fmtMin(later.open)} today` };
-  const DN = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const DN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   for (let i = 1; i <= 7; i++) {
-    const next = hours[(day+i)%7];
+    const next = hours[(day + i) % 7];
     if (next?.length) {
-      const name = DN[(day+i)%7];
-      return { isOpen: false, label: i===1 ? `Closed · Opens ${fmtMin(next[0].open)} tomorrow` : `Closed · Opens ${name} ${fmtMin(next[0].open)}` };
+      const name = DN[(day + i) % 7];
+      return { isOpen: false, label: i === 1 ? `Closed · Opens ${fmtMin(next[0].open)} tomorrow` : `Closed · Opens ${name} ${fmtMin(next[0].open)}` };
     }
   }
   return { isOpen: false, label: 'Currently closed' };
 }
 
 // ── Stripe PayForm ────────────────────────────────────────────────────────────
-function PayForm({ clientSecret, total, onSuccess }: { clientSecret: string; total: number; onSuccess: () => void }) {
-  const stripe   = useStripe();
+function PayForm({ clientSecret, total, onSuccess }: { clientSecret: string; total: number; onSuccess: (piId: string) => void }) {
+  const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
+  const [cardComplete, setCardComplete] = useState(false);
+  const [cardError, setCardError] = useState<string | null>(null);
+  const [declineError, setDeclineError] = useState<string | null>(null);
+
+  const cardEl = () => elements?.getElement(CardElement) ?? null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!stripe || !elements) return;
+    setDeclineError(null);
+
+    if (!cardComplete) {
+      const msg = cardError || 'Please enter your complete card details';
+      console.warn('[Payment] ⛔ Blocked — card not complete:', msg);
+      toast.error(msg);
+      return;
+    }
+
     setLoading(true);
-    const r = await stripe.confirmCardPayment(clientSecret, {
-      payment_method: { card: elements.getElement(CardElement)! },
+
+    // ── Step 1: validate card details against Stripe before touching the PaymentIntent ──
+    // This catches invalid numbers (Luhn), expired dates, wrong CVC length, etc.
+    // without any charge or authorisation attempt.
+    console.log('[Payment] Validating card details…');
+    const { paymentMethod, error: pmError } = await stripe.createPaymentMethod({
+      type: 'card',
+      card: cardEl()!,
     });
-    if (r.error) { toast.error(r.error.message || 'Payment failed'); setLoading(false); return; }
-    if (r.paymentIntent?.status === 'succeeded') onSuccess();
-    else setLoading(false);
+
+    if (pmError) {
+      const msg = pmError.message || 'Invalid card details — please check and try again';
+      console.error('[Payment] ❌ Card validation failed:', pmError.code, '—', msg);
+      setDeclineError(msg);
+      cardEl()?.clear();
+      setCardComplete(false);
+      setLoading(false);
+      return;
+    }
+    console.log('[Payment] ✅ Card format valid — PM id:', paymentMethod.id, '| brand:', paymentMethod.card?.brand, '| last4:', paymentMethod.card?.last4);
+
+    // ── Step 2: authorise against the PaymentIntent (actual bank auth / 3-D Secure) ──
+    console.log('[Payment] Authorising payment…');
+    const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+      payment_method: paymentMethod.id,
+    });
+
+    if (confirmError) {
+      const msg = confirmError.message || 'Payment declined — please try a different card';
+      console.error('[Payment] ❌ Declined:', confirmError.code, '—', msg);
+      setDeclineError(msg);
+      cardEl()?.clear();
+      setCardComplete(false);
+      setLoading(false);
+      return;
+    }
+
+    const status = paymentIntent?.status;
+    console.log('[Payment] ✅ Auth response status:', status, '| PI id:', paymentIntent?.id);
+
+    // With capture_method:'manual', authorised funds land on 'requires_capture'.
+    // 'succeeded' fires only after the admin captures — both are valid here.
+    if (status === 'requires_capture' || status === 'succeeded') {
+      console.log('[Payment] ✅ Card authorised — handing off to server for order creation');
+      onSuccess(paymentIntent!.id);
+    } else {
+      console.warn('[Payment] ⚠️ Unexpected status:', status);
+      setDeclineError('Unexpected payment status — please contact us.');
+      setLoading(false);
+    }
   };
+
+  const canSubmit = !!(stripe && cardComplete && !cardError && !loading);
 
   return (
     <form onSubmit={handleSubmit} style={{ marginTop: '16px' }}>
-      <div style={{ background: '#f9f5f0', border: '1.5px solid var(--stone-light)', borderRadius: '12px', padding: '14px 16px', marginBottom: '16px' }}>
-        <CardElement options={{ style: { base: { color: '#2C1A0E', fontSize: '15px', fontFamily: 'Outfit, sans-serif', '::placeholder': { color: '#a08060' } } } }} />
+      <div style={{
+        background: '#f9f5f0',
+        border: `1.5px solid ${cardError || declineError ? '#ef4444' : cardComplete ? '#16a34a' : 'var(--stone-light)'}`,
+        borderRadius: '12px', padding: '14px 16px',
+        marginBottom: (cardError || declineError) ? '6px' : '16px',
+        transition: 'border-color 0.2s',
+      }}>
+        <CardElement
+          onChange={e => {
+            setCardComplete(e.complete);
+            setCardError(e.error?.message || null);
+            if (e.complete) setDeclineError(null);
+          }}
+          options={{ style: { base: { color: '#2C1A0E', fontSize: '15px', fontFamily: 'Outfit, sans-serif', '::placeholder': { color: '#a08060' } } } }}
+        />
       </div>
-      <button type="submit" disabled={!stripe || loading}
-        style={{ width: '100%', background: loading ? '#6B3A1F' : 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '12px', padding: '15px', fontSize: '15px', fontWeight: 600, cursor: loading ? 'wait' : 'pointer', fontFamily: 'Outfit, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'background 0.2s' }}>
-        <Lock size={16} /> {loading ? 'Processing payment…' : `Pay $${total.toFixed(2)} AUD`}
+
+      {(cardError || declineError) && (
+        <p style={{ color: '#ef4444', fontSize: '12px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <span>⚠</span> {declineError || cardError}
+        </p>
+      )}
+
+      <button type="submit" disabled={!canSubmit}
+        style={{ width: '100%', background: loading ? '#6B3A1F' : !canSubmit ? '#9ca3af' : 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '12px', padding: '15px', fontSize: '15px', fontWeight: 600, cursor: canSubmit ? 'pointer' : 'not-allowed', fontFamily: 'Outfit, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'background 0.2s' }}>
+        <Lock size={16} /> {loading ? 'Validating card…' : `Pay $${total.toFixed(2)} AUD`}
       </button>
       <p style={{ textAlign: 'center', fontSize: '11px', color: 'var(--brown-mid)', marginTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
         <Lock size={10} /> Secured by Stripe · Your card details are never stored
@@ -104,15 +184,15 @@ function PayForm({ clientSecret, total, onSuccess }: { clientSecret: string; tot
 // ── Main Checkout Page ────────────────────────────────────────────────────────
 export default function CheckoutPage() {
   const { items, total, clearCart } = useCartStore();
-  const [step, setStep]             = useState(1);
+  const [step, setStep] = useState(1);
   const [clientSecret, setClientSecret] = useState('');
-  const [loading, setLoading]       = useState(false);
-  const [orderType, setOrderType]   = useState<'takeaway' | 'dinein'>('takeaway');
-  const [form, setForm]             = useState({ name: '', email: '', phone: '', pickupTime: '', instructions: '' });
+  const [loading, setLoading] = useState(false);
+  const [orderType, setOrderType] = useState<'takeaway' | 'dinein'>('takeaway');
+  const [form, setForm] = useState({ name: '', email: '', phone: '', pickupTime: '', instructions: '' });
   const [savedOrder, setSavedOrder] = useState<any>(null);
-  const [orderDate]                 = useState(new Date());
-  const [isOpen, setIsOpen]         = useState<boolean | null>(null);
-  const [openLabel, setOpenLabel]   = useState('');
+  const [orderDate] = useState(new Date());
+  const [isOpen, setIsOpen] = useState<boolean | null>(null);
+  const [openLabel, setOpenLabel] = useState('');
   const hoursRef = useRef(HOURS);
 
   const orderTotal = total();
@@ -153,6 +233,7 @@ export default function CheckoutPage() {
     </div>
   );
 
+  // Step 1 — validate form + create PaymentIntent only (no order yet)
   const handleDetails = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim() || !form.email.trim() || !form.phone.trim()) {
@@ -165,41 +246,66 @@ export default function CheckoutPage() {
 
     setLoading(true);
     try {
-      const or = await fetch('/api/orders', {
+      console.log('[Checkout] Creating payment intent | total: $' + orderTotal.toFixed(2));
+      const pr = await fetch('/api/payments/create-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: orderTotal, metadata: { type: 'order' } }),
+      });
+      const data = await pr.json();
+      if (!pr.ok || !data.clientSecret) {
+        console.error('[Checkout] ❌ Payment intent failed:', data.error);
+        toast.error(data.error || 'Failed to initialise payment');
+        setLoading(false);
+        return;
+      }
+      console.log('[Checkout] ✅ Payment intent ready — PI id:', data.id);
+      setClientSecret(data.clientSecret);
+      setStep(2);
+    } catch (err) {
+      console.error('[Checkout] ❌ Network error:', err);
+      toast.error('Network error — please try again');
+    }
+    setLoading(false);
+  };
+
+  // Step 2 callback — called only after Stripe confirms the card is genuinely authorised.
+  // Server verifies the PaymentIntent directly from Stripe before creating the order.
+  const handleCardAuthorized = async (piId: string) => {
+    try {
+      console.log('[Checkout] Card authorised — finalising order with server verification | PI:', piId);
+      const or = await fetch('/api/payments/finalize-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          customerName:        form.name.trim(),
-          customerEmail:       form.email.trim().toLowerCase(),
-          customerPhone:       form.phone.trim(),
+          paymentIntentId: piId,
+          customerName: form.name.trim(),
+          customerEmail: form.email.trim().toLowerCase(),
+          customerPhone: form.phone.trim(),
           orderType,
-          items:               items.map(i => ({ menuItemId: i.id, name: i.name, price: i.price, quantity: i.quantity, image: i.image })),
-          subtotal:            orderTotal,
-          deliveryFee:         0,
-          total:               orderTotal,
-          pickupTime:          form.pickupTime,
+          items: items.map(i => ({ menuItemId: i.id, name: i.name, price: i.price, originalPrice: i.originalPrice, quantity: i.quantity, image: i.image })),
+          subtotal: orderTotal,
+          deliveryFee: 0,
+          total: orderTotal,
+          pickupTime: form.pickupTime,
           specialInstructions: form.instructions.trim(),
         }),
       });
       const order = await or.json();
-      if (!or.ok) { toast.error(order.error || 'Failed to create order'); setLoading(false); return; }
-
+      if (!or.ok) {
+        console.error('[Checkout] ❌ Order finalisation failed:', order.error);
+        toast.error(order.error || 'Failed to complete order — please contact us');
+        return;
+      }
+      console.log('[Checkout] ✅ Order created & verified — ID:', order._id);
       setSavedOrder(order);
-
-      const pr = await fetch('/api/payments/create-intent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: orderTotal, metadata: { type: 'order', orderId: order._id } }),
-      });
-      const data = await pr.json();
-      if (!pr.ok || !data.clientSecret) { toast.error(data.error || 'Failed to initialise payment'); setLoading(false); return; }
-
-      setClientSecret(data.clientSecret);
-      setStep(2);
-    } catch {
+      clearCart();
+      setStep(3);
+      toast.success('Order placed! Your receipt is below.');
+    } catch (err) {
+      console.error('[Checkout] ❌ Network error during finalisation:', err);
       toast.error('Network error — please try again');
     }
-    setLoading(false);
   };
 
   const inp: React.CSSProperties = {
@@ -209,13 +315,13 @@ export default function CheckoutPage() {
   };
 
   // Receipt data
-  const receiptItems    = savedOrder?.items ?? [];
-  const receiptTotal    = savedOrder?.total ?? orderTotal;
-  const orderId         = savedOrder?._id ? savedOrder._id.slice(-6).toUpperCase() : '';
-  const gst             = receiptTotal / 11;
-  const exGst           = receiptTotal - gst;
+  const receiptItems = savedOrder?.items ?? [];
+  const receiptTotal = savedOrder?.total ?? orderTotal;
+  const orderId = savedOrder?._id ? savedOrder._id.slice(-6).toUpperCase() : '';
+  const gst = receiptTotal / 11;
+  const exGst = receiptTotal - gst;
 
-  const orderTypeLabel  = (savedOrder?.orderType ?? orderType) === 'dinein' ? '🍽️ Dine-in' : '🥡 Takeaway';
+  const orderTypeLabel = (savedOrder?.orderType ?? orderType) === 'dinein' ? '🍽️ Dine-in' : '🥡 Takeaway';
 
   // Download receipt as self-contained HTML file
   const downloadReceipt = () => {
@@ -245,9 +351,9 @@ export default function CheckoutPage() {
 <body>${receiptEl.outerHTML}</body>
 </html>`;
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
     a.download = `mumskitchen-receipt-${orderId}.html`;
     document.body.appendChild(a);
     a.click();
@@ -307,7 +413,7 @@ export default function CheckoutPage() {
                   <div style={{ display: 'flex', gap: '10px' }}>
                     {([
                       { value: 'takeaway', label: 'Takeaway', icon: Package, emoji: '🥡', desc: 'Pick up your order' },
-                      { value: 'dinein',   label: 'Dine-in',  icon: UtensilsCrossed, emoji: '🍽️', desc: 'Eat at the restaurant' },
+                      { value: 'dinein', label: 'Dine-in', icon: UtensilsCrossed, emoji: '🍽️', desc: 'Eat at the restaurant' },
                     ] as const).map(opt => (
                       <button
                         key={opt.value}
@@ -406,7 +512,7 @@ export default function CheckoutPage() {
                   <PayForm
                     clientSecret={clientSecret}
                     total={orderTotal}
-                    onSuccess={() => { clearCart(); setStep(3); toast.success('Order placed! Your receipt is below.'); }}
+                    onSuccess={handleCardAuthorized}
                   />
                 </Elements>
                 <button onClick={() => setStep(1)}

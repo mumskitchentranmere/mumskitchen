@@ -84,21 +84,27 @@ function DiscountWidget() {
   const [saved,     setSaved]     = useState(false);
 
   useEffect(() => {
-    fetch('/api/settings').then(r => r.json()).then(d => {
-      setDiscount(d.globalDiscount ?? 0);
-      setInput(String(d.globalDiscount ?? 0));
+    fetch('/api/settings', { cache: 'no-store' }).then(r => r.json()).then(d => {
+      setDiscount(Number(d.globalDiscount) || 0);
+      setInput(String(Number(d.globalDiscount) || 0));
     });
   }, []);
 
   const apply = async (pct: number) => {
     setSaving(true);
-    const res  = await fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ globalDiscount: pct }) });
-    const data = await res.json();
-    if (res.ok) {
-      setDiscount(data.globalDiscount);
-      setInput(String(data.globalDiscount));
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+    try {
+      const res  = await fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ globalDiscount: pct }) });
+      const data = await res.json();
+      if (res.ok) {
+        setDiscount(data.globalDiscount);
+        setInput(String(data.globalDiscount));
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      } else {
+        toast.error(data.error || 'Failed to save discount');
+      }
+    } catch {
+      toast.error('Network error — could not save discount');
     }
     setSaving(false);
   };
@@ -182,14 +188,6 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => { loadStats(); }, []);
-
-  const seedDB = async () => {
-    if (!confirm('This will reset all menu items. Are you sure?')) return;
-    const res  = await fetch('/api/seed', { method: 'POST' });
-    const data = await res.json();
-    toast.success(data.message || 'Seeded!');
-    loadStats();
-  };
 
   const dailyRevenue = getDailyRevenue(orders);
   const topItems     = getTopItems(orders);

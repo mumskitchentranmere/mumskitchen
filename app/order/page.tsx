@@ -69,7 +69,7 @@ export default function OrderPage() {
         <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
             <ShoppingBag size={22} color="var(--gold)" />
-            <h1 className="font-display" style={{ fontSize: 'clamp(28px,4vw,44px)', fontWeight: 700, color: 'white' }}>Takeaway Order</h1>
+            <h1 className="font-display" style={{ fontSize: 'clamp(28px,4vw,44px)', fontWeight: 700, color: 'white' }}>Order Online</h1>
           </div>
           <p style={{ fontSize: '14px', color: 'rgba(232,224,213,0.6)' }}>Add items to your cart, then proceed to checkout.</p>
         </div>

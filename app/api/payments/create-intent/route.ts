@@ -27,7 +27,12 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ clientSecret: pi.client_secret, id: pi.id });
   } catch (e: any) {
-    console.error('[Stripe] Failed to create payment intent:', e.message);
-    return NextResponse.json({ error: 'Failed to initialise payment' }, { status: 500 });
+    const stripeCode = e?.code || e?.type || 'unknown';
+    const stripeMsg  = e?.message || 'unknown error';
+    console.error('[Stripe] ❌ create-intent failed | code:', stripeCode, '| message:', stripeMsg);
+    const clientMsg = process.env.NODE_ENV === 'development'
+      ? `Stripe error (${stripeCode}): ${stripeMsg}`
+      : 'Failed to initialise payment';
+    return NextResponse.json({ error: clientMsg, stripeCode }, { status: 500 });
   }
 }

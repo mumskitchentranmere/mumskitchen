@@ -33,25 +33,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `Order payment is '${order.paymentStatus}', not 'authorized'` }, { status: 400 });
   }
 
+  const admin = (session?.user as any)?.email || 'admin';
+
   try {
     if (action === 'accept') {
+      console.log(`[Capture] ▶ Admin (${admin}) accepting order ${orderId} | PI: ${order.paymentIntentId}`);
       await stripe.paymentIntents.capture(order.paymentIntentId);
-      // Webhook will also update, but we update immediately for instant UI feedback
-      await Order.findByIdAndUpdate(orderId, {
-        paymentStatus: 'paid',
-        status:        'confirmed',
-      });
+      await Order.findByIdAndUpdate(orderId, { paymentStatus: 'paid', status: 'confirmed' });
+      console.log(`[Capture] ✅ Payment captured for order ${orderId}`);
       return NextResponse.json({ ok: true, status: 'confirmed' });
     } else {
+      console.log(`[Capture] ▶ Admin (${admin}) rejecting order ${orderId} | PI: ${order.paymentIntentId}`);
       await stripe.paymentIntents.cancel(order.paymentIntentId);
-      await Order.findByIdAndUpdate(orderId, {
-        paymentStatus: 'cancelled',
-        status:        'cancelled',
-      });
+      await Order.findByIdAndUpdate(orderId, { paymentStatus: 'cancelled', status: 'cancelled' });
+      console.log(`[Capture] ✅ Payment cancelled (void) for order ${orderId}`);
       return NextResponse.json({ ok: true, status: 'cancelled' });
     }
   } catch (e: any) {
-    console.error('[PaymentCapture]', e.message);
+    console.error(`[Capture] ❌ Stripe error for order ${orderId}:`, e.message);
     return NextResponse.json({ error: e.message || 'Stripe error' }, { status: 500 });
   }
 }

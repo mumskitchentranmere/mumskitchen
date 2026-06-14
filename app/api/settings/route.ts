@@ -10,9 +10,15 @@ export async function GET() {
   try {
     await connectDB();
     const s = await Settings.findOne().lean();
-    return NextResponse.json({ globalDiscount: (s as any)?.globalDiscount ?? 0 });
+    return NextResponse.json(
+      { globalDiscount: (s as any)?.globalDiscount ?? 0 },
+      { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } }
+    );
   } catch {
-    return NextResponse.json({ globalDiscount: 0 });
+    return NextResponse.json(
+      { globalDiscount: 0 },
+      { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } }
+    );
   }
 }
 
@@ -27,6 +33,6 @@ export async function PUT(req: NextRequest) {
   const pct = Math.min(100, Math.max(0, Number(globalDiscount) || 0));
 
   await connectDB();
-  await Settings.findOneAndUpdate({}, { globalDiscount: pct }, { upsert: true, new: true });
+  await Settings.findOneAndUpdate({}, { $set: { globalDiscount: pct } }, { upsert: true, new: true });
   return NextResponse.json({ ok: true, globalDiscount: pct });
 }

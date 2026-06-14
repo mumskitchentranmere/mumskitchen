@@ -4,16 +4,16 @@ import { z } from 'zod';
 
 export const RegisterSchema = z.object({
   name:     z.string().min(2, 'Name must be at least 2 characters').max(100),
-  email:    z.string().email('Invalid email address'),
+  email:    z.string().check(z.email({ error: 'Invalid email address' })),
   password: z.string()
     .min(8, 'Password must be at least 8 characters')
-    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-    .regex(/[0-9]/, 'Password must contain at least one number'),
+    .check(z.regex(/[A-Z]/, 'Password must contain at least one uppercase letter'))
+    .check(z.regex(/[0-9]/, 'Password must contain at least one number')),
   phone:    z.string().max(20).optional(),
 });
 
 export const LoginSchema = z.object({
-  email:    z.string().email(),
+  email:    z.string().check(z.email()),
   password: z.string().min(1),
 });
 
@@ -26,10 +26,10 @@ export const MenuItemSchema = z.object({
   price:           z.number().positive().max(9999),
   category:        z.enum(['snack','rice-bowl','noodle','bibimbap','soup','fried-chicken','side','drink','set-menu','bangladeshi-main','bangladeshi-snack','biryani','curry']),
   cuisine:         z.enum(['korean','bangladeshi','both']).optional().default('korean'),
-  images:          z.array(z.string().url()).max(10).optional().default([]),
+  images:          z.array(z.url()).max(10).optional().default([]),
   primaryImage:    z.string().optional().default(''),
   tags:            z.array(z.string().max(50)).max(20).optional().default([]),
-  sizes:           z.array(z.object({ label: z.string().max(50), price: z.number().positive() })).max(5).optional().default([]),
+  sizes:           z.array(z.object({ label: z.string().max(50), price: z.number().positive(), image: z.string().optional().default('') })).max(5).optional().default([]),
   isAvailable:     z.boolean().optional().default(true),
   isFeatured:      z.boolean().optional().default(false),
   sortOrder:       z.number().optional().default(0),
@@ -38,19 +38,20 @@ export const MenuItemSchema = z.object({
 // ─── Orders ───────────────────────────────────────────────────────────────────
 
 export const OrderItemSchema = z.object({
-  menuItemId:   z.string().min(1),
-  name:         z.string().min(1).max(200),
-  price:        z.number().positive(),
-  quantity:     z.number().int().positive().max(50),
-  image:        z.string().optional().default(''),
-  selectedSize: z.string().optional(),
+  menuItemId:    z.string().min(1),
+  name:          z.string().min(1).max(200),
+  price:         z.number().positive(),
+  originalPrice: z.number().positive().optional(),
+  quantity:      z.number().int().positive().max(50),
+  image:         z.string().optional().default(''),
+  selectedSize:  z.string().optional(),
 });
 
 export const CreateOrderSchema = z.object({
   customerName:        z.string().min(1).max(200),
-  customerEmail:       z.string().email(),
+  customerEmail:       z.string().check(z.email()),
   customerPhone:       z.string().max(20).optional(),
-  orderType:           z.enum(['takeaway','delivery','dinein']), // delivery/dinein kept for legacy orders
+  orderType:           z.enum(['takeaway','delivery','dinein']),
   items:               z.array(OrderItemSchema).min(1).max(50),
   subtotal:            z.number().positive(),
   deliveryFee:         z.number().min(0).optional().default(0),
@@ -64,12 +65,12 @@ export const CreateOrderSchema = z.object({
 
 export const CreateBookingSchema = z.object({
   customerName:    z.string().min(1).max(200),
-  customerEmail:   z.string().email(),
+  customerEmail:   z.string().check(z.email()),
   customerPhone:   z.string().min(8).max(20),
   tableId:         z.string().min(1),
   tableNumber:     z.number().int().positive(),
-  date:            z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format'),
-  time:            z.string().regex(/^\d{2}:\d{2}$/, 'Invalid time format'),
+  date:            z.string().check(z.regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format')),
+  time:            z.string().check(z.regex(/^\d{2}:\d{2}$/, 'Invalid time format')),
   partySize:       z.number().int().min(1).max(20),
   specialRequests: z.string().max(500).optional(),
   depositAmount:   z.number().min(0).optional().default(0),
@@ -82,7 +83,7 @@ export const CreateReviewSchema = z.object({
   title:         z.string().min(3).max(120),
   body:          z.string().min(10).max(1000),
   customerName:  z.string().min(1).max(100).optional(),
-  customerEmail: z.string().email().optional(),
+  customerEmail: z.string().check(z.email()).optional(),
   type:          z.enum(['restaurant','dish']).optional().default('restaurant'),
   menuItemId:    z.string().optional(),
   menuItemName:  z.string().max(200).optional(),
@@ -106,10 +107,7 @@ export const UploadSchema = z.object({
   images: z.array(
     z.string()
       .refine(s => s.startsWith('data:image/'), 'Only image files are allowed')
-      .refine(s => {
-        // Rough size check — base64 of 5MB ≈ 6.8M chars
-        return s.length < 7_000_000;
-      }, 'Each image must be under 5MB')
+      .refine(s => s.length < 7_000_000, 'Each image must be under 5MB')
   ).min(1).max(10),
 });
 

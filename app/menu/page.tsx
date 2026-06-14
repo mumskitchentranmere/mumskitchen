@@ -41,10 +41,18 @@ export default function MenuPage() {
   const [search,   setSearch]   = useState('');
   const [discount, setDiscount] = useState(0);
 
-  // Fetch global discount once on mount
+  // Fetch discount — fresh every time (no-cache) and re-fetch when tab regains focus
+  const fetchDiscount = () =>
+    fetch('/api/settings', { cache: 'no-store' })
+      .then(r => r.json())
+      .then(d => setDiscount(Number(d.globalDiscount) || 0))
+      .catch(() => {});
+
   useEffect(() => {
-    fetch('/api/settings').then(r => r.json()).then(d => setDiscount(d.globalDiscount ?? 0)).catch(() => {});
-  }, []);
+    fetchDiscount();
+    window.addEventListener('focus', fetchDiscount);
+    return () => window.removeEventListener('focus', fetchDiscount);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset subcategory whenever cuisine changes
   const selectCuisine = (c: string) => { setCuisine(c); setCat('all'); };
