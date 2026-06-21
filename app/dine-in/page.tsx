@@ -12,7 +12,7 @@ export default function DineInPage() {
   const [form, setForm] = useState({ name: session?.user?.name||'', email: session?.user?.email||'', phone:'', requests:'' });
   const deposit = partySize * DEPOSIT_PP;
   const today = new Date().toISOString().split('T')[0];
-  const inp: React.CSSProperties = { width:'100%', background:'white', border:'1.5px solid var(--stone-light)', borderRadius:'12px', padding:'11px 14px', fontSize:'14px', color:'var(--brown-dark)', outline:'none', fontFamily:'Outfit, sans-serif', boxSizing:'border-box' };
+  const inp: React.CSSProperties = { width:'100%', background:'white', border:'1.5px solid var(--stone-light)', borderRadius:'12px', padding:'11px 14px', fontSize:'14px', color:'var(--brown-dark)', outline:'none', fontFamily:'Poppins, sans-serif', boxSizing:'border-box' };
   const search = async () => {
     if (!date||!time) { toast.error('Please select date and time'); return; }
     setLoading(true);
@@ -53,28 +53,28 @@ export default function DineInPage() {
             <h2 className="font-display" style={{ fontSize:'24px', fontWeight:600, color:'var(--brown-dark)', marginBottom:'24px' }}>When would you like to visit?</h2>
             <div style={{ marginBottom:'20px' }}><label style={{ fontSize:'13px', fontWeight:500, color:'var(--brown-mid)', display:'flex', alignItems:'center', gap:'5px', marginBottom:'8px' }}><Calendar size={13}/>Date</label><input type="date" min={today} value={date} onChange={e=>setDate(e.target.value)} style={inp} /></div>
             <div style={{ marginBottom:'20px' }}><label style={{ fontSize:'13px', fontWeight:500, color:'var(--brown-mid)', display:'flex', alignItems:'center', gap:'5px', marginBottom:'8px' }}><Clock size={13}/>Time</label>
-              <div className="dinein-grid">{SLOTS.map(t=><button key={t} onClick={()=>setTime(t)} style={{ padding:'8px 4px', borderRadius:'8px', border:'1.5px solid', borderColor:time===t?'var(--red-korean)':'var(--stone-light)', background:time===t?'var(--red-korean)':'white', color:time===t?'white':'var(--brown-mid)', fontSize:'12px', cursor:'pointer', fontFamily:'Outfit, sans-serif', fontWeight:time===t?600:400 }}>{t}</button>)}</div>
+              <div className="dinein-grid">{SLOTS.map(t=><button key={t} onClick={()=>setTime(t)} style={{ padding:'8px 4px', borderRadius:'8px', border:'1.5px solid', borderColor:time===t?'var(--red-korean)':'var(--stone-light)', background:time===t?'var(--red-korean)':'white', color:time===t?'white':'var(--brown-mid)', fontSize:'12px', cursor:'pointer', fontFamily:'Poppins, sans-serif', fontWeight:time===t?600:400 }}>{t}</button>)}</div>
             </div>
             <div style={{ marginBottom:'24px' }}><label style={{ fontSize:'13px', fontWeight:500, color:'var(--brown-mid)', display:'flex', alignItems:'center', gap:'5px', marginBottom:'8px' }}><Users size={13}/>Party Size</label>
               <div style={{ display:'flex', alignItems:'center', gap:'12px' }}>
-                <button onClick={()=>setPartySize(Math.max(1,partySize-1))} style={{ width:'36px', height:'36px', borderRadius:'10px', background:'var(--stone-light)', border:'none', cursor:'pointer', fontSize:'18px', fontFamily:'Outfit, sans-serif' }}>-</button>
+                <button onClick={()=>setPartySize(Math.max(1,partySize-1))} style={{ width:'36px', height:'36px', borderRadius:'10px', background:'var(--stone-light)', border:'none', cursor:'pointer', fontSize:'18px', fontFamily:'Poppins, sans-serif' }}>-</button>
                 <span style={{ fontSize:'24px', fontWeight:700, color:'var(--brown-dark)', minWidth:'30px', textAlign:'center' }}>{partySize}</span>
-                <button onClick={()=>setPartySize(Math.min(12,partySize+1))} style={{ width:'36px', height:'36px', borderRadius:'10px', background:'var(--stone-light)', border:'none', cursor:'pointer', fontSize:'18px', fontFamily:'Outfit, sans-serif' }}>+</button>
+                <button onClick={()=>setPartySize(Math.min(12,partySize+1))} style={{ width:'36px', height:'36px', borderRadius:'10px', background:'var(--stone-light)', border:'none', cursor:'pointer', fontSize:'18px', fontFamily:'Poppins, sans-serif' }}>+</button>
                 <span style={{ fontSize:'13px', color:'var(--brown-mid)' }}>guests · ${deposit} deposit</span>
               </div>
             </div>
-            <button onClick={search} disabled={loading||!date||!time} style={{ width:'100%', background:'var(--brown-dark)', color:'white', border:'none', borderRadius:'12px', padding:'14px', fontSize:'15px', fontWeight:600, cursor:loading||!date||!time?'not-allowed':'pointer', opacity:loading||!date||!time?0.6:1, fontFamily:'Outfit, sans-serif' }}>{loading?'Searching…':'Find Available Tables'}</button>
+            <button onClick={search} disabled={loading||!date||!time} style={{ width:'100%', background:'var(--brown-dark)', color:'white', border:'none', borderRadius:'12px', padding:'14px', fontSize:'15px', fontWeight:600, cursor:loading||!date||!time?'not-allowed':'pointer', opacity:loading||!date||!time?0.6:1, fontFamily:'Poppins, sans-serif' }}>{loading?'Searching…':'Find Available Tables'}</button>
           </div>
         )}
 
         {step===2&&(
           <div>
-            <button onClick={()=>setStep(1)} style={{ background:'none', border:'none', color:'var(--brown-mid)', fontSize:'13px', cursor:'pointer', marginBottom:'16px', fontFamily:'Outfit, sans-serif' }}>← Back</button>
+            <button onClick={()=>setStep(1)} style={{ background:'none', border:'none', color:'var(--brown-mid)', fontSize:'13px', cursor:'pointer', marginBottom:'16px', fontFamily:'Poppins, sans-serif' }}>← Back</button>
             <h2 className="font-display" style={{ fontSize:'24px', fontWeight:600, color:'var(--brown-dark)', marginBottom:'6px' }}>Available Tables</h2>
             <p style={{ fontSize:'13px', color:'var(--brown-mid)', marginBottom:'20px' }}>{date} at {time} · {partySize} guests</p>
             {tables.length===0?<div style={{ background:'white', borderRadius:'16px', padding:'40px', textAlign:'center', border:'1px solid var(--stone-light)' }}><AlertCircle size={32} color="var(--brown-mid)" style={{ margin:'0 auto 12px' }} /><p style={{ color:'var(--brown-mid)' }}>No tables available for this slot. Please try another time.</p></div>
             :<div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', marginBottom:'24px' }}>
-              {tables.map(t=><button key={t._id} onClick={()=>setSel(t)} style={{ padding:'16px', borderRadius:'14px', border:`2px solid ${sel?._id===t._id?'var(--red-korean)':'var(--stone-light)'}`, background:sel?._id===t._id?'#fdf0ee':'white', cursor:'pointer', textAlign:'left', fontFamily:'Outfit, sans-serif' }}>
+              {tables.map(t=><button key={t._id} onClick={()=>setSel(t)} style={{ padding:'16px', borderRadius:'14px', border:`2px solid ${sel?._id===t._id?'var(--red-korean)':'var(--stone-light)'}`, background:sel?._id===t._id?'#fdf0ee':'white', cursor:'pointer', textAlign:'left', fontFamily:'Poppins, sans-serif' }}>
                 <div className="font-display" style={{ fontSize:'26px', fontWeight:700, color:'var(--red-korean)' }}>Table {t.tableNumber}</div>
                 <div style={{ fontSize:'12px', color:'var(--brown-mid)', marginTop:'4px' }}>{t.floor} · Seats {t.capacity}</div>
                 {sel?._id===t._id&&<CheckCircle size={16} color="var(--red-korean)" style={{ marginTop:'8px' }} />}
@@ -86,7 +86,7 @@ export default function DineInPage() {
                 <div key={field} style={{ marginBottom:'14px' }}><label style={{ fontSize:'12px', fontWeight:500, color:'var(--brown-mid)', display:'block', marginBottom:'5px' }}>{label}</label><input type={type} value={(form as any)[field]} onChange={e=>setForm(f=>({...f,[field]:e.target.value}))} style={inp} /></div>
               ))}
               <div style={{ marginBottom:'16px' }}><label style={{ fontSize:'12px', fontWeight:500, color:'var(--brown-mid)', display:'block', marginBottom:'5px' }}>Special Requests</label><textarea value={form.requests} onChange={e=>setForm(f=>({...f,requests:e.target.value}))} rows={2} style={{...inp, resize:'none'}} /></div>
-              <button onClick={confirm} disabled={loading} style={{ width:'100%', background:'var(--brown-dark)', color:'white', border:'none', borderRadius:'12px', padding:'14px', fontSize:'15px', fontWeight:600, cursor:loading?'wait':'pointer', fontFamily:'Outfit, sans-serif' }}>{loading?'Confirming…':`Confirm Booking (Table ${sel.tableNumber})`}</button>
+              <button onClick={confirm} disabled={loading} style={{ width:'100%', background:'var(--brown-dark)', color:'white', border:'none', borderRadius:'12px', padding:'14px', fontSize:'15px', fontWeight:600, cursor:loading?'wait':'pointer', fontFamily:'Poppins, sans-serif' }}>{loading?'Confirming…':`Confirm Booking (Table ${sel.tableNumber})`}</button>
             </div>}
           </div>
         )}

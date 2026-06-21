@@ -78,7 +78,7 @@ export function ReviewCard({ review, showDishName = false, onHelpful }: ReviewCa
       {/* Body */}
       <p style={{ fontSize: '13px', color: 'var(--brown-mid)', lineHeight: 1.7, marginBottom: '10px' }}>{displayBody}</p>
       {isLong && (
-        <button onClick={() => setExpanded(!expanded)} style={{ background: 'none', border: 'none', color: 'var(--red-korean)', fontSize: '12px', cursor: 'pointer', fontFamily: 'Outfit, sans-serif', display: 'flex', alignItems: 'center', gap: '3px', marginBottom: '10px' }}>
+        <button onClick={() => setExpanded(!expanded)} style={{ background: 'none', border: 'none', color: 'var(--red-korean)', fontSize: '12px', cursor: 'pointer', fontFamily: 'Poppins, sans-serif', display: 'flex', alignItems: 'center', gap: '3px', marginBottom: '10px' }}>
           {expanded ? <><ChevronUp size={13} />Show less</> : <><ChevronDown size={13} />Read more</>}
         </button>
       )}
@@ -113,7 +113,7 @@ export function ReviewCard({ review, showDishName = false, onHelpful }: ReviewCa
 
       {/* Footer — helpful */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '10px', borderTop: '1px solid var(--stone-light)' }}>
-        <button onClick={handleHelpful} style={{ display: 'flex', alignItems: 'center', gap: '5px', background: helpfulClicked ? '#fdf0ee' : 'none', border: `1px solid ${helpfulClicked ? 'var(--red-korean)' : 'var(--stone-light)'}`, borderRadius: '8px', padding: '5px 12px', cursor: 'pointer', fontSize: '12px', fontFamily: 'Outfit, sans-serif', color: helpfulClicked ? 'var(--red-korean)' : 'var(--brown-mid)', transition: 'all 0.15s' }}>
+        <button onClick={handleHelpful} style={{ display: 'flex', alignItems: 'center', gap: '5px', background: helpfulClicked ? '#fdf0ee' : 'none', border: `1px solid ${helpfulClicked ? 'var(--red-korean)' : 'var(--stone-light)'}`, borderRadius: '8px', padding: '5px 12px', cursor: 'pointer', fontSize: '12px', fontFamily: 'Poppins, sans-serif', color: helpfulClicked ? 'var(--red-korean)' : 'var(--brown-mid)', transition: 'all 0.15s' }}>
           <ThumbsUp size={13} fill={helpfulClicked ? 'currentColor' : 'none'} />
           Helpful {helpfulCount > 0 && `(${helpfulCount})`}
         </button>

@@ -133,7 +133,7 @@ function DiscountWidget() {
       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '16px' }}>
         {presets.map(p => (
           <button key={p} onClick={() => { setInput(String(p)); apply(p); }}
-            style={{ padding: '6px 14px', borderRadius: '8px', border: '1.5px solid', borderColor: discount === p ? 'var(--red-korean)' : 'var(--stone-light)', background: discount === p ? '#fef2f2' : 'white', color: discount === p ? 'var(--red-korean)' : 'var(--brown-mid)', fontSize: '13px', fontWeight: discount === p ? 700 : 400, cursor: 'pointer', fontFamily: 'Outfit, sans-serif', transition: 'all 0.15s' }}>
+            style={{ padding: '6px 14px', borderRadius: '8px', border: '1.5px solid', borderColor: discount === p ? 'var(--red-korean)' : 'var(--stone-light)', background: discount === p ? '#fef2f2' : 'white', color: discount === p ? 'var(--red-korean)' : 'var(--brown-mid)', fontSize: '13px', fontWeight: discount === p ? 700 : 400, cursor: 'pointer', fontFamily: 'Poppins, sans-serif', transition: 'all 0.15s' }}>
             {p === 0 ? 'Off' : `${p}%`}
           </button>
         ))}
@@ -146,16 +146,16 @@ function DiscountWidget() {
             type="number" min="0" max="100" value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && apply(Math.min(100, Math.max(0, Number(input) || 0)))}
-            style={{ width: '100%', background: '#f9f5f0', border: '1.5px solid var(--stone-light)', borderRadius: '10px', padding: '9px 32px 9px 12px', fontSize: '15px', fontWeight: 700, color: 'var(--brown-dark)', outline: 'none', fontFamily: 'Outfit, sans-serif', boxSizing: 'border-box' }}
+            style={{ width: '100%', background: '#f9f5f0', border: '1.5px solid var(--stone-light)', borderRadius: '10px', padding: '9px 32px 9px 12px', fontSize: '15px', fontWeight: 700, color: 'var(--brown-dark)', outline: 'none', fontFamily: 'Poppins, sans-serif', boxSizing: 'border-box' }}
           />
           <span style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px', fontWeight: 600, color: 'var(--brown-mid)' }}>%</span>
         </div>
         <button onClick={() => apply(Math.min(100, Math.max(0, Number(input) || 0)))} disabled={saving}
-          style={{ display: 'flex', alignItems: 'center', gap: '6px', background: saved ? '#16a34a' : 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '10px', padding: '9px 18px', cursor: saving ? 'wait' : 'pointer', fontSize: '13px', fontWeight: 600, fontFamily: 'Outfit, sans-serif', transition: 'background 0.2s' }}>
+          style={{ display: 'flex', alignItems: 'center', gap: '6px', background: saved ? '#16a34a' : 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '10px', padding: '9px 18px', cursor: saving ? 'wait' : 'pointer', fontSize: '13px', fontWeight: 600, fontFamily: 'Poppins, sans-serif', transition: 'background 0.2s' }}>
           {saved ? <><Check size={14} /> Saved!</> : saving ? 'Saving…' : 'Apply'}
         </button>
         {discount > 0 && (
-          <button onClick={() => apply(0)} style={{ background: 'none', border: '1px solid #fecaca', borderRadius: '10px', padding: '9px 14px', cursor: 'pointer', fontSize: '12px', color: '#ef4444', fontFamily: 'Outfit, sans-serif' }}>
+          <button onClick={() => apply(0)} style={{ background: 'none', border: '1px solid #fecaca', borderRadius: '10px', padding: '9px 14px', cursor: 'pointer', fontSize: '12px', color: '#ef4444', fontFamily: 'Poppins, sans-serif' }}>
             Remove discount
           </button>
         )}

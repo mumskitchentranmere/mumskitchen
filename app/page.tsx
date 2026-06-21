@@ -108,18 +108,18 @@ export default function HomePage() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '20px' }}>
             {featured.slice(0, 6).map((item: any) => (
-              <div key={item._id} style={{ background: 'white', borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--stone-light)' }}>
-                <div style={{ height: '160px', overflow: 'hidden', background: 'var(--stone-light)' }}>
+              <div key={item._id} style={{ background: 'white', borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--stone-light)', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ height: '160px', overflow: 'hidden', background: 'var(--stone-light)', flexShrink: 0 }}>
                   {(item.primaryImage || item.images?.[0]) && (
                     <img src={item.primaryImage || item.images[0]} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   )}
                 </div>
-                <div style={{ padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <h3 className="font-display" style={{ fontSize: '16px', fontWeight: 600, color: 'var(--brown-dark)' }}>{item.name}</h3>
-                    <p style={{ fontSize: '14px', fontWeight: 700, color: 'var(--red-korean)' }}>from ${item.price.toFixed(2)}</p>
-                  </div>
-                  <Link href="/menu" style={{ background: 'var(--brown-dark)', color: 'white', padding: '7px 14px', borderRadius: '8px', textDecoration: 'none', fontSize: '12px', fontWeight: 500 }}>Order</Link>
+                <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                  <h3 className="font-display" style={{ fontSize: '16px', fontWeight: 600, color: 'var(--brown-dark)', marginBottom: '4px' }}>{item.name}</h3>
+                  <p style={{ fontSize: '14px', fontWeight: 700, color: 'var(--red-korean)', flex: 1, marginBottom: '12px' }}>from ${item.price.toFixed(2)}</p>
+                  <Link href="/order" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', alignSelf: 'flex-start', background: 'var(--red-korean)', color: 'white', padding: '8px 16px', borderRadius: '10px', textDecoration: 'none', fontSize: '13px', fontWeight: 600 }}>
+                    Order Now <ArrowRight size={13} />
+                  </Link>
                 </div>
               </div>
             ))}

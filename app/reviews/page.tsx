@@ -59,7 +59,7 @@ export default function ReviewsPage() {
               </div>
             )}
           </div>
-          <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--red-korean)', color: 'white', border: 'none', borderRadius: '12px', padding: '12px 24px', cursor: 'pointer', fontSize: '14px', fontWeight: 600, fontFamily: 'Outfit, sans-serif' }}>
+          <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--red-korean)', color: 'white', border: 'none', borderRadius: '12px', padding: '12px 24px', cursor: 'pointer', fontSize: '14px', fontWeight: 600, fontFamily: 'Poppins, sans-serif' }}>
             <PenLine size={16} /> Write a Review
           </button>
         </div>
@@ -81,14 +81,14 @@ export default function ReviewsPage() {
           </div>
           {[0, 5, 4, 3, 2, 1].map(star => (
             <button key={star} onClick={() => { setFilterRating(star); setPage(1); }}
-              style={{ padding: '6px 14px', borderRadius: '20px', border: '1.5px solid', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'Outfit, sans-serif', transition: 'all 0.15s', borderColor: filterRating === star ? 'var(--red-korean)' : 'var(--stone-light)', background: filterRating === star ? 'var(--red-korean)' : 'white', color: filterRating === star ? 'white' : 'var(--brown-mid)' }}>
+              style={{ padding: '6px 14px', borderRadius: '20px', border: '1.5px solid', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'Poppins, sans-serif', transition: 'all 0.15s', borderColor: filterRating === star ? 'var(--red-korean)' : 'var(--stone-light)', background: filterRating === star ? 'var(--red-korean)' : 'white', color: filterRating === star ? 'white' : 'var(--brown-mid)' }}>
               {star === 0 ? 'All' : `${star} ★`}
             </button>
           ))}
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <SortDesc size={13} color="var(--brown-mid)" />
             <select value={sort} onChange={e => setSort(e.target.value)}
-              style={{ background: 'white', border: '1px solid var(--stone-light)', borderRadius: '8px', padding: '6px 10px', fontSize: '12px', color: 'var(--brown-dark)', fontFamily: 'Outfit, sans-serif', outline: 'none', cursor: 'pointer' }}>
+              style={{ background: 'white', border: '1px solid var(--stone-light)', borderRadius: '8px', padding: '6px 10px', fontSize: '12px', color: 'var(--brown-dark)', fontFamily: 'Poppins, sans-serif', outline: 'none', cursor: 'pointer' }}>
               {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </div>
@@ -104,7 +104,7 @@ export default function ReviewsPage() {
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>⭐</div>
             <h3 className="font-display" style={{ fontSize: '22px', fontWeight: 700, color: 'var(--brown-dark)', marginBottom: '8px' }}>No reviews yet</h3>
             <p style={{ color: 'var(--brown-mid)', marginBottom: '24px' }}>Be the first to share your experience!</p>
-            <button onClick={() => setShowForm(true)} style={{ background: 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '12px', padding: '12px 28px', cursor: 'pointer', fontSize: '14px', fontWeight: 600, fontFamily: 'Outfit, sans-serif' }}>
+            <button onClick={() => setShowForm(true)} style={{ background: 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '12px', padding: '12px 28px', cursor: 'pointer', fontSize: '14px', fontWeight: 600, fontFamily: 'Poppins, sans-serif' }}>
               Write First Review
             </button>
           </div>
@@ -123,7 +123,7 @@ export default function ReviewsPage() {
             </button>
             {Array.from({ length: data.pages }).map((_, i) => (
               <button key={i} onClick={() => setPage(i + 1)}
-                style={{ width: '36px', height: '36px', borderRadius: '10px', border: '1.5px solid', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'Outfit, sans-serif', borderColor: page === i + 1 ? 'var(--red-korean)' : 'var(--stone-light)', background: page === i + 1 ? 'var(--red-korean)' : 'white', color: page === i + 1 ? 'white' : 'var(--brown-dark)' }}>
+                style={{ width: '36px', height: '36px', borderRadius: '10px', border: '1.5px solid', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'Poppins, sans-serif', borderColor: page === i + 1 ? 'var(--red-korean)' : 'var(--stone-light)', background: page === i + 1 ? 'var(--red-korean)' : 'white', color: page === i + 1 ? 'white' : 'var(--brown-dark)' }}>
                 {i + 1}
               </button>
             ))}

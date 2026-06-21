@@ -19,7 +19,7 @@ export default function AdminTablesPage() {
     <div>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'24px' }}>
         <div><h1 className="font-display" style={{ fontSize:'28px', fontWeight:700, color:'var(--brown-dark)' }}>Tables</h1><p style={{ fontSize:'13px', color:'var(--brown-mid)' }}>{tables.length} tables</p></div>
-        <button onClick={add} style={{ display:'flex', alignItems:'center', gap:'6px', background:'var(--red-korean)', color:'white', border:'none', borderRadius:'12px', padding:'10px 18px', cursor:'pointer', fontFamily:'Outfit, sans-serif', fontSize:'13px', fontWeight:600 }}><Plus size={14}/>Add Table</button>
+        <button onClick={add} style={{ display:'flex', alignItems:'center', gap:'6px', background:'var(--red-korean)', color:'white', border:'none', borderRadius:'12px', padding:'10px 18px', cursor:'pointer', fontFamily:'Poppins, sans-serif', fontSize:'13px', fontWeight:600 }}><Plus size={14}/>Add Table</button>
       </div>
       {loading?<p style={{color:'var(--brown-mid)'}}>Loading…</p>:(
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))', gap:'12px' }}>
@@ -29,7 +29,7 @@ export default function AdminTablesPage() {
               <div style={{ fontSize:'12px', color:'var(--brown-mid)', marginTop:'4px' }}>{t.floor}</div>
               <div style={{ fontSize:'12px', color:'var(--brown-mid)' }}>Seats {t.capacity}</div>
               <div style={{ display:'flex', gap:'6px', marginTop:'10px' }}>
-                <button onClick={()=>toggleActive(t)} style={{ flex:1, padding:'5px', borderRadius:'7px', border:'1px solid var(--stone-light)', background:t.isActive?'#f0fdf4':'#fef2f2', color:t.isActive?'#16a34a':'#dc2626', fontSize:'11px', cursor:'pointer', fontFamily:'Outfit, sans-serif' }}>{t.isActive?'Active':'Off'}</button>
+                <button onClick={()=>toggleActive(t)} style={{ flex:1, padding:'5px', borderRadius:'7px', border:'1px solid var(--stone-light)', background:t.isActive?'#f0fdf4':'#fef2f2', color:t.isActive?'#16a34a':'#dc2626', fontSize:'11px', cursor:'pointer', fontFamily:'Poppins, sans-serif' }}>{t.isActive?'Active':'Off'}</button>
                 <button onClick={()=>remove(t._id)} style={{ padding:'5px 8px', borderRadius:'7px', border:'1px solid #fecaca', background:'#fef2f2', color:'#dc2626', cursor:'pointer' }}><Trash2 size={11}/></button>
               </div>
             </div>

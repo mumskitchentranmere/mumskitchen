@@ -82,7 +82,7 @@ export default function AdminReviewsPage() {
       {/* Filter tabs */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
         {(['all', 'pending', 'approved', 'rejected'] as const).map(f => (
-          <button key={f} onClick={() => setFilter(f)} style={{ padding: '7px 16px', borderRadius: '20px', border: '1.5px solid', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'Outfit, sans-serif', textTransform: 'capitalize', transition: 'all 0.15s', borderColor: filter === f ? 'var(--red-korean)' : 'var(--stone-light)', background: filter === f ? 'var(--red-korean)' : 'white', color: filter === f ? 'white' : 'var(--brown-mid)' }}>
+          <button key={f} onClick={() => setFilter(f)} style={{ padding: '7px 16px', borderRadius: '20px', border: '1.5px solid', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'Poppins, sans-serif', textTransform: 'capitalize', transition: 'all 0.15s', borderColor: filter === f ? 'var(--red-korean)' : 'var(--stone-light)', background: filter === f ? 'var(--red-korean)' : 'white', color: filter === f ? 'white' : 'var(--brown-mid)' }}>
             {f === 'pending' ? `⏳ Pending` : f === 'approved' ? `✅ Approved` : f === 'rejected' ? `❌ Rejected` : 'All'}
           </button>
         ))}
@@ -143,10 +143,10 @@ export default function AdminReviewsPage() {
               {replyId === r._id && (
                 <div style={{ marginBottom: '12px' }}>
                   <textarea value={replyText} onChange={e => setReplyText(e.target.value)} rows={3} placeholder="Write your reply to this review…"
-                    style={{ width: '100%', background: '#faf7f2', border: '1.5px solid var(--stone-light)', borderRadius: '10px', padding: '10px 12px', fontSize: '13px', fontFamily: 'Outfit, sans-serif', resize: 'none', outline: 'none', boxSizing: 'border-box' }} />
+                    style={{ width: '100%', background: '#faf7f2', border: '1.5px solid var(--stone-light)', borderRadius: '10px', padding: '10px 12px', fontSize: '13px', fontFamily: 'Poppins, sans-serif', resize: 'none', outline: 'none', boxSizing: 'border-box' }} />
                   <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                    <button onClick={() => submitReply(r._id)} style={{ background: 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '8px', padding: '8px 16px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Outfit, sans-serif' }}>Post Reply</button>
-                    <button onClick={() => setReplyId(null)} style={{ background: 'var(--stone-light)', color: 'var(--brown-dark)', border: 'none', borderRadius: '8px', padding: '8px 14px', fontSize: '12px', cursor: 'pointer', fontFamily: 'Outfit, sans-serif' }}>Cancel</button>
+                    <button onClick={() => submitReply(r._id)} style={{ background: 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '8px', padding: '8px 16px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Poppins, sans-serif' }}>Post Reply</button>
+                    <button onClick={() => setReplyId(null)} style={{ background: 'var(--stone-light)', color: 'var(--brown-dark)', border: 'none', borderRadius: '8px', padding: '8px 14px', fontSize: '12px', cursor: 'pointer', fontFamily: 'Poppins, sans-serif' }}>Cancel</button>
                   </div>
                 </div>
               )}
@@ -154,22 +154,22 @@ export default function AdminReviewsPage() {
               {/* Action buttons */}
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                 {r.status !== 'approved' && (
-                  <button onClick={() => action(r._id, 'approve')} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 14px', borderRadius: '8px', border: '1px solid #bbf7d0', background: '#f0fdf4', color: '#16a34a', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'Outfit, sans-serif' }}>
+                  <button onClick={() => action(r._id, 'approve')} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 14px', borderRadius: '8px', border: '1px solid #bbf7d0', background: '#f0fdf4', color: '#16a34a', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'Poppins, sans-serif' }}>
                     <CheckCircle size={13} /> Approve
                   </button>
                 )}
                 {r.status !== 'rejected' && (
-                  <button onClick={() => action(r._id, 'reject')} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 14px', borderRadius: '8px', border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'Outfit, sans-serif' }}>
+                  <button onClick={() => action(r._id, 'reject')} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 14px', borderRadius: '8px', border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'Poppins, sans-serif' }}>
                     <XCircle size={13} /> Reject
                   </button>
                 )}
-                <button onClick={() => action(r._id, r.featured ? 'unfeature' : 'feature')} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 14px', borderRadius: '8px', border: '1px solid #fde68a', background: r.featured ? '#fef3c7' : 'white', color: '#92400e', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'Outfit, sans-serif' }}>
+                <button onClick={() => action(r._id, r.featured ? 'unfeature' : 'feature')} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 14px', borderRadius: '8px', border: '1px solid #fde68a', background: r.featured ? '#fef3c7' : 'white', color: '#92400e', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'Poppins, sans-serif' }}>
                   <Star size={13} fill={r.featured ? 'currentColor' : 'none'} /> {r.featured ? 'Unfeature' : 'Feature'}
                 </button>
-                <button onClick={() => { setReplyId(r._id === replyId ? null : r._id); setReplyText(r.adminReply || ''); }} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 14px', borderRadius: '8px', border: '1px solid var(--stone-light)', background: 'white', color: 'var(--brown-mid)', fontSize: '12px', cursor: 'pointer', fontFamily: 'Outfit, sans-serif' }}>
+                <button onClick={() => { setReplyId(r._id === replyId ? null : r._id); setReplyText(r.adminReply || ''); }} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 14px', borderRadius: '8px', border: '1px solid var(--stone-light)', background: 'white', color: 'var(--brown-mid)', fontSize: '12px', cursor: 'pointer', fontFamily: 'Poppins, sans-serif' }}>
                   <MessageSquare size={13} /> Reply
                 </button>
-                <button onClick={() => deleteReview(r._id)} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px', borderRadius: '8px', border: '1px solid #fecaca', background: 'white', color: '#dc2626', fontSize: '12px', cursor: 'pointer', fontFamily: 'Outfit, sans-serif', marginLeft: 'auto' }}>
+                <button onClick={() => deleteReview(r._id)} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px', borderRadius: '8px', border: '1px solid #fecaca', background: 'white', color: '#dc2626', fontSize: '12px', cursor: 'pointer', fontFamily: 'Poppins, sans-serif', marginLeft: 'auto' }}>
                   <Trash2 size={13} />
                 </button>
               </div>

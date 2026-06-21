@@ -49,7 +49,13 @@ export default function OrderPage() {
     const q = params.toString() ? `?${params}` : '';
     fetch(`/api/menu${q}`)
       .then(r => r.json())
-      .then(d => { setItems(Array.isArray(d) ? d : []); setLoading(false); });
+      .then(d => {
+        const arr: any[] = Array.isArray(d) ? d : [];
+        // items with multiple sizes first, then single/no-size items
+        arr.sort((a, b) => (b.sizes?.length > 1 ? 1 : 0) - (a.sizes?.length > 1 ? 1 : 0));
+        setItems(arr);
+        setLoading(false);
+      });
   }, [cuisine, cat]);
 
   const tabBtn = (active: boolean): React.CSSProperties => ({
@@ -58,7 +64,7 @@ export default function OrderPage() {
     background: active ? 'var(--red-korean)' : 'white',
     color: active ? 'white' : 'var(--brown-mid)',
     fontSize: '12px', fontWeight: 500, cursor: 'pointer',
-    transition: 'all 0.15s', fontFamily: 'Outfit, sans-serif',
+    transition: 'all 0.15s', fontFamily: 'Poppins, sans-serif',
   });
 
   return (
@@ -88,7 +94,7 @@ export default function OrderPage() {
                 background: cuisine === c.id ? 'var(--red-korean)' : 'white',
                 color: cuisine === c.id ? 'white' : 'var(--brown-dark)',
                 fontSize: '13px', fontWeight: 600, cursor: 'pointer',
-                transition: 'all 0.15s', fontFamily: 'Outfit, sans-serif',
+                transition: 'all 0.15s', fontFamily: 'Poppins, sans-serif',
                 boxShadow: cuisine === c.id ? '0 4px 14px rgba(192,57,43,0.25)' : 'none',
               }}>
               <span style={{ fontSize: '16px' }}>{c.flag}</span>

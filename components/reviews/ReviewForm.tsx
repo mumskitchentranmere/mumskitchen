@@ -60,7 +60,7 @@ export function ReviewForm({ type = 'restaurant', menuItemId, menuItemName, onSu
   const inp: React.CSSProperties = {
     width: '100%', background: '#faf7f2', border: '1.5px solid var(--stone-light)',
     borderRadius: '12px', padding: '11px 14px', fontSize: '14px', color: 'var(--brown-dark)',
-    outline: 'none', fontFamily: 'Outfit, sans-serif', boxSizing: 'border-box',
+    outline: 'none', fontFamily: 'Poppins, sans-serif', boxSizing: 'border-box',
   };
 
   if (done) return (
@@ -122,7 +122,7 @@ export function ReviewForm({ type = 'restaurant', menuItemId, menuItemName, onSu
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
           {QUICK_TAGS.map(tag => (
             <button key={tag} type="button" onClick={() => toggleTag(tag)}
-              style={{ padding: '5px 12px', borderRadius: '20px', border: '1.5px solid', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'Outfit, sans-serif', transition: 'all 0.15s', borderColor: tags.includes(tag) ? 'var(--red-korean)' : 'var(--stone-light)', background: tags.includes(tag) ? '#fdf0ee' : 'white', color: tags.includes(tag) ? 'var(--red-korean)' : 'var(--brown-mid)' }}>
+              style={{ padding: '5px 12px', borderRadius: '20px', border: '1.5px solid', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'Poppins, sans-serif', transition: 'all 0.15s', borderColor: tags.includes(tag) ? 'var(--red-korean)' : 'var(--stone-light)', background: tags.includes(tag) ? '#fdf0ee' : 'white', color: tags.includes(tag) ? 'var(--red-korean)' : 'var(--brown-mid)' }}>
               {tags.includes(tag) ? '✓ ' : ''}{tag}
             </button>
           ))}
@@ -150,7 +150,7 @@ export function ReviewForm({ type = 'restaurant', menuItemId, menuItemName, onSu
         </div>
       )}
 
-      <button type="submit" disabled={loading} style={{ width: '100%', background: 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '12px', padding: '14px', fontSize: '15px', fontWeight: 600, cursor: loading ? 'wait' : 'pointer', fontFamily: 'Outfit, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+      <button type="submit" disabled={loading} style={{ width: '100%', background: 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '12px', padding: '14px', fontSize: '15px', fontWeight: 600, cursor: loading ? 'wait' : 'pointer', fontFamily: 'Poppins, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
         <Send size={16} /> {loading ? 'Submitting…' : 'Submit Review'}
       </button>
       <p style={{ textAlign: 'center', fontSize: '11px', color: 'var(--brown-mid)', marginTop: '10px' }}>

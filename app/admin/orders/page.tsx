@@ -86,7 +86,7 @@ function OrderCard({ o, updating, capturing, btStatus, onUpdate, onCapture, onPr
 
         {/* Items — collapsible */}
         <div style={{ background: '#f9f5f0', borderRadius: '10px', marginBottom: '12px', overflow: 'hidden' }}>
-          <button onClick={() => setExpanded(v => !v)} style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 12px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Outfit, sans-serif' }}>
+          <button onClick={() => setExpanded(v => !v)} style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 12px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Poppins, sans-serif' }}>
             <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--brown-mid)' }}>
               {(o.items || []).length} item{(o.items || []).length !== 1 ? 's' : ''}
               {!expanded && <span style={{ fontWeight: 400, marginLeft: '6px' }}>— {(o.items || []).slice(0, 2).map((i: any) => `${i.quantity}× ${i.name}`).join(', ')}{(o.items || []).length > 2 ? '…' : ''}</span>}
@@ -117,14 +117,14 @@ function OrderCard({ o, updating, capturing, btStatus, onUpdate, onCapture, onPr
             <button
               onClick={() => onCapture(o._id, 'accept')}
               disabled={capturing === o._id}
-              style={{ flex: 1, minWidth: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: capturing === o._id ? '#86efac' : '#16a34a', color: 'white', border: 'none', borderRadius: '10px', padding: '11px 16px', cursor: capturing === o._id ? 'wait' : 'pointer', fontSize: '13px', fontWeight: 700, fontFamily: 'Outfit, sans-serif', transition: 'background 0.15s' }}
+              style={{ flex: 1, minWidth: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: capturing === o._id ? '#86efac' : '#16a34a', color: 'white', border: 'none', borderRadius: '10px', padding: '11px 16px', cursor: capturing === o._id ? 'wait' : 'pointer', fontSize: '13px', fontWeight: 700, fontFamily: 'Poppins, sans-serif', transition: 'background 0.15s' }}
             >
               <Check size={15} /> Accept &amp; Charge
             </button>
             <button
               onClick={() => onCapture(o._id, 'reject')}
               disabled={capturing === o._id}
-              style={{ flex: 1, minWidth: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: capturing === o._id ? '#fca5a5' : '#ef4444', color: 'white', border: 'none', borderRadius: '10px', padding: '11px 16px', cursor: capturing === o._id ? 'wait' : 'pointer', fontSize: '13px', fontWeight: 700, fontFamily: 'Outfit, sans-serif', transition: 'background 0.15s' }}
+              style={{ flex: 1, minWidth: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: capturing === o._id ? '#fca5a5' : '#ef4444', color: 'white', border: 'none', borderRadius: '10px', padding: '11px 16px', cursor: capturing === o._id ? 'wait' : 'pointer', fontSize: '13px', fontWeight: 700, fontFamily: 'Poppins, sans-serif', transition: 'background 0.15s' }}
             >
               <X size={15} /> Reject &amp; Release
             </button>
@@ -135,13 +135,13 @@ function OrderCard({ o, updating, capturing, btStatus, onUpdate, onCapture, onPr
         <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', alignItems: 'center' }}>
           {ALL_STATUSES.map(s => (
             <button key={s} onClick={() => onUpdate(o._id, s)} disabled={updating === o._id}
-              style={{ padding: '5px 11px', borderRadius: '8px', border: '1.5px solid', borderColor: o.status === s ? SC[s] : 'var(--stone-light)', background: o.status === s ? SC[s] + '20' : 'white', color: o.status === s ? SC[s] : 'var(--brown-mid)', fontSize: '11px', fontWeight: o.status === s ? 700 : 400, cursor: updating === o._id ? 'wait' : 'pointer', fontFamily: 'Outfit, sans-serif', textTransform: 'capitalize', opacity: updating === o._id && o.status !== s ? 0.5 : 1, transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+              style={{ padding: '5px 11px', borderRadius: '8px', border: '1.5px solid', borderColor: o.status === s ? SC[s] : 'var(--stone-light)', background: o.status === s ? SC[s] + '20' : 'white', color: o.status === s ? SC[s] : 'var(--brown-mid)', fontSize: '11px', fontWeight: o.status === s ? 700 : 400, cursor: updating === o._id ? 'wait' : 'pointer', fontFamily: 'Poppins, sans-serif', textTransform: 'capitalize', opacity: updating === o._id && o.status !== s ? 0.5 : 1, transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
               {s}
             </button>
           ))}
           <button
             onClick={() => onPrint(o)}
-            style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '5px', background: btStatus === 'connected' ? 'var(--brown-dark)' : '#e5e7eb', color: btStatus === 'connected' ? 'white' : '#9ca3af', border: 'none', borderRadius: '8px', padding: '6px 12px', cursor: btStatus === 'connected' ? 'pointer' : 'default', fontSize: '11px', fontFamily: 'Outfit, sans-serif', fontWeight: 500, whiteSpace: 'nowrap' }}
+            style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '5px', background: btStatus === 'connected' ? 'var(--brown-dark)' : '#e5e7eb', color: btStatus === 'connected' ? 'white' : '#9ca3af', border: 'none', borderRadius: '8px', padding: '6px 12px', cursor: btStatus === 'connected' ? 'pointer' : 'default', fontSize: '11px', fontFamily: 'Poppins, sans-serif', fontWeight: 500, whiteSpace: 'nowrap' }}
             title={btStatus === 'connected' ? 'Print kitchen ticket' : 'Connect a printer first'}
           >
             <Printer size={12} /> Print
@@ -225,7 +225,7 @@ export default function AdminOrdersPage() {
   const inp: React.CSSProperties = {
     background: 'white', border: '1px solid var(--stone-light)', borderRadius: '8px',
     padding: '7px 10px', fontSize: '13px', color: 'var(--brown-dark)',
-    outline: 'none', fontFamily: 'Outfit, sans-serif',
+    outline: 'none', fontFamily: 'Poppins, sans-serif',
   };
 
   return (
@@ -259,16 +259,16 @@ export default function AdminOrdersPage() {
                 <input type="checkbox" checked={autoPrint} onChange={e => setAutoPrint(e.target.checked)} style={{ accentColor: 'var(--red-korean)' }} />
                 Auto-print on accept
               </label>
-              <button onClick={disconnect} style={{ padding: '7px 12px', background: 'none', border: '1px solid #fecaca', borderRadius: '10px', cursor: 'pointer', color: '#ef4444', fontSize: '12px', fontFamily: 'Outfit, sans-serif', display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <button onClick={disconnect} style={{ padding: '7px 12px', background: 'none', border: '1px solid #fecaca', borderRadius: '10px', cursor: 'pointer', color: '#ef4444', fontSize: '12px', fontFamily: 'Poppins, sans-serif', display: 'flex', alignItems: 'center', gap: '5px' }}>
                 Disconnect
               </button>
             </>
           ) : (
-            <button onClick={connect} disabled={btStatus === 'connecting'} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: btStatus === 'connecting' ? 'var(--stone-light)' : '#1d4ed8', color: btStatus === 'connecting' ? 'var(--brown-mid)' : 'white', border: 'none', borderRadius: '10px', padding: '8px 14px', cursor: btStatus === 'connecting' ? 'wait' : 'pointer', fontSize: '12px', fontWeight: 500, fontFamily: 'Outfit, sans-serif' }}>
+            <button onClick={connect} disabled={btStatus === 'connecting'} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: btStatus === 'connecting' ? 'var(--stone-light)' : '#1d4ed8', color: btStatus === 'connecting' ? 'var(--brown-mid)' : 'white', border: 'none', borderRadius: '10px', padding: '8px 14px', cursor: btStatus === 'connecting' ? 'wait' : 'pointer', fontSize: '12px', fontWeight: 500, fontFamily: 'Poppins, sans-serif' }}>
               <Bluetooth size={13} /> {btStatus === 'connecting' ? 'Connecting…' : 'Connect Printer'}
             </button>
           )}
-          <button onClick={() => downloadCSV(filtered)} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '10px', padding: '8px 14px', cursor: 'pointer', fontSize: '12px', fontFamily: 'Outfit, sans-serif', fontWeight: 500 }}>
+          <button onClick={() => downloadCSV(filtered)} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '10px', padding: '8px 14px', cursor: 'pointer', fontSize: '12px', fontFamily: 'Poppins, sans-serif', fontWeight: 500 }}>
             <Download size={13} /> Export CSV
           </button>
         </div>
@@ -302,7 +302,7 @@ export default function AdminOrdersPage() {
           <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={inp} />
           {(search || statusFilter !== 'all' || payFilter !== 'all' || dateFrom || dateTo) && (
             <button onClick={() => { setSearch(''); setStatusFilter('all'); setPayFilter('all'); setDateFrom(''); setDateTo(''); }}
-              style={{ background: 'none', border: '1px solid var(--stone-light)', borderRadius: '8px', padding: '7px 12px', cursor: 'pointer', fontSize: '12px', color: 'var(--brown-mid)', fontFamily: 'Outfit, sans-serif' }}>
+              style={{ background: 'none', border: '1px solid var(--stone-light)', borderRadius: '8px', padding: '7px 12px', cursor: 'pointer', fontSize: '12px', color: 'var(--brown-mid)', fontFamily: 'Poppins, sans-serif' }}>
               Clear
             </button>
           )}

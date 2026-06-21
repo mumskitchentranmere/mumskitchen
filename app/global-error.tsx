@@ -14,7 +14,7 @@ export default function GlobalError({
 
   return (
     <html lang="en-AU">
-      <body style={{ margin: 0, background: '#FAF7F2', fontFamily: 'Outfit, Arial, sans-serif', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+      <body style={{ margin: 0, background: '#FAF7F2', fontFamily: 'Poppins, Arial, sans-serif', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
         <div style={{ textAlign: 'center', maxWidth: '480px' }}>
           <div style={{ fontSize: '48px', marginBottom: '12px' }}>⚠️</div>
           <h1 style={{ fontSize: '26px', fontWeight: 700, color: '#2C1A0E', marginBottom: '10px' }}>

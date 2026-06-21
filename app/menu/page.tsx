@@ -80,7 +80,7 @@ export default function MenuPage() {
     background: active ? 'var(--red-korean)' : 'white',
     color: active ? 'white' : 'var(--brown-mid)',
     fontSize: '13px', fontWeight: 500, cursor: 'pointer',
-    transition: 'all 0.15s', fontFamily: 'Outfit, sans-serif',
+    transition: 'all 0.15s', fontFamily: 'Poppins, sans-serif',
   });
 
   return (
@@ -114,7 +114,7 @@ export default function MenuPage() {
                 background: cuisine === c.id ? 'var(--red-korean)' : 'white',
                 color: cuisine === c.id ? 'white' : 'var(--brown-dark)',
                 fontSize: '14px', fontWeight: 600, cursor: 'pointer',
-                transition: 'all 0.15s', fontFamily: 'Outfit, sans-serif',
+                transition: 'all 0.15s', fontFamily: 'Poppins, sans-serif',
                 boxShadow: cuisine === c.id ? '0 4px 14px rgba(192,57,43,0.25)' : 'none',
               }}>
               <span style={{ fontSize: '18px' }}>{c.flag}</span>

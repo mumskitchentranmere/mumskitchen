@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 export default function NotFound() {
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--cream)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', paddingTop: '68px', fontFamily: 'Outfit, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--cream)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', paddingTop: '68px', fontFamily: 'Poppins, sans-serif' }}>
       <div style={{ textAlign: 'center', maxWidth: '480px' }}>
         <div style={{ fontSize: '80px', marginBottom: '8px' }}>🍜</div>
         <h1 className="font-display" style={{ fontSize: 'clamp(48px, 8vw, 80px)', fontWeight: 700, color: 'var(--red-korean)', lineHeight: 1, marginBottom: '16px' }}>404</h1>

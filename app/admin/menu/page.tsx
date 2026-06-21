@@ -52,7 +52,7 @@ function SizeManager({ sizes, onChange }: { sizes: SizeEntry[]; onChange: (s: Si
   const inp: React.CSSProperties = {
     background: 'white', border: '1px solid var(--stone-light)', borderRadius: '8px',
     padding: '7px 10px', fontSize: '13px', color: 'var(--brown-dark)',
-    outline: 'none', fontFamily: 'Outfit, sans-serif', boxSizing: 'border-box', width: '100%',
+    outline: 'none', fontFamily: 'Poppins, sans-serif', boxSizing: 'border-box', width: '100%',
   };
 
   return (
@@ -61,7 +61,7 @@ function SizeManager({ sizes, onChange }: { sizes: SizeEntry[]; onChange: (s: Si
         <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--brown-mid)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           Sizes &amp; Per-Size Images
         </label>
-        <button type="button" onClick={add} style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--red-korean)', color: 'white', border: 'none', borderRadius: '8px', padding: '5px 12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Outfit, sans-serif' }}>
+        <button type="button" onClick={add} style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--red-korean)', color: 'white', border: 'none', borderRadius: '8px', padding: '5px 12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Poppins, sans-serif' }}>
           <Plus size={11} /> Add Size
         </button>
       </div>
@@ -109,7 +109,7 @@ function SizeManager({ sizes, onChange }: { sizes: SizeEntry[]; onChange: (s: Si
                 </div>
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
                   <input ref={el => { fileRefs.current[i] = el; }} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => e.target.files && uploadImage(i, e.target.files)} />
-                  <button type="button" onClick={() => fileRefs.current[i]?.click()} disabled={uploading === i} style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '7px', padding: '5px 10px', fontSize: '11px', cursor: uploading === i ? 'wait' : 'pointer', fontFamily: 'Outfit, sans-serif', fontWeight: 500, opacity: uploading === i ? 0.6 : 1, whiteSpace: 'nowrap' }}>
+                  <button type="button" onClick={() => fileRefs.current[i]?.click()} disabled={uploading === i} style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '7px', padding: '5px 10px', fontSize: '11px', cursor: uploading === i ? 'wait' : 'pointer', fontFamily: 'Poppins, sans-serif', fontWeight: 500, opacity: uploading === i ? 0.6 : 1, whiteSpace: 'nowrap' }}>
                     <Upload size={10} /> {uploading === i ? 'Uploading…' : 'Upload'}
                   </button>
                   <span style={{ fontSize: '11px', color: 'var(--brown-mid)', flexShrink: 0 }}>or</span>
@@ -234,7 +234,7 @@ export default function AdminMenuPage() {
   const inp: React.CSSProperties = {
     width: '100%', background: '#f9f5f0', border: '1px solid var(--stone-light)',
     borderRadius: '10px', padding: '9px 12px', fontSize: '13px', color: 'var(--brown-dark)',
-    outline: 'none', fontFamily: 'Outfit, sans-serif', boxSizing: 'border-box',
+    outline: 'none', fontFamily: 'Poppins, sans-serif', boxSizing: 'border-box',
   };
 
   const q = search.toLowerCase().trim();
@@ -257,7 +257,7 @@ export default function AdminMenuPage() {
           <h1 className="font-display" style={{ fontSize: '28px', fontWeight: 700, color: 'var(--brown-dark)' }}>Menu Items</h1>
           <p style={{ fontSize: '13px', color: 'var(--brown-mid)' }}>{items.length} item{items.length !== 1 ? 's' : ''}</p>
         </div>
-        <button onClick={openAdd} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--red-korean)', color: 'white', border: 'none', borderRadius: '12px', padding: '10px 20px', cursor: 'pointer', fontFamily: 'Outfit, sans-serif', fontSize: '13px', fontWeight: 600 }}>
+        <button onClick={openAdd} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--red-korean)', color: 'white', border: 'none', borderRadius: '12px', padding: '10px 20px', cursor: 'pointer', fontFamily: 'Poppins, sans-serif', fontSize: '13px', fontWeight: 600 }}>
           <Plus size={15} /> Add Item
         </button>
       </div>
@@ -288,7 +288,7 @@ export default function AdminMenuPage() {
           {CATS.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
         {(search || catFilter !== 'all') && (
-          <button onClick={() => { setSearch(''); setCatFilter('all'); }} style={{ background: 'none', border: '1px solid var(--stone-light)', borderRadius: '12px', padding: '0 14px', cursor: 'pointer', fontSize: '12px', color: 'var(--brown-mid)', fontFamily: 'Outfit, sans-serif', whiteSpace: 'nowrap' }}>
+          <button onClick={() => { setSearch(''); setCatFilter('all'); }} style={{ background: 'none', border: '1px solid var(--stone-light)', borderRadius: '12px', padding: '0 14px', cursor: 'pointer', fontSize: '12px', color: 'var(--brown-mid)', fontFamily: 'Poppins, sans-serif', whiteSpace: 'nowrap' }}>
             Clear
           </button>
         )}
@@ -354,7 +354,7 @@ export default function AdminMenuPage() {
                   </td>
                   <td style={{ padding: '12px 14px' }}>
                     <div style={{ display: 'flex', gap: '4px' }}>
-                      <button onClick={() => openEdit(item)} style={{ padding: '6px 10px', background: 'none', border: '1px solid var(--stone-light)', borderRadius: '8px', cursor: 'pointer', color: 'var(--brown-mid)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontFamily: 'Outfit, sans-serif' }}>
+                      <button onClick={() => openEdit(item)} style={{ padding: '6px 10px', background: 'none', border: '1px solid var(--stone-light)', borderRadius: '8px', cursor: 'pointer', color: 'var(--brown-mid)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontFamily: 'Poppins, sans-serif' }}>
                         <Edit size={12} /> Edit
                       </button>
                       <button onClick={() => remove(item._id)} style={{ padding: '6px', background: 'none', border: '1px solid #fecaca', borderRadius: '8px', cursor: 'pointer', color: '#ef4444' }}>
@@ -401,13 +401,13 @@ export default function AdminMenuPage() {
                   </div>
                 ))}
                 <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => e.target.files && handleImages(e.target.files)} />
-                <button onClick={() => fileRef.current?.click()} disabled={uploading} style={{ width: '64px', height: '64px', borderRadius: '10px', border: '2px dashed var(--stone-light)', background: '#f9f5f0', cursor: uploading ? 'wait' : 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', color: 'var(--brown-mid)', fontSize: '10px', fontFamily: 'Outfit, sans-serif' }}>
+                <button onClick={() => fileRef.current?.click()} disabled={uploading} style={{ width: '64px', height: '64px', borderRadius: '10px', border: '2px dashed var(--stone-light)', background: '#f9f5f0', cursor: uploading ? 'wait' : 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', color: 'var(--brown-mid)', fontSize: '10px', fontFamily: 'Poppins, sans-serif' }}>
                   {uploading ? <span style={{ fontSize: '9px' }}>…</span> : <><Upload size={14} /><span>Upload</span></>}
                 </button>
               </div>
               <div style={{ display: 'flex', gap: '6px' }}>
                 <input type="text" placeholder="Or paste image URL…" id="img-url-inp" style={{ ...inp, flex: 1, fontSize: '12px' }} />
-                <button onClick={() => { const v = (document.getElementById('img-url-inp') as HTMLInputElement)?.value?.trim(); if (v) { setForm((f: any) => ({ ...f, images: [...f.images, v], primaryImage: f.primaryImage || v })); (document.getElementById('img-url-inp') as HTMLInputElement).value = ''; } }} style={{ background: 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '10px', padding: '9px 14px', cursor: 'pointer', fontSize: '12px', fontFamily: 'Outfit, sans-serif', whiteSpace: 'nowrap' }}>Add</button>
+                <button onClick={() => { const v = (document.getElementById('img-url-inp') as HTMLInputElement)?.value?.trim(); if (v) { setForm((f: any) => ({ ...f, images: [...f.images, v], primaryImage: f.primaryImage || v })); (document.getElementById('img-url-inp') as HTMLInputElement).value = ''; } }} style={{ background: 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '10px', padding: '9px 14px', cursor: 'pointer', fontSize: '12px', fontFamily: 'Poppins, sans-serif', whiteSpace: 'nowrap' }}>Add</button>
               </div>
               <p style={{ fontSize: '11px', color: 'var(--brown-mid)', marginTop: '5px' }}>First image = main display. Upload multiple photos.</p>
             </div>
@@ -467,10 +467,10 @@ export default function AdminMenuPage() {
 
             {/* Action buttons */}
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={save} style={{ flex: 1, background: 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '12px', padding: '13px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Outfit, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px' }}>
+              <button onClick={save} style={{ flex: 1, background: 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '12px', padding: '13px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Poppins, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px' }}>
                 <Check size={15} /> Save Item
               </button>
-              <button onClick={() => setModal(false)} style={{ flex: 1, background: 'var(--stone-light)', color: 'var(--brown-dark)', border: 'none', borderRadius: '12px', padding: '13px', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'Outfit, sans-serif' }}>
+              <button onClick={() => setModal(false)} style={{ flex: 1, background: 'var(--stone-light)', color: 'var(--brown-dark)', border: 'none', borderRadius: '12px', padding: '13px', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'Poppins, sans-serif' }}>
                 Cancel
               </button>
             </div>

@@ -10,7 +10,7 @@ export default function ContactPage() {
     if (r.ok) { setSent(true); toast.success('Message sent!'); } else { toast.error('Failed to send message. Please call or email us directly.'); }
     setLoading(false);
   };
-  const inp: React.CSSProperties = { width:'100%', background:'white', border:'1.5px solid var(--stone-light)', borderRadius:'12px', padding:'11px 14px', fontSize:'14px', color:'var(--brown-dark)', outline:'none', fontFamily:'Outfit, sans-serif', boxSizing:'border-box' };
+  const inp: React.CSSProperties = { width:'100%', background:'white', border:'1.5px solid var(--stone-light)', borderRadius:'12px', padding:'11px 14px', fontSize:'14px', color:'var(--brown-dark)', outline:'none', fontFamily:'Poppins, sans-serif', boxSizing:'border-box' };
   return (
     <div style={{ minHeight:'100vh', background:'var(--cream)', paddingTop:'68px' }}>
       <div style={{ background:'var(--brown-dark)', padding:'56px 24px', textAlign:'center' }}>
@@ -52,7 +52,7 @@ export default function ContactPage() {
               <div style={{ width:'56px', height:'56px', background:'#e8f5e9', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:'16px' }}><CheckCircle size={28} color="#2e7d32"/></div>
               <h2 className="font-display" style={{ fontSize:'24px', fontWeight:700, color:'var(--brown-dark)', marginBottom:'8px' }}>Message Sent!</h2>
               <p style={{ color:'var(--brown-mid)', marginBottom:'20px' }}>We'll get back to you within 24 hours.</p>
-              <button onClick={()=>{setSent(false);setForm({name:'',email:'',phone:'',message:''})} } style={{ background:'var(--stone-light)', border:'none', borderRadius:'10px', padding:'10px 20px', cursor:'pointer', fontSize:'13px', fontFamily:'Outfit, sans-serif' }}>Send Another</button>
+              <button onClick={()=>{setSent(false);setForm({name:'',email:'',phone:'',message:''})} } style={{ background:'var(--stone-light)', border:'none', borderRadius:'10px', padding:'10px 20px', cursor:'pointer', fontSize:'13px', fontFamily:'Poppins, sans-serif' }}>Send Another</button>
             </div>:(
               <form onSubmit={handleSubmit} style={{ background:'white', borderRadius:'16px', padding:'28px', border:'1px solid var(--stone-light)' }}>
                 <h2 className="font-display" style={{ fontSize:'24px', fontWeight:600, color:'var(--brown-dark)', marginBottom:'20px' }}>Send Us a Message</h2>
@@ -63,7 +63,7 @@ export default function ContactPage() {
                 </div>
                 <div style={{ marginBottom:'14px' }}><label style={{ fontSize:'12px', fontWeight:500, color:'var(--brown-mid)', display:'block', marginBottom:'5px' }}>Phone</label><input type="tel" value={form.phone} onChange={e=>setForm(f=>({...f,phone:e.target.value}))} style={inp}/></div>
                 <div style={{ marginBottom:'20px' }}><label style={{ fontSize:'12px', fontWeight:500, color:'var(--brown-mid)', display:'block', marginBottom:'5px' }}>Message *</label><textarea required rows={5} value={form.message} onChange={e=>setForm(f=>({...f,message:e.target.value}))} style={{...inp,resize:'none'}} placeholder="How can we help?"/></div>
-                <button type="submit" disabled={loading} style={{ width:'100%', background:'var(--brown-dark)', color:'white', border:'none', borderRadius:'12px', padding:'14px', fontSize:'15px', fontWeight:600, cursor:loading?'wait':'pointer', fontFamily:'Outfit, sans-serif', display:'flex', alignItems:'center', justifyContent:'center', gap:'8px' }}>
+                <button type="submit" disabled={loading} style={{ width:'100%', background:'var(--brown-dark)', color:'white', border:'none', borderRadius:'12px', padding:'14px', fontSize:'15px', fontWeight:600, cursor:loading?'wait':'pointer', fontFamily:'Poppins, sans-serif', display:'flex', alignItems:'center', justifyContent:'center', gap:'8px' }}>
                   <Send size={16}/>{loading?'Sending…':'Send Message'}
                 </button>
               </form>

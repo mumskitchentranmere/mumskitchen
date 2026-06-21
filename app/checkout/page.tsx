@@ -160,7 +160,7 @@ function PayForm({ clientSecret, total, onSuccess }: { clientSecret: string; tot
             setCardError(e.error?.message || null);
             if (e.complete) setDeclineError(null);
           }}
-          options={{ style: { base: { color: '#2C1A0E', fontSize: '15px', fontFamily: 'Outfit, sans-serif', '::placeholder': { color: '#a08060' } } } }}
+          options={{ style: { base: { color: '#2C1A0E', fontSize: '15px', fontFamily: 'Poppins, sans-serif', '::placeholder': { color: '#a08060' } } } }}
         />
       </div>
 
@@ -171,7 +171,7 @@ function PayForm({ clientSecret, total, onSuccess }: { clientSecret: string; tot
       )}
 
       <button type="submit" disabled={!canSubmit}
-        style={{ width: '100%', background: loading ? '#6B3A1F' : !canSubmit ? '#9ca3af' : 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '12px', padding: '15px', fontSize: '15px', fontWeight: 600, cursor: canSubmit ? 'pointer' : 'not-allowed', fontFamily: 'Outfit, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'background 0.2s' }}>
+        style={{ width: '100%', background: loading ? '#6B3A1F' : !canSubmit ? '#9ca3af' : 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '12px', padding: '15px', fontSize: '15px', fontWeight: 600, cursor: canSubmit ? 'pointer' : 'not-allowed', fontFamily: 'Poppins, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'background 0.2s' }}>
         <Lock size={16} /> {loading ? 'Validating card…' : `Pay $${total.toFixed(2)} AUD`}
       </button>
       <p style={{ textAlign: 'center', fontSize: '11px', color: 'var(--brown-mid)', marginTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
@@ -311,7 +311,7 @@ export default function CheckoutPage() {
   const inp: React.CSSProperties = {
     width: '100%', background: 'white', border: '1.5px solid var(--stone-light)',
     borderRadius: '12px', padding: '11px 14px', fontSize: '14px',
-    color: 'var(--brown-dark)', outline: 'none', fontFamily: 'Outfit, sans-serif', boxSizing: 'border-box',
+    color: 'var(--brown-dark)', outline: 'none', fontFamily: 'Poppins, sans-serif', boxSizing: 'border-box',
   };
 
   // Receipt data
@@ -340,11 +340,11 @@ export default function CheckoutPage() {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Receipt #${orderId} — Mum's Kitchen</title>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    body{background:#FAF7F2;font-family:Outfit,Arial,sans-serif;padding:24px;max-width:680px;margin:0 auto}
-    .font-display{font-family:Outfit,Arial,sans-serif}
+    body{background:#FAF7F2;font-family:Poppins,Arial,sans-serif;padding:24px;max-width:680px;margin:0 auto}
+    .font-display{font-family:Poppins,Arial,sans-serif}
     ${cssVars}
   </style>
 </head>
@@ -423,7 +423,7 @@ export default function CheckoutPage() {
                           flex: 1, padding: '14px', borderRadius: '12px', cursor: 'pointer',
                           border: `2px solid ${orderType === opt.value ? 'var(--red-korean)' : 'var(--stone-light)'}`,
                           background: orderType === opt.value ? '#fdf0ee' : 'white',
-                          textAlign: 'center', transition: 'all 0.15s', fontFamily: 'Outfit, sans-serif',
+                          textAlign: 'center', transition: 'all 0.15s', fontFamily: 'Poppins, sans-serif',
                         }}
                       >
                         <div style={{ fontSize: '22px', marginBottom: '4px' }}>{opt.emoji}</div>
@@ -468,7 +468,7 @@ export default function CheckoutPage() {
 
                 <button type="submit" disabled={loading || isOpen === false}
                   title={isOpen === false ? 'Ordering is only available during opening hours' : undefined}
-                  style={{ width: '100%', background: isOpen === false ? '#9ca3af' : loading ? '#6B3A1F' : 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '12px', padding: '15px', fontSize: '15px', fontWeight: 600, cursor: (loading || isOpen === false) ? 'not-allowed' : 'pointer', fontFamily: 'Outfit, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'background 0.2s' }}>
+                  style={{ width: '100%', background: isOpen === false ? '#9ca3af' : loading ? '#6B3A1F' : 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '12px', padding: '15px', fontSize: '15px', fontWeight: 600, cursor: (loading || isOpen === false) ? 'not-allowed' : 'pointer', fontFamily: 'Poppins, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'background 0.2s' }}>
                   {isOpen === false
                     ? <><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(255,255,255,0.6)', flexShrink: 0 }} /> Ordering unavailable — we're closed</>
                     : <><CreditCard size={16} /> {loading ? 'Creating order…' : 'Continue to Payment'}</>
@@ -508,7 +508,7 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'stripe', variables: { colorPrimary: '#C0392B', fontFamily: 'Outfit, sans-serif' } } }}>
+                <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'stripe', variables: { colorPrimary: '#C0392B', fontFamily: 'Poppins, sans-serif' } } }}>
                   <PayForm
                     clientSecret={clientSecret}
                     total={orderTotal}
@@ -516,7 +516,7 @@ export default function CheckoutPage() {
                   />
                 </Elements>
                 <button onClick={() => setStep(1)}
-                  style={{ background: 'none', border: 'none', color: 'var(--brown-mid)', fontSize: '13px', cursor: 'pointer', marginTop: '14px', fontFamily: 'Outfit, sans-serif', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  style={{ background: 'none', border: 'none', color: 'var(--brown-mid)', fontSize: '13px', cursor: 'pointer', marginTop: '14px', fontFamily: 'Poppins, sans-serif', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   ← Back to details
                 </button>
               </div>
@@ -660,11 +660,11 @@ export default function CheckoutPage() {
                 {/* Actions */}
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                   <button onClick={() => window.print()}
-                    style={{ display: 'flex', alignItems: 'center', gap: '7px', background: 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '12px', padding: '12px 22px', cursor: 'pointer', fontSize: '14px', fontWeight: 600, fontFamily: 'Outfit, sans-serif' }}>
+                    style={{ display: 'flex', alignItems: 'center', gap: '7px', background: 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '12px', padding: '12px 22px', cursor: 'pointer', fontSize: '14px', fontWeight: 600, fontFamily: 'Poppins, sans-serif' }}>
                     <Printer size={16} /> Print Receipt
                   </button>
                   <button onClick={downloadReceipt}
-                    style={{ display: 'flex', alignItems: 'center', gap: '7px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '12px', padding: '12px 22px', cursor: 'pointer', fontSize: '14px', fontWeight: 600, fontFamily: 'Outfit, sans-serif' }}>
+                    style={{ display: 'flex', alignItems: 'center', gap: '7px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '12px', padding: '12px 22px', cursor: 'pointer', fontSize: '14px', fontWeight: 600, fontFamily: 'Poppins, sans-serif' }}>
                     <Download size={16} /> Download Receipt
                   </button>
                   <a href="/menu"

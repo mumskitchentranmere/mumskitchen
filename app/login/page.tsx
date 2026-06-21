@@ -37,7 +37,7 @@ export default function LoginPage() {
     await signIn('google', { callbackUrl: '/dashboard' });
   };
 
-  const inp: React.CSSProperties = { width: '100%', background: 'white', border: '1.5px solid var(--stone-light)', borderRadius: '12px', padding: '12px 16px', fontSize: '14px', color: 'var(--brown-dark)', outline: 'none', fontFamily: 'Outfit, sans-serif', boxSizing: 'border-box' };
+  const inp: React.CSSProperties = { width: '100%', background: 'white', border: '1.5px solid var(--stone-light)', borderRadius: '12px', padding: '12px 16px', fontSize: '14px', color: 'var(--brown-dark)', outline: 'none', fontFamily: 'Poppins, sans-serif', boxSizing: 'border-box' };
 
   if (status === 'loading') return (
     <div style={{ minHeight: '100vh', background: 'var(--cream)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -64,7 +64,7 @@ export default function LoginPage() {
           {process.env.NEXT_PUBLIC_GOOGLE_ENABLED === 'true' && (
             <>
               <button onClick={handleGoogle} disabled={googleLoading}
-                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', background: 'white', color: '#374151', border: '1.5px solid #e5e7eb', borderRadius: '12px', padding: '12px', fontSize: '14px', fontWeight: 500, cursor: googleLoading ? 'wait' : 'pointer', fontFamily: 'Outfit, sans-serif', marginBottom: '20px' }}>
+                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', background: 'white', color: '#374151', border: '1.5px solid #e5e7eb', borderRadius: '12px', padding: '12px', fontSize: '14px', fontWeight: 500, cursor: googleLoading ? 'wait' : 'pointer', fontFamily: 'Poppins, sans-serif', marginBottom: '20px' }}>
                 {/* Google icon */}
                 <svg width="18" height="18" viewBox="0 0 24 24">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -96,7 +96,7 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
-            <button type="submit" disabled={loading} style={{ width: '100%', background: 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '12px', padding: '14px', fontSize: '15px', fontWeight: 600, cursor: loading ? 'wait' : 'pointer', fontFamily: 'Outfit, sans-serif' }}>
+            <button type="submit" disabled={loading} style={{ width: '100%', background: 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '12px', padding: '14px', fontSize: '15px', fontWeight: 600, cursor: loading ? 'wait' : 'pointer', fontFamily: 'Poppins, sans-serif' }}>
               {loading ? 'Signing in…' : 'Sign In'}
             </button>
           </form>

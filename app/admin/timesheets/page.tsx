@@ -110,13 +110,13 @@ export default function TimesheetsPage() {
   const timeInp: React.CSSProperties = {
     width: '100%', background: 'white', border: '1px solid var(--stone-light)',
     borderRadius: '6px', padding: '4px 6px', fontSize: '12px', textAlign: 'center',
-    color: 'var(--brown-dark)', outline: 'none', fontFamily: 'Outfit, sans-serif',
+    color: 'var(--brown-dark)', outline: 'none', fontFamily: 'Poppins, sans-serif',
     boxSizing: 'border-box',
   };
   const dateInp: React.CSSProperties = {
     background: 'white', border: '1px solid var(--stone-light)', borderRadius: '8px',
     padding: '7px 10px', fontSize: '13px', color: 'var(--brown-dark)',
-    outline: 'none', fontFamily: 'Outfit, sans-serif',
+    outline: 'none', fontFamily: 'Poppins, sans-serif',
   };
 
   const emptyShifts = (): Record<string, DayShift> => {
@@ -241,7 +241,7 @@ export default function TimesheetsPage() {
         <div style={{ display: 'flex', gap: '8px' }}>
           {(['weekly', 'range'] as ViewMode[]).map(m => (
             <button key={m} onClick={() => setViewMode(m)}
-              style={{ padding: '8px 16px', borderRadius: '20px', border: '1.5px solid', borderColor: viewMode === m ? 'var(--red-korean)' : 'var(--stone-light)', background: viewMode === m ? 'var(--red-korean)' : 'white', color: viewMode === m ? 'white' : 'var(--brown-mid)', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'Outfit, sans-serif', display: 'flex', alignItems: 'center', gap: '5px' }}>
+              style={{ padding: '8px 16px', borderRadius: '20px', border: '1.5px solid', borderColor: viewMode === m ? 'var(--red-korean)' : 'var(--stone-light)', background: viewMode === m ? 'var(--red-korean)' : 'white', color: viewMode === m ? 'white' : 'var(--brown-mid)', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'Poppins, sans-serif', display: 'flex', alignItems: 'center', gap: '5px' }}>
               {m === 'weekly' ? <><Calendar size={12} /> Weekly</> : <><Filter size={12} /> Date Range</>}
             </button>
           ))}
@@ -259,9 +259,9 @@ export default function TimesheetsPage() {
             </div>
             <button onClick={() => setWeekStart(addWeeks(weekStart, 1))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--brown-mid)', display: 'flex' }}><ChevronRight size={18} /></button>
           </div>
-          <button onClick={() => setWeekStart(getMondayOfWeek(new Date()))} style={{ background: 'var(--stone-light)', color: 'var(--brown-dark)', border: 'none', borderRadius: '10px', padding: '8px 14px', cursor: 'pointer', fontSize: '12px', fontFamily: 'Outfit, sans-serif' }}>This Week</button>
+          <button onClick={() => setWeekStart(getMondayOfWeek(new Date()))} style={{ background: 'var(--stone-light)', color: 'var(--brown-dark)', border: 'none', borderRadius: '10px', padding: '8px 14px', cursor: 'pointer', fontSize: '12px', fontFamily: 'Poppins, sans-serif' }}>This Week</button>
           <button onClick={() => { const ts = Object.values(timesheets); if (ts.length) downloadCSV(ts, weekStart); else toast.error('No data to download'); }}
-            style={{ display: 'flex', alignItems: 'center', gap: '5px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '10px', padding: '8px 14px', cursor: 'pointer', fontSize: '12px', fontFamily: 'Outfit, sans-serif' }}>
+            style={{ display: 'flex', alignItems: 'center', gap: '5px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '10px', padding: '8px 14px', cursor: 'pointer', fontSize: '12px', fontFamily: 'Poppins, sans-serif' }}>
             <Download size={13} /> Download CSV
           </button>
         </div>
@@ -272,7 +272,7 @@ export default function TimesheetsPage() {
           <span style={{ fontSize: '13px', color: 'var(--brown-mid)', fontWeight: 500 }}>To:</span>
           <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={dateInp} />
           <button onClick={loadRange} disabled={!dateFrom || !dateTo}
-            style={{ background: 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '8px', padding: '8px 16px', cursor: 'pointer', fontSize: '12px', fontFamily: 'Outfit, sans-serif', opacity: (!dateFrom || !dateTo) ? 0.5 : 1 }}>
+            style={{ background: 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '8px', padding: '8px 16px', cursor: 'pointer', fontSize: '12px', fontFamily: 'Poppins, sans-serif', opacity: (!dateFrom || !dateTo) ? 0.5 : 1 }}>
             Search
           </button>
           {rangeTS.length > 0 && (
@@ -289,7 +289,7 @@ export default function TimesheetsPage() {
                   const label = empFilter === 'all' ? `${dateFrom}-to-${dateTo}` : `${empFilter.replace(/\s+/g, '-')}-${dateFrom}-to-${dateTo}`;
                   downloadCSV(rows, label);
                 }}
-                style={{ display: 'flex', alignItems: 'center', gap: '5px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', padding: '8px 14px', cursor: 'pointer', fontSize: '12px', fontFamily: 'Outfit, sans-serif' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: '5px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', padding: '8px 14px', cursor: 'pointer', fontSize: '12px', fontFamily: 'Poppins, sans-serif' }}>
                 <Download size={13} /> {empFilter === 'all' ? 'Download All' : `Download ${empFilter}`}
               </button>
             </>
@@ -368,19 +368,19 @@ export default function TimesheetsPage() {
                       <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
                         {!locked && (
                           <button onClick={() => saveRow(employee)} disabled={saving[employee._id]}
-                            style={{ padding: '6px 10px', background: 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '11px', fontFamily: 'Outfit, sans-serif', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                            style={{ padding: '6px 10px', background: 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '11px', fontFamily: 'Poppins, sans-serif', display: 'flex', alignItems: 'center', gap: '3px' }}>
                             <Save size={12} /> {saving[employee._id] ? '…' : 'Save'}
                           </button>
                         )}
                         {ts && !isApproved && !isPaid && (
                           <button onClick={() => approve(employee)}
-                            style={{ padding: '6px 10px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '11px', fontFamily: 'Outfit, sans-serif', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                            style={{ padding: '6px 10px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '11px', fontFamily: 'Poppins, sans-serif', display: 'flex', alignItems: 'center', gap: '3px' }}>
                             <CheckCircle size={12} /> Approve
                           </button>
                         )}
                         {ts && (
                           <button onClick={() => togglePaid(ts, employee)}
-                            style={{ padding: '6px 10px', background: isPaid ? '#f0fdf4' : '#fef9c3', color: isPaid ? '#16a34a' : '#854d0e', border: `1.5px solid ${isPaid ? '#22c55e' : '#ca8a04'}`, borderRadius: '8px', cursor: 'pointer', fontSize: '11px', fontFamily: 'Outfit, sans-serif', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '3px' }}>
+                            style={{ padding: '6px 10px', background: isPaid ? '#f0fdf4' : '#fef9c3', color: isPaid ? '#16a34a' : '#854d0e', border: `1.5px solid ${isPaid ? '#22c55e' : '#ca8a04'}`, borderRadius: '8px', cursor: 'pointer', fontSize: '11px', fontFamily: 'Poppins, sans-serif', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '3px' }}>
                             <DollarSign size={12} /> {isPaid ? '✓ Paid' : 'Mark Paid'}
                           </button>
                         )}
@@ -509,7 +509,7 @@ export default function TimesheetsPage() {
                       </td>
                       <td style={{ padding: '10px 10px' }}>
                         <button onClick={() => togglePaid(ts)}
-                          style={{ padding: '5px 10px', background: ts.paid ? '#f0fdf4' : '#fef9c3', color: ts.paid ? '#16a34a' : '#854d0e', border: `1px solid ${ts.paid ? '#22c55e' : '#ca8a04'}`, borderRadius: '8px', cursor: 'pointer', fontSize: '11px', fontFamily: 'Outfit, sans-serif', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                          style={{ padding: '5px 10px', background: ts.paid ? '#f0fdf4' : '#fef9c3', color: ts.paid ? '#16a34a' : '#854d0e', border: `1px solid ${ts.paid ? '#22c55e' : '#ca8a04'}`, borderRadius: '8px', cursor: 'pointer', fontSize: '11px', fontFamily: 'Poppins, sans-serif', fontWeight: 600, whiteSpace: 'nowrap' }}>
                           {ts.paid ? '✓ Paid' : 'Mark Paid'}
                         </button>
                       </td>

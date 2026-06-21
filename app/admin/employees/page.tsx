@@ -13,7 +13,7 @@ export default function EmployeesPage() {
   const [form, setForm]           = useState<any>(EMPTY);
   const [saving, setSaving]       = useState(false);
 
-  const inp: React.CSSProperties = { width: '100%', background: '#f9f5f0', border: '1px solid var(--stone-light)', borderRadius: '10px', padding: '9px 12px', fontSize: '13px', color: 'var(--brown-dark)', outline: 'none', fontFamily: 'Outfit, sans-serif', boxSizing: 'border-box' };
+  const inp: React.CSSProperties = { width: '100%', background: '#f9f5f0', border: '1px solid var(--stone-light)', borderRadius: '10px', padding: '9px 12px', fontSize: '13px', color: 'var(--brown-dark)', outline: 'none', fontFamily: 'Poppins, sans-serif', boxSizing: 'border-box' };
 
   const load = () => {
     fetch('/api/employees').then(r => r.json()).then(d => { setEmployees(Array.isArray(d) ? d : []); setLoading(false); });
@@ -57,7 +57,7 @@ export default function EmployeesPage() {
           <h1 className="font-display" style={{ fontSize: '28px', fontWeight: 700, color: 'var(--brown-dark)' }}>Employees</h1>
           <p style={{ fontSize: '13px', color: 'var(--brown-mid)' }}>{employees.length} employee{employees.length !== 1 ? 's' : ''}</p>
         </div>
-        <button onClick={openAdd} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--red-korean)', color: 'white', border: 'none', borderRadius: '12px', padding: '10px 20px', cursor: 'pointer', fontFamily: 'Outfit, sans-serif', fontSize: '13px', fontWeight: 600 }}>
+        <button onClick={openAdd} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--red-korean)', color: 'white', border: 'none', borderRadius: '12px', padding: '10px 20px', cursor: 'pointer', fontFamily: 'Poppins, sans-serif', fontSize: '13px', fontWeight: 600 }}>
           <Plus size={15} /> Add Employee
         </button>
       </div>
@@ -87,7 +87,7 @@ export default function EmployeesPage() {
                   <div style={{ fontSize: '11px', color: 'var(--brown-mid)' }}>per hour</div>
                 </div>
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                  <button onClick={() => toggle(e)} title={e.isActive ? 'Deactivate' : 'Activate'} style={{ padding: '6px 12px', background: e.isActive ? '#f0fdf4' : '#fef2f2', border: `1px solid ${e.isActive ? '#22c55e' : '#ef4444'}`, borderRadius: '8px', cursor: 'pointer', fontSize: '11px', fontWeight: 600, color: e.isActive ? '#16a34a' : '#dc2626', fontFamily: 'Outfit, sans-serif' }}>
+                  <button onClick={() => toggle(e)} title={e.isActive ? 'Deactivate' : 'Activate'} style={{ padding: '6px 12px', background: e.isActive ? '#f0fdf4' : '#fef2f2', border: `1px solid ${e.isActive ? '#22c55e' : '#ef4444'}`, borderRadius: '8px', cursor: 'pointer', fontSize: '11px', fontWeight: 600, color: e.isActive ? '#16a34a' : '#dc2626', fontFamily: 'Poppins, sans-serif' }}>
                     {e.isActive ? 'Active' : 'Inactive'}
                   </button>
                   <button onClick={() => openEdit(e)} style={{ padding: '7px', background: 'none', border: '1px solid var(--stone-light)', borderRadius: '8px', cursor: 'pointer', color: 'var(--brown-mid)' }}><Edit size={14} /></button>
@@ -129,10 +129,10 @@ export default function EmployeesPage() {
             </div>
 
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={save} disabled={saving} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '12px', padding: '12px', fontSize: '14px', fontWeight: 600, cursor: saving ? 'wait' : 'pointer', fontFamily: 'Outfit, sans-serif' }}>
+              <button onClick={save} disabled={saving} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '12px', padding: '12px', fontSize: '14px', fontWeight: 600, cursor: saving ? 'wait' : 'pointer', fontFamily: 'Poppins, sans-serif' }}>
                 <Check size={15} />{saving ? 'Saving…' : 'Save Employee'}
               </button>
-              <button onClick={() => setModal(false)} style={{ flex: 1, background: 'var(--stone-light)', color: 'var(--brown-dark)', border: 'none', borderRadius: '12px', padding: '12px', fontSize: '14px', cursor: 'pointer', fontFamily: 'Outfit, sans-serif' }}>Cancel</button>
+              <button onClick={() => setModal(false)} style={{ flex: 1, background: 'var(--stone-light)', color: 'var(--brown-dark)', border: 'none', borderRadius: '12px', padding: '12px', fontSize: '14px', cursor: 'pointer', fontFamily: 'Poppins, sans-serif' }}>Cancel</button>
             </div>
           </div>
         </div>

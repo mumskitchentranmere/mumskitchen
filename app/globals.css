@@ -14,8 +14,8 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
-body { font-family: 'Outfit', sans-serif; background: var(--cream); color: var(--brown-dark); }
-.font-display { font-family: 'Cormorant Garamond', serif; }
+body { font-family: 'Poppins', sans-serif; background: var(--cream); color: var(--brown-dark); }
+.font-display { font-family: 'Playfair Display', serif; }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 5px; }

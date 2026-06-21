@@ -69,7 +69,7 @@ export default function DashboardPage() {
         <div style={{ display:'flex', gap:'10px', marginBottom:'24px', flexWrap:'wrap' }}>
           {TABS.map(({ id, label, icon: Icon, count }) => (
             <button key={id} onClick={() => setTab(id as any)}
-              style={{ display:'flex', alignItems:'center', gap:'6px', padding:'9px 18px', borderRadius:'20px', border:'1.5px solid', borderColor: tab===id ? 'var(--red-korean)' : 'var(--stone-light)', background: tab===id ? 'var(--red-korean)' : 'white', color: tab===id ? 'white' : 'var(--brown-mid)', fontSize:'13px', fontWeight:500, cursor:'pointer', fontFamily:'Outfit, sans-serif' }}>
+              style={{ display:'flex', alignItems:'center', gap:'6px', padding:'9px 18px', borderRadius:'20px', border:'1.5px solid', borderColor: tab===id ? 'var(--red-korean)' : 'var(--stone-light)', background: tab===id ? 'var(--red-korean)' : 'white', color: tab===id ? 'white' : 'var(--brown-mid)', fontSize:'13px', fontWeight:500, cursor:'pointer', fontFamily:'Poppins, sans-serif' }}>
               <Icon size={14} /> {label} ({count})
             </button>
           ))}
@@ -107,7 +107,7 @@ export default function DashboardPage() {
           <div>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px' }}>
               <h2 style={{ fontSize:'16px', fontWeight:600, color:'var(--brown-dark)' }}>Your Reviews</h2>
-              <button onClick={() => setShowWriteReview(true)} style={{ display:'flex', alignItems:'center', gap:'6px', background:'var(--brown-dark)', color:'white', border:'none', borderRadius:'10px', padding:'8px 16px', cursor:'pointer', fontSize:'13px', fontWeight:500, fontFamily:'Outfit, sans-serif' }}>
+              <button onClick={() => setShowWriteReview(true)} style={{ display:'flex', alignItems:'center', gap:'6px', background:'var(--brown-dark)', color:'white', border:'none', borderRadius:'10px', padding:'8px 16px', cursor:'pointer', fontSize:'13px', fontWeight:500, fontFamily:'Poppins, sans-serif' }}>
                 <PenLine size={13}/> Write Review
               </button>
             </div>
@@ -115,7 +115,7 @@ export default function DashboardPage() {
               <div style={{ textAlign:'center', padding:'60px 0', color:'var(--brown-mid)' }}>
                 <Star size={36} style={{ margin:'0 auto 12px', opacity:0.2 }}/>
                 <p>No reviews yet</p>
-                <button onClick={() => setShowWriteReview(true)} style={{ background:'none', border:'none', color:'var(--red-korean)', cursor:'pointer', fontSize:'13px', fontFamily:'Outfit, sans-serif', marginTop:'8px' }}>Write your first review →</button>
+                <button onClick={() => setShowWriteReview(true)} style={{ background:'none', border:'none', color:'var(--red-korean)', cursor:'pointer', fontSize:'13px', fontFamily:'Poppins, sans-serif', marginTop:'8px' }}>Write your first review →</button>
               </div>
             ) : (
               <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>

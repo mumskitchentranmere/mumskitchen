@@ -7,7 +7,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
   }, [error]);
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--cream)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', paddingTop: '68px', fontFamily: 'Outfit, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--cream)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', paddingTop: '68px', fontFamily: 'Poppins, sans-serif' }}>
       <div style={{ textAlign: 'center', maxWidth: '480px' }}>
         <div style={{ fontSize: '64px', marginBottom: '8px' }}>⚠️</div>
         <h1 className="font-display" style={{ fontSize: '32px', fontWeight: 700, color: 'var(--brown-dark)', marginBottom: '12px' }}>Something went wrong</h1>
@@ -22,7 +22,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
           <button
             onClick={reset}
-            style={{ background: 'var(--red-korean)', color: 'white', padding: '13px 28px', borderRadius: '12px', border: 'none', fontSize: '14px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Outfit, sans-serif' }}>
+            style={{ background: 'var(--red-korean)', color: 'white', padding: '13px 28px', borderRadius: '12px', border: 'none', fontSize: '14px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Poppins, sans-serif' }}>
             Try Again
           </button>
           <a href="/" style={{ background: 'var(--brown-dark)', color: 'white', padding: '13px 28px', borderRadius: '12px', textDecoration: 'none', fontSize: '14px', fontWeight: 600 }}>

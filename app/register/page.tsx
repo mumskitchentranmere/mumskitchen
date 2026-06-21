@@ -19,7 +19,7 @@ export default function RegisterPage() {
     if (!r.ok) { toast.error(d.error); setLoading(false); return; }
     toast.success('Account created!'); router.push('/login');
   };
-  const inp: React.CSSProperties = { width:'100%', background:'white', border:'1.5px solid var(--stone-light)', borderRadius:'12px', padding:'12px 16px', fontSize:'14px', color:'var(--brown-dark)', outline:'none', fontFamily:'Outfit, sans-serif', boxSizing:'border-box' };
+  const inp: React.CSSProperties = { width:'100%', background:'white', border:'1.5px solid var(--stone-light)', borderRadius:'12px', padding:'12px 16px', fontSize:'14px', color:'var(--brown-dark)', outline:'none', fontFamily:'Poppins, sans-serif', boxSizing:'border-box' };
   return (
     <div style={{ minHeight:'100vh', background:'var(--cream)', display:'flex', alignItems:'center', justifyContent:'center', padding:'80px 24px 40px' }}>
       <div style={{ width:'100%', maxWidth:'420px' }}>
@@ -34,7 +34,7 @@ export default function RegisterPage() {
               <input type={type} required={field!=='phone'} value={(form as any)[field]} onChange={e=>setForm(f=>({...f,[field]:e.target.value}))} placeholder={ph} style={inp} />
             </div>
           ))}
-          <button type="submit" disabled={loading} style={{ width:'100%', background:'var(--brown-dark)', color:'white', border:'none', borderRadius:'12px', padding:'14px', fontSize:'15px', fontWeight:600, cursor:loading?'wait':'pointer', fontFamily:'Outfit, sans-serif', marginTop:'8px' }}>{loading?'Creating…':'Create Account'}</button>
+          <button type="submit" disabled={loading} style={{ width:'100%', background:'var(--brown-dark)', color:'white', border:'none', borderRadius:'12px', padding:'14px', fontSize:'15px', fontWeight:600, cursor:loading?'wait':'pointer', fontFamily:'Poppins, sans-serif', marginTop:'8px' }}>{loading?'Creating…':'Create Account'}</button>
           <p style={{ textAlign:'center', fontSize:'13px', color:'var(--brown-mid)', marginTop:'16px' }}>Already registered? <Link href="/login" style={{ color:'var(--red-korean)', textDecoration:'none', fontWeight:500 }}>Sign in</Link></p>
         </form>
       </div>

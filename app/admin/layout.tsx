@@ -7,7 +7,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const session = await auth();
   if (!session || (session.user as any)?.role !== 'admin') redirect('/login');
   return (
-    <div className="admin-layout" style={{ background: 'var(--cream)', fontFamily: 'Outfit, sans-serif' }}>
+    <div className="admin-layout" style={{ background: 'var(--cream)', fontFamily: 'Poppins, sans-serif' }}>
       <AdminSidebar />
       <OrderNotifications />
       <main className="admin-main">{children}</main>

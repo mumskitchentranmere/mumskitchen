@@ -22,7 +22,7 @@ export default function AdminBookingsPage() {
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:'8px', flexWrap:'wrap' }}>
                 <span style={{ fontSize:'11px', padding:'3px 8px', borderRadius:'8px', fontWeight:600, background:SC[b.status]+'20', color:SC[b.status] }}>{b.status}</span>
-                {['confirmed','completed','cancelled','no-show'].map(s=><button key={s} onClick={()=>update(b._id,s)} style={{ padding:'4px 10px', borderRadius:'7px', border:'1px solid var(--stone-light)', background:b.status===s?'var(--stone-light)':'white', color:'var(--brown-mid)', fontSize:'11px', cursor:'pointer', fontFamily:'Outfit, sans-serif', textTransform:'capitalize' }}>{s}</button>)}
+                {['confirmed','completed','cancelled','no-show'].map(s=><button key={s} onClick={()=>update(b._id,s)} style={{ padding:'4px 10px', borderRadius:'7px', border:'1px solid var(--stone-light)', background:b.status===s?'var(--stone-light)':'white', color:'var(--brown-mid)', fontSize:'11px', cursor:'pointer', fontFamily:'Poppins, sans-serif', textTransform:'capitalize' }}>{s}</button>)}
               </div>
             </div>
           ))}

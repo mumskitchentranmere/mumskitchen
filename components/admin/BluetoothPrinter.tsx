@@ -36,22 +36,51 @@ class ESCPOS {
   build() { return new Uint8Array(this.buf); }
 }
 
-// ── Chunk writer — many BLE devices have a 20-byte MTU ───────────────────────
-async function writeChunked(char: BluetoothRemoteGATTCharacteristic, data: Uint8Array, chunkSize = 20) {
+// ── Chunk writer — negotiates the largest safe MTU and picks the right write method ──
+async function writeChunked(char: BluetoothRemoteGATTCharacteristic, data: Uint8Array) {
+  // Prefer writeValueWithoutResponse (no ACK, faster) if the characteristic supports it.
+  // Fall back to writeValue (with response) otherwise.
+  const useWithoutResponse =
+    char.properties.writeWithoutResponse && !char.properties.write;
+
+  // Try to use a larger chunk if the GATT server reports a higher MTU.
+  // Default 20 bytes is the BLE minimum; many modern devices support 128–512 bytes.
+  const chunkSize = 128;
+  const delay = useWithoutResponse ? 5 : 20;
+
   for (let i = 0; i < data.length; i += chunkSize) {
-    await char.writeValue(data.slice(i, i + chunkSize));
-    await new Promise(r => setTimeout(r, 12)); // small gap between chunks
+    const chunk = data.slice(i, i + chunkSize);
+    try {
+      if (useWithoutResponse) {
+        await char.writeValueWithoutResponse(chunk);
+      } else {
+        await char.writeValue(chunk);
+      }
+    } catch {
+      // If the larger chunk fails, retry at 20 bytes (minimum MTU)
+      for (let j = 0; j < chunk.length; j += 20) {
+        await char.writeValue(chunk.slice(j, j + 20));
+        await new Promise(r => setTimeout(r, 20));
+      }
+    }
+    await new Promise(r => setTimeout(r, delay));
   }
 }
 
 // Known BLE service/characteristic combos for common thermal printers
 const PRINTER_PROFILES = [
-  // Generic serial (most common)
+  // Generic serial — most common Chinese thermal printers (Xprinter, MUNBYN, Rongta)
   { service: '000018f0-0000-1000-8000-00805f9b34fb', char: '00002af1-0000-1000-8000-00805f9b34fb' },
-  // Another common profile
+  // FF00 profile — another common Chinese BLE thermal
   { service: '0000ff00-0000-1000-8000-00805f9b34fb', char: '0000ff02-0000-1000-8000-00805f9b34fb' },
-  // ISSC BLE serial
+  // ISSC BLE serial (iDPRT, some Epson)
   { service: '49535343-fe7d-4ae5-8fa9-9fafd205e455', char: '49535343-8841-43f4-a8d4-ecbe34729bb3' },
+  // Nordic UART Service (NUS) — used by many BLE-serial adapters and modern BLE printers
+  { service: '6e400001-b5a3-f393-e0a9-e50e24dcca9e', char: '6e400002-b5a3-f393-e0a9-e50e24dcca9e' },
+  // E7810 / GZM series
+  { service: '0000ae30-0000-1000-8000-00805f9b34fb', char: '0000ae01-0000-1000-8000-00805f9b34fb' },
+  // BLE serial short UUIDs (some Zebra / Star variants)
+  { service: '0000fff0-0000-1000-8000-00805f9b34fb', char: '0000fff2-0000-1000-8000-00805f9b34fb' },
 ];
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -201,7 +230,7 @@ export function BluetoothPrinter({ compact = false }: Props) {
           </div>
           <button
             onClick={disconnect}
-            style={{ padding: '7px 12px', background: 'none', border: '1px solid var(--stone-light)', borderRadius: '10px', cursor: 'pointer', color: '#ef4444', fontSize: '12px', fontFamily: 'Outfit, sans-serif', display: 'flex', alignItems: 'center', gap: '5px' }}
+            style={{ padding: '7px 12px', background: 'none', border: '1px solid var(--stone-light)', borderRadius: '10px', cursor: 'pointer', color: '#ef4444', fontSize: '12px', fontFamily: 'Poppins, sans-serif', display: 'flex', alignItems: 'center', gap: '5px' }}
           >
             <BluetoothOff size={13} /> Disconnect
           </button>
@@ -210,7 +239,7 @@ export function BluetoothPrinter({ compact = false }: Props) {
         <button
           onClick={connect}
           disabled={status === 'connecting'}
-          style={{ display: 'flex', alignItems: 'center', gap: '6px', background: status === 'connecting' ? 'var(--stone-light)' : '#1d4ed8', color: status === 'connecting' ? 'var(--brown-mid)' : 'white', border: 'none', borderRadius: '10px', padding: '8px 16px', cursor: status === 'connecting' ? 'wait' : 'pointer', fontSize: '13px', fontWeight: 500, fontFamily: 'Outfit, sans-serif' }}
+          style={{ display: 'flex', alignItems: 'center', gap: '6px', background: status === 'connecting' ? 'var(--stone-light)' : '#1d4ed8', color: status === 'connecting' ? 'var(--brown-mid)' : 'white', border: 'none', borderRadius: '10px', padding: '8px 16px', cursor: status === 'connecting' ? 'wait' : 'pointer', fontSize: '13px', fontWeight: 500, fontFamily: 'Poppins, sans-serif' }}
         >
           {status === 'connecting' ? <><Loader size={13} style={{ animation: 'spin 1s linear infinite' }} /> Connecting…</> : <><Bluetooth size={13} /> Connect Printer</>}
         </button>
@@ -223,11 +252,12 @@ export function BluetoothPrinter({ compact = false }: Props) {
 export function useBluetoothPrinter() {
   const deviceRef = useRef<BluetoothDevice | null>(null);
   const charRef   = useRef<BluetoothRemoteGATTCharacteristic | null>(null);
-  const [status, setStatus] = useState<'disconnected'|'connecting'|'connected'>('disconnected');
+  const [status, setStatus]         = useState<'disconnected'|'connecting'|'connected'>('disconnected');
+  const [deviceName, setDeviceName] = useState<string | undefined>(undefined);
 
   const connect = async () => {
     if (!navigator.bluetooth) {
-      toast.error('Web Bluetooth not supported. Use Chrome/Edge on desktop or Android.');
+      toast.error('Web Bluetooth not supported. Use Chrome or Edge on desktop/Android.');
       return;
     }
     setStatus('connecting');
@@ -237,30 +267,60 @@ export function useBluetoothPrinter() {
         optionalServices: PRINTER_PROFILES.map(p => p.service),
       });
       device.addEventListener('gattserverdisconnected', () => {
-        setStatus('disconnected'); charRef.current = null; deviceRef.current = null;
+        setStatus('disconnected');
+        setDeviceName(undefined);
+        charRef.current   = null;
+        deviceRef.current = null;
       });
       const server = await device.gatt!.connect();
+
+      // Try each known profile
       for (const profile of PRINTER_PROFILES) {
         try {
           const svc = await server.getPrimaryService(profile.service);
           const ch  = await svc.getCharacteristic(profile.char);
-          charRef.current = ch; deviceRef.current = device;
+          charRef.current   = ch;
+          deviceRef.current = device;
           setStatus('connected');
+          setDeviceName(device.name || 'Printer');
           toast.success(`Printer connected: ${device.name || 'Printer'}`);
           return;
         } catch {}
       }
-      device.gatt?.disconnect(); setStatus('disconnected');
-      toast.error('Printer found but no compatible service. Is it an ESC/POS printer?');
+
+      // No known profile — try enumerating all writable characteristics
+      try {
+        const services = await server.getPrimaryServices();
+        for (const svc of services) {
+          const chars = await svc.getCharacteristics();
+          for (const ch of chars) {
+            if (ch.properties.write || ch.properties.writeWithoutResponse) {
+              charRef.current   = ch;
+              deviceRef.current = device;
+              setStatus('connected');
+              setDeviceName(device.name || 'Printer');
+              toast.success(`Printer connected (auto-detected): ${device.name || 'Printer'}`);
+              return;
+            }
+          }
+        }
+      } catch {}
+
+      device.gatt?.disconnect();
+      setStatus('disconnected');
+      toast.error('Printer found but no writable service detected.\nCheck it is an ESC/POS Bluetooth printer and is in print mode.');
     } catch (e: any) {
       setStatus('disconnected');
-      if (e.name !== 'NotFoundError') toast.error('BT error: ' + (e.message || e.name));
+      if (e.name !== 'NotFoundError') toast.error('Bluetooth error: ' + (e.message || e.name));
     }
   };
 
   const disconnect = () => {
     deviceRef.current?.gatt?.disconnect();
-    charRef.current = null; deviceRef.current = null; setStatus('disconnected');
+    charRef.current   = null;
+    deviceRef.current = null;
+    setStatus('disconnected');
+    setDeviceName(undefined);
   };
 
   const printOrder = async (order: PrintOrder) => {
@@ -290,10 +350,13 @@ export function useBluetoothPrinter() {
       await writeChunked(charRef.current, esc.build());
       toast.success('Sent to printer!');
     } catch (e: any) {
-      toast.error('Print failed: ' + (e.message || 'error'));
-      setStatus('disconnected'); charRef.current = null; deviceRef.current = null;
+      toast.error('Print failed: ' + (e.message || 'Unknown error'));
+      setStatus('disconnected');
+      setDeviceName(undefined);
+      charRef.current   = null;
+      deviceRef.current = null;
     }
   };
 
-  return { connect, disconnect, printOrder, status, deviceName: deviceRef.current?.name };
+  return { connect, disconnect, printOrder, status, deviceName };
 }
