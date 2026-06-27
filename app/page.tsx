@@ -65,7 +65,7 @@ export default function HomePage() {
           <h1 className="font-display" style={{ fontSize: 'clamp(52px, 8vw, 96px)', fontWeight: 700, color: 'white', lineHeight: 1.05, marginBottom: '8px' }}>Mum's</h1>
           <h1 className="font-display" style={{ fontSize: 'clamp(52px, 8vw, 96px)', fontWeight: 700, color: '#C8922A', lineHeight: 1.05, marginBottom: '28px', fontStyle: 'italic' }}>Kitchen</h1>
           <p style={{ fontSize: 'clamp(15px, 2vw, 18px)', color: 'rgba(232,224,213,0.8)', lineHeight: 1.7, marginBottom: '40px', maxWidth: '540px', margin: '0 auto 40px' }}>
-            Korean traditional authentic food, freshly prepared to order. Fried Chicken, Bibimbap, Rice Bowls, Soups & more.
+            Korean traditional authentic food, freshly prepared to order. Fried Chicken, Bibimbap, Rice Bowls, Soups & more delicious dishes.
           </p>
           <div className="hero-btns" style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link href="/order" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--red-korean)', color: 'white', padding: '14px 32px', borderRadius: '14px', textDecoration: 'none', fontSize: '15px', fontWeight: 600 }}>
