@@ -89,7 +89,7 @@ async function printViaTunnel(hex: string): Promise<void> {
   const res = await fetch(url, {
     method:  'POST',
     body:    hex,
-    signal:  AbortSignal.timeout(8000),
+    signal:  AbortSignal.timeout(4000),
   });
   if (!res.ok) throw new Error(await res.text());
 }
@@ -141,7 +141,8 @@ export async function POST(req: NextRequest) {
       await printViaTunnel(hex);
       return NextResponse.json({ printed: true });
     } catch (e: any) {
-      return NextResponse.json({ error: `Tunnel error: ${e.message}` }, { status: 502 });
+      // Tunnel failed — fall through to TCP then hex fallback
+      console.error('[Printer] Tunnel failed:', e.message);
     }
   }
 
@@ -150,7 +151,7 @@ export async function POST(req: NextRequest) {
     await tcpPrint(receipt);
     return NextResponse.json({ printed: true });
   } catch {
-    // Path 3 — Return hex for browser-side bridge / print dialog fallback
+    // Path 3 — Return hex so the browser can forward to localhost bridge or open print dialog
     return NextResponse.json({ hex });
   }
 }

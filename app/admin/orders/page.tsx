@@ -1,6 +1,35 @@
 'use client';
-import { useEffect, useState, useMemo } from 'react';
-import { Clock, Phone, Mail, Search, Download, Filter, Check, X, Printer, ChevronDown, ChevronUp } from 'lucide-react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
+import { Clock, Phone, Mail, Search, Download, Filter, Check, X, Printer, ChevronDown, ChevronUp, BellRing } from 'lucide-react';
+
+function playRingtone() {
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const t = ctx.currentTime;
+    const beep = (start: number, dur: number, freq: number, vol = 0.38) => {
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(vol, start);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
+      osc.start(start);
+      osc.stop(start + dur + 0.05);
+    };
+    // Ascending triple beep × 2 (like a doorbell chime)
+    beep(t + 0.00, 0.13, 880);
+    beep(t + 0.20, 0.13, 1108);
+    beep(t + 0.40, 0.25, 1318);
+    beep(t + 0.85, 0.13, 880);
+    beep(t + 1.05, 0.13, 1108);
+    beep(t + 1.25, 0.35, 1318);
+    setTimeout(() => ctx.close().catch?.(() => {}), 2500);
+  } catch {}
+}
 import toast from 'react-hot-toast';
 
 const ALL_STATUSES = ['pending', 'confirmed', 'preparing', 'ready', 'out-for-delivery', 'delivered', 'cancelled'];
@@ -89,43 +118,35 @@ ${order.specialInstructions?`<div class="b">SPECIAL INSTRUCTIONS:</div><div>${or
 async function printReceipt(order: any) {
   const tid = toast.loading('Sending to printer…');
   try {
-    const res = await fetch('/api/printer/print', {
+    const res  = await fetch('/api/printer/print', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(order),
     });
-    if (!res.ok) {
-      const d = await res.json().catch(() => ({}));
-      toast.error(d.error || 'Failed to build receipt', { id: tid });
-      return;
-    }
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
 
-    // Server printed directly via TCP (works on localhost:3000 — same LAN as printer)
+    // Server (or tunnel/TCP) printed successfully
     if (data.printed) {
       toast.success('Printed!', { id: tid });
       return;
     }
 
-    // Server is on Hostinger (can't reach printer) — forward hex to local bridge
-    const { hex } = data;
-    try {
-      const bridgeRes = await fetch('http://localhost:9102/print', {
+    // Server returned hex — forward to the local bridge running on this machine
+    if (data.hex) {
+      const bridgeOk = await fetch('http://localhost:9102/print', {
         method: 'POST',
-        body:   hex,
-      });
-      if (bridgeRes.ok) {
+        body:   data.hex,
+      }).then(r => r.ok).catch(() => false);
+
+      if (bridgeOk) {
         toast.success('Printed!', { id: tid });
         return;
       }
-      const errText = await bridgeRes.text();
-      toast.error(errText || 'Printer error', { id: tid });
-      return;
-    } catch {
-      // Bridge not running — open browser print dialog as last resort
-      toast.dismiss(tid);
-      openBrowserPrint(order);
     }
+
+    // Last resort: open formatted receipt in a popup for manual printing
+    toast.dismiss(tid);
+    openBrowserPrint(order);
   } catch {
     toast.dismiss(tid);
     openBrowserPrint(order);
@@ -288,15 +309,66 @@ export default function AdminOrdersPage() {
   const [dateTo,       setDateTo]      = useState('');
   const [updating,     setUpdating]    = useState<string | null>(null);
   const [capturing,    setCapturing]   = useState<string | null>(null);
+  const [alertActive,  setAlertActive] = useState(false);
+  const [newOrderCount, setNewOrderCount] = useState(0);
 
-  const load = () =>
-    fetch('/api/orders').then(r => r.ok ? r.json() : Promise.reject(r.status)).then(d => { setOrders(Array.isArray(d) ? d : []); setLoading(false); }).catch(() => setLoading(false));
+  const seenOrderIds   = useRef<Set<string>>(new Set());
+  const isFirstLoad    = useRef(true);
+  const ringIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const stopRing = useCallback(() => {
+    if (ringIntervalRef.current) { clearInterval(ringIntervalRef.current); ringIntervalRef.current = null; }
+    setAlertActive(false);
+    setNewOrderCount(0);
+  }, []);
+
+  const startRing = useCallback((count: number) => {
+    playRingtone();
+    setAlertActive(true);
+    setNewOrderCount(c => c + count);
+    if (!ringIntervalRef.current) {
+      ringIntervalRef.current = setInterval(playRingtone, 2_000);
+    }
+  }, []);
+
+  const load = useCallback(() =>
+    fetch('/api/orders')
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then((d: any[]) => {
+        const data = Array.isArray(d) ? d : [];
+        setOrders(data);
+        setLoading(false);
+
+        // Orders that need the admin's attention
+        const needsAction = data.filter(o =>
+          o.status === 'pending' || o.paymentStatus === 'authorized'
+        );
+
+        if (isFirstLoad.current) {
+          data.forEach(o => seenOrderIds.current.add(o._id));
+          isFirstLoad.current = false;
+          if (needsAction.length > 0) startRing(needsAction.length);
+          return;
+        }
+
+        // New orders that arrived since last poll
+        const brandNew = needsAction.filter(o => !seenOrderIds.current.has(o._id));
+        data.forEach(o => seenOrderIds.current.add(o._id));
+
+        if (brandNew.length > 0) {
+          startRing(brandNew.length);
+        } else if (needsAction.length === 0) {
+          stopRing();
+        }
+      })
+      .catch(() => setLoading(false)),
+  [startRing, stopRing]);
 
   useEffect(() => {
     load();
     const interval = setInterval(load, 30_000);
-    return () => clearInterval(interval);
-  }, []);
+    return () => { clearInterval(interval); stopRing(); };
+  }, [load, stopRing]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -351,6 +423,27 @@ export default function AdminOrdersPage() {
 
   return (
     <div>
+      {/* ── New-order alert banner ─────────────────────────────── */}
+      {alertActive && (
+        <div style={{ background: 'linear-gradient(135deg, #dc2626, #b91c1c)', borderRadius: '14px', padding: '14px 18px', marginBottom: '18px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <BellRing size={22} color="white" style={{ animation: 'ring-bell 0.5s ease-in-out infinite alternate', flexShrink: 0 }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 700, fontSize: '14px', color: 'white' }}>
+              {newOrderCount} new order{newOrderCount !== 1 ? 's' : ''} need attention!
+            </div>
+            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)', marginTop: '2px' }}>
+              Ringing every 20 seconds until all pending orders are handled.
+            </div>
+          </div>
+          <button
+            onClick={stopRing}
+            style={{ background: 'rgba(255,255,255,0.2)', border: '1.5px solid rgba(255,255,255,0.5)', color: 'white', borderRadius: '9px', padding: '7px 16px', cursor: 'pointer', fontSize: '12px', fontWeight: 700, fontFamily: 'Poppins, sans-serif', whiteSpace: 'nowrap', flexShrink: 0 }}
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
@@ -438,6 +531,10 @@ export default function AdminOrdersPage() {
         @keyframes pulse-dot {
           0%, 100% { opacity: 1; }
           50%       { opacity: 0.3; }
+        }
+        @keyframes ring-bell {
+          from { transform: rotate(-22deg); }
+          to   { transform: rotate(22deg); }
         }
       `}</style>
     </div>

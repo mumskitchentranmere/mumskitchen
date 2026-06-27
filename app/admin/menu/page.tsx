@@ -303,9 +303,67 @@ export default function AdminMenuPage() {
         </p>
       )}
 
-      {/* Table */}
+      {/* Mobile card list */}
+      {!loading && (
+        <div className="menu-card-list">
+          {filtered.length === 0 && (
+            <p style={{ textAlign: 'center', color: 'var(--brown-mid)', fontSize: '13px', padding: '32px 0' }}>
+              {search ? 'No items match your search' : 'No menu items yet'}
+            </p>
+          )}
+          {filtered.map(item => (
+            <div key={item._id} className="menu-list-item">
+              {/* Row 1: image + name/desc + toggle */}
+              <div className="menu-list-row1">
+                {item.primaryImage ? (
+                  <img src={item.primaryImage} alt={item.name} style={{ width: '48px', height: '48px', borderRadius: '10px', objectFit: 'cover', flexShrink: 0 }} />
+                ) : (
+                  <div style={{ width: '48px', height: '48px', borderRadius: '10px', background: 'var(--stone-light)', flexShrink: 0 }} />
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="menu-list-name" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    {item.name}
+                    {item.isFeatured && <Star size={11} color="#C8922A" fill="#C8922A" />}
+                  </div>
+                  <div className="menu-list-desc">{item.description}</div>
+                  <div className="menu-list-cat" style={{ marginTop: '2px' }}>{item.category}</div>
+                </div>
+                <button onClick={() => toggle(item)} style={{ width: '40px', height: '22px', borderRadius: '11px', background: item.isAvailable ? '#22c55e' : 'var(--stone-light)', border: 'none', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                  <div style={{ position: 'absolute', top: '3px', left: item.isAvailable ? '21px' : '3px', width: '16px', height: '16px', borderRadius: '50%', background: 'white', transition: 'left 0.2s' }} />
+                </button>
+              </div>
+              {/* Row 2: price + actions */}
+              <div className="menu-list-row2">
+                <div>
+                  {item.sizes?.length > 0 ? (
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      {item.sizes.map((s: any) => (
+                        <span key={s.label} style={{ fontSize: '12px', color: 'var(--red-korean)', fontWeight: 700 }}>
+                          {s.label} ${s.price?.toFixed(2)}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="menu-list-price">${item.price?.toFixed(2)}</span>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button onClick={() => openEdit(item)} style={{ padding: '7px 14px', background: 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontFamily: 'Poppins, sans-serif', fontWeight: 600 }}>
+                    <Edit size={12} /> Edit
+                  </button>
+                  <button onClick={() => remove(item._id)} style={{ padding: '7px 10px', background: 'none', border: '1px solid #fecaca', borderRadius: '8px', cursor: 'pointer', color: '#ef4444', display: 'flex', alignItems: 'center' }}>
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Desktop table */}
       {loading ? <p style={{ color: 'var(--brown-mid)' }}>Loading…</p> : (
-        <div className="table-scroll" style={{ background: 'white', borderRadius: '14px', border: '1px solid var(--stone-light)', overflow: 'hidden' }}>
+        <div className="table-scroll menu-table-wrap" style={{ background: 'white', borderRadius: '14px', border: '1px solid var(--stone-light)', overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '640px' }}>
             <thead style={{ background: '#f9f5f0' }}>
               <tr>
@@ -374,8 +432,8 @@ export default function AdminMenuPage() {
 
       {/* Modal */}
       {modal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(44,26,14,0.55)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }} onClick={() => setModal(false)}>
-          <div style={{ background: 'white', borderRadius: '20px', padding: '28px', width: '100%', maxWidth: '600px', maxHeight: '92vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(44,26,14,0.55)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'clamp(8px,3vw,16px)' }} onClick={() => setModal(false)}>
+          <div style={{ background: 'white', borderRadius: '20px', padding: 'clamp(16px,4vw,28px)', width: '100%', maxWidth: '600px', maxHeight: '92vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
 
             {/* Modal header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
