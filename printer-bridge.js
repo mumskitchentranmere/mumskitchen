@@ -42,10 +42,12 @@ function sendToPrinter(hexData) {
 }
 
 const server = http.createServer((req, res) => {
-  // Allow the hosted site to call this bridge
-  res.setHeader('Access-Control-Allow-Origin',  '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  // Standard CORS + Chrome Private Network Access header (required since Chrome 115
+  // for https:// pages calling http://localhost).
+  res.setHeader('Access-Control-Allow-Origin',          '*');
+  res.setHeader('Access-Control-Allow-Methods',         'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers',         'Content-Type');
+  res.setHeader('Access-Control-Allow-Private-Network', 'true');
 
   if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
   if (req.method !== 'POST')    { res.writeHead(405); res.end('Method Not Allowed'); return; }

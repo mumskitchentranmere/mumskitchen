@@ -30,48 +30,50 @@ function downloadCSV(orders: any[]) {
 }
 
 // ── Receipt printer ───────────────────────────────────────────────────────────
-// Step 1: Hosted server builds the ESC/POS receipt and returns it as hex.
-// Step 2: Browser sends the hex to printer-bridge.js running on localhost:9102
-//         on the restaurant computer (same LAN as the printer).
-// Chrome allows http://localhost calls from HTTPS pages, so this works even
-// when the admin site is hosted remotely.
-const BRIDGE_URL = 'http://localhost:9102';
-
+// Step 1: /api/printer/print on the hosted server builds ESC/POS → returns hex.
+// Step 2: Browser POSTs that hex to printer-bridge.js on localhost:9102
+//         (restaurant computer, same LAN as printer) which does the TCP write.
+// Chrome allows http://localhost from https:// pages per the Secure Contexts spec.
 async function printReceipt(order: any) {
   const tid = toast.loading('Sending to printer…');
   try {
-    // Step 1 — get ESC/POS hex from the hosted server
-    const prepRes = await fetch('/api/printer/prepare', {
+    // Step 1 — build receipt on server (no TCP, just ESC/POS hex)
+    const res = await fetch('/api/printer/print', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(order),
     });
-    if (!prepRes.ok) {
-      const d = await prepRes.json().catch(() => ({}));
-      toast.error(d.error || 'Failed to prepare receipt', { id: tid });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      toast.error(d.error || 'Failed to build receipt', { id: tid });
       return;
     }
-    const { hex } = await prepRes.json();
+    const { hex } = await res.json();
 
-    // Step 2 — forward to local bridge → printer
-    const printRes = await fetch(`${BRIDGE_URL}/print`, {
-      method: 'POST',
-      body:   hex,
-    });
-    if (printRes.ok) {
+    // Step 2 — forward hex to local bridge running on the restaurant computer
+    let bridgeRes: Response;
+    try {
+      bridgeRes = await fetch('http://localhost:9102/print', {
+        method: 'POST',
+        body:   hex,
+      });
+    } catch {
+      toast.error(
+        '⚠️ Printer bridge not running.\n' +
+        'Open Terminal on the restaurant computer and run:\n' +
+        'node printer-bridge.js',
+        { id: tid, duration: 8000 }
+      );
+      return;
+    }
+
+    if (bridgeRes.ok) {
       toast.success('Printed!', { id: tid });
     } else {
-      toast.error((await printRes.text()) || 'Printer error', { id: tid });
+      toast.error((await bridgeRes.text()) || 'Printer error', { id: tid });
     }
   } catch (e: any) {
-    if (e?.message?.includes('Failed to fetch') || e?.name === 'TypeError') {
-      toast.error(
-        'Printer bridge not running.\nOpen a terminal and run: node printer-bridge.js',
-        { id: tid, duration: 6000 }
-      );
-    } else {
-      toast.error('Print error: ' + (e?.message || 'Unknown'), { id: tid });
-    }
+    toast.error('Print error: ' + (e?.message || 'Unknown'), { id: tid });
   }
 }
 
