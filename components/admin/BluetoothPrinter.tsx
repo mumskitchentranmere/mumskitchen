@@ -1,6 +1,6 @@
 'use client';
 import { useRef, useState } from 'react';
-import { Bluetooth, BluetoothOff, Printer, Loader } from 'lucide-react';
+import { Bluetooth, BluetoothOff, Loader } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 // ── ESC/POS builder ──────────────────────────────────────────────────────────
@@ -67,21 +67,63 @@ async function writeChunked(char: BluetoothRemoteGATTCharacteristic, data: Uint8
   }
 }
 
-// Known BLE service/characteristic combos for common thermal printers
+// Known BLE service/characteristic combos for common thermal printers.
+// Chrome only allows access to services declared here, so this list must be broad.
 const PRINTER_PROFILES = [
   // Generic serial — most common Chinese thermal printers (Xprinter, MUNBYN, Rongta)
   { service: '000018f0-0000-1000-8000-00805f9b34fb', char: '00002af1-0000-1000-8000-00805f9b34fb' },
-  // FF00 profile — another common Chinese BLE thermal
+  // FF00 profile — another common Chinese BLE thermal (primary + alt char)
   { service: '0000ff00-0000-1000-8000-00805f9b34fb', char: '0000ff02-0000-1000-8000-00805f9b34fb' },
+  { service: '0000ff00-0000-1000-8000-00805f9b34fb', char: '0000ff01-0000-1000-8000-00805f9b34fb' },
   // ISSC BLE serial (iDPRT, some Epson)
   { service: '49535343-fe7d-4ae5-8fa9-9fafd205e455', char: '49535343-8841-43f4-a8d4-ecbe34729bb3' },
   // Nordic UART Service (NUS) — used by many BLE-serial adapters and modern BLE printers
   { service: '6e400001-b5a3-f393-e0a9-e50e24dcca9e', char: '6e400002-b5a3-f393-e0a9-e50e24dcca9e' },
-  // E7810 / GZM series
+  // E7810 / GZM / some HPRT models
   { service: '0000ae30-0000-1000-8000-00805f9b34fb', char: '0000ae01-0000-1000-8000-00805f9b34fb' },
-  // BLE serial short UUIDs (some Zebra / Star variants)
+  // FFF0 profile — Zebra / Star variants (primary + alt char)
   { service: '0000fff0-0000-1000-8000-00805f9b34fb', char: '0000fff2-0000-1000-8000-00805f9b34fb' },
+  { service: '0000fff0-0000-1000-8000-00805f9b34fb', char: '0000fff1-0000-1000-8000-00805f9b34fb' },
+  // Xprinter BLE — many MUNBYN devices are Xprinter OEM and use this UUID
+  { service: 'e7810a71-73ae-499d-8c15-faa9aef0c3f2', char: 'bef8d6c9-9c21-4c9e-b632-bd58c1009f9f' },
+  // Dialog Semiconductor DSPS — used by some HPRT / MUNBYN BLE modules
+  { service: '0000fef5-0000-1000-8000-00805f9b34fb', char: '0000fef6-0000-1000-8000-00805f9b34fb' },
 ];
+
+// ── Shared connection helper ─────────────────────────────────────────────────
+// Tries each unique service from PRINTER_PROFILES. For a service that exists on
+// the device it first tries the known char UUIDs, then enumerates ALL
+// characteristics and picks the first writable one. This handles printers that
+// share a well-known service UUID but use a non-standard characteristic UUID.
+async function findWritableChar(
+  server: BluetoothRemoteGATTServer
+): Promise<BluetoothRemoteGATTCharacteristic | null> {
+  const tried = new Set<string>();
+  for (const profile of PRINTER_PROFILES) {
+    if (tried.has(profile.service)) continue;
+    tried.add(profile.service);
+
+    let svc: BluetoothRemoteGATTService | undefined;
+    try { svc = await server.getPrimaryService(profile.service); } catch { continue; }
+
+    // Try every known char UUID for this service first
+    const knownChars = PRINTER_PROFILES.filter(p => p.service === profile.service).map(p => p.char);
+    for (const uuid of knownChars) {
+      try {
+        const ch = await svc.getCharacteristic(uuid);
+        if (ch.properties.write || ch.properties.writeWithoutResponse) return ch;
+      } catch {}
+    }
+
+    // Fall back: enumerate every characteristic and pick the first writable one
+    try {
+      const chars = await svc.getCharacteristics();
+      const ch = chars.find(c => c.properties.write || c.properties.writeWithoutResponse);
+      if (ch) return ch;
+    } catch {}
+  }
+  return null;
+}
 
 // ── Component ────────────────────────────────────────────────────────────────
 export type PrintOrder = {
@@ -111,7 +153,7 @@ export function BluetoothPrinter({ compact = false }: Props) {
     try {
       const device = await navigator.bluetooth.requestDevice({
         acceptAllDevices: true,
-        optionalServices: PRINTER_PROFILES.map(p => p.service),
+        optionalServices: [...new Set(PRINTER_PROFILES.map(p => p.service))],
       });
 
       device.addEventListener('gattserverdisconnected', () => {
@@ -121,24 +163,18 @@ export function BluetoothPrinter({ compact = false }: Props) {
       });
 
       const server = await device.gatt!.connect();
+      const ch = await findWritableChar(server);
 
-      // Try each profile until one works
-      for (const profile of PRINTER_PROFILES) {
-        try {
-          const svc  = await server.getPrimaryService(profile.service);
-          const ch   = await svc.getCharacteristic(profile.char);
-          charRef.current  = ch;
-          deviceRef.current = device;
-          setStatus('connected');
-          toast.success(`Printer connected: ${device.name || 'Unknown device'}`);
-          return;
-        } catch {}
+      if (ch) {
+        charRef.current  = ch;
+        deviceRef.current = device;
+        setStatus('connected');
+        toast.success(`Printer connected: ${device.name || 'Unknown device'}`);
+      } else {
+        device.gatt?.disconnect();
+        setStatus('disconnected');
+        toast.error('Printer found but no compatible service detected.\nCheck it is an ESC/POS Bluetooth printer and is in print mode.');
       }
-
-      // No known profile matched
-      device.gatt?.disconnect();
-      setStatus('disconnected');
-      toast.error('Printer connected but no compatible service found.\nMake sure it is a supported ESC/POS Bluetooth printer.');
     } catch (e: any) {
       setStatus('disconnected');
       if (e.name !== 'NotFoundError') {
@@ -264,7 +300,7 @@ export function useBluetoothPrinter() {
     try {
       const device = await navigator.bluetooth.requestDevice({
         acceptAllDevices: true,
-        optionalServices: PRINTER_PROFILES.map(p => p.service),
+        optionalServices: [...new Set(PRINTER_PROFILES.map(p => p.service))],
       });
       device.addEventListener('gattserverdisconnected', () => {
         setStatus('disconnected');
@@ -273,42 +309,19 @@ export function useBluetoothPrinter() {
         deviceRef.current = null;
       });
       const server = await device.gatt!.connect();
+      const ch = await findWritableChar(server);
 
-      // Try each known profile
-      for (const profile of PRINTER_PROFILES) {
-        try {
-          const svc = await server.getPrimaryService(profile.service);
-          const ch  = await svc.getCharacteristic(profile.char);
-          charRef.current   = ch;
-          deviceRef.current = device;
-          setStatus('connected');
-          setDeviceName(device.name || 'Printer');
-          toast.success(`Printer connected: ${device.name || 'Printer'}`);
-          return;
-        } catch {}
+      if (ch) {
+        charRef.current   = ch;
+        deviceRef.current = device;
+        setStatus('connected');
+        setDeviceName(device.name || 'Printer');
+        toast.success(`Printer connected: ${device.name || 'Printer'}`);
+      } else {
+        device.gatt?.disconnect();
+        setStatus('disconnected');
+        toast.error('Printer found but no compatible service detected.\nCheck it is an ESC/POS Bluetooth printer and is in print mode.');
       }
-
-      // No known profile — try enumerating all writable characteristics
-      try {
-        const services = await server.getPrimaryServices();
-        for (const svc of services) {
-          const chars = await svc.getCharacteristics();
-          for (const ch of chars) {
-            if (ch.properties.write || ch.properties.writeWithoutResponse) {
-              charRef.current   = ch;
-              deviceRef.current = device;
-              setStatus('connected');
-              setDeviceName(device.name || 'Printer');
-              toast.success(`Printer connected (auto-detected): ${device.name || 'Printer'}`);
-              return;
-            }
-          }
-        }
-      } catch {}
-
-      device.gatt?.disconnect();
-      setStatus('disconnected');
-      toast.error('Printer found but no writable service detected.\nCheck it is an ESC/POS Bluetooth printer and is in print mode.');
     } catch (e: any) {
       setStatus('disconnected');
       if (e.name !== 'NotFoundError') toast.error('Bluetooth error: ' + (e.message || e.name));

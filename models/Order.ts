@@ -9,7 +9,7 @@ const OrderSchema = new Schema({
   items: [ItemSchema],
   subtotal: Number, deliveryFee: { type: Number, default: 0 }, total: Number,
   status: { type: String, enum: ['pending','confirmed','preparing','ready','out-for-delivery','delivered','cancelled'], default: 'pending' },
-  paymentStatus: { type: String, enum: ['pending','authorized','paid','failed','refunded','cancelled'], default: 'pending' },
+  paymentStatus: { type: String, enum: ['pending','authorized','capturing','paid','failed','refunded','cancelled'], default: 'pending' },
   paymentIntentId: String,
   deliveryAddress: String, pickupTime: String, specialInstructions: String,
 }, { timestamps: true });

@@ -1,8 +1,7 @@
 'use client';
 import { useEffect, useState, useMemo } from 'react';
-import { Clock, Phone, Mail, Search, Download, Filter, Check, X, Printer, Bluetooth, ChevronDown, ChevronUp } from 'lucide-react';
+import { Clock, Phone, Mail, Search, Download, Filter, Check, X, Printer, ChevronDown, ChevronUp } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useBluetoothPrinter, type PrintOrder } from '@/components/admin/BluetoothPrinter';
 
 const ALL_STATUSES = ['pending', 'confirmed', 'preparing', 'ready', 'out-for-delivery', 'delivered', 'cancelled'];
 const SC: Record<string, string> = {
@@ -30,17 +29,81 @@ function downloadCSV(orders: any[]) {
   URL.revokeObjectURL(url);
 }
 
-function OrderCard({ o, updating, capturing, btStatus, onUpdate, onCapture, onPrint }: {
+// ── Receipt printer ───────────────────────────────────────────────────────────
+// Opens a formatted 80mm receipt in a popup and triggers the system print
+// dialog. Works with any printer connected to the OS (USB, network, etc.)
+// including the Star TSP100III — no drivers or apps needed.
+function printReceipt(order: any) {
+  const typeLabel = order.orderType === 'dinein' ? 'DINE-IN' : 'TAKEAWAY';
+  const time = new Date().toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' });
+  const date = new Date().toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+  const id   = order._id.slice(-6).toUpperCase();
+
+  const itemRows = (order.items || []).map((i: any) =>
+    `<tr><td class="b">${i.quantity}&times; ${i.name}</td><td class="r">$${(i.price * i.quantity).toFixed(2)}</td></tr>`
+  ).join('');
+
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Receipt #${id}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Courier New',Courier,monospace;font-size:13px;width:72mm;padding:3mm}
+.c{text-align:center}.b{font-weight:bold}.r{text-align:right}
+.xl{font-size:18px;font-weight:bold}.lg{font-size:15px;font-weight:bold}
+hr{border:none;border-top:1px dashed #000;margin:5px 0}
+table{width:100%;border-collapse:collapse}
+td{padding:2px 0;vertical-align:top}
+.footer{margin-top:8px}
+@media print{@page{size:80mm auto;margin:0}body{padding:3mm;width:72mm}}
+</style></head>
+<body>
+<div class="c xl">MUM'S KITCHEN</div>
+<div class="c">Tranmere SA 5073</div>
+<hr>
+<div class="c b">ORDER #${id}</div>
+<div class="c">${date}&nbsp;&nbsp;${time}</div>
+<hr>
+<div class="c lg">${typeLabel}</div>
+<div>Customer: <b>${order.customerName}</b></div>
+${order.customerPhone ? `<div>Phone: ${order.customerPhone}</div>` : ''}
+${order.pickupTime     ? `<div>Pickup: ${order.pickupTime}</div>`  : ''}
+${order.deliveryAddress ? `<div>Address: ${order.deliveryAddress}</div>` : ''}
+<hr>
+<table>${itemRows}</table>
+<hr>
+${order.subtotal != null && order.deliveryFee ? `
+<table>
+  <tr><td>Subtotal</td><td class="r">$${(order.subtotal||0).toFixed(2)}</td></tr>
+  <tr><td>Delivery</td><td class="r">$${(order.deliveryFee||0).toFixed(2)}</td></tr>
+</table>
+<hr>` : ''}
+<table><tr><td class="b lg">TOTAL</td><td class="r b lg">$${(order.total||0).toFixed(2)} AUD</td></tr></table>
+<hr>
+${order.specialInstructions ? `<div class="b">SPECIAL INSTRUCTIONS:</div><div>${order.specialInstructions}</div><hr>` : ''}
+<div class="c footer">Thank you!</div>
+<script>window.onload=function(){window.print();}<\/script>
+</body></html>`;
+
+  const w = window.open('', '_blank', 'width=380,height=600,left=100,top=80');
+  if (!w) {
+    toast.error('Allow popups for this site to enable printing.');
+    return;
+  }
+  w.document.write(html);
+  w.document.close();
+}
+
+// ── Order card ────────────────────────────────────────────────────────────────
+function OrderCard({ o, updating, capturing, onUpdate, onCapture }: {
   o: any;
   updating: string | null;
   capturing: string | null;
-  btStatus: string;
   onUpdate: (id: string, status: string) => void;
   onCapture: (id: string, action: 'accept' | 'reject') => void;
-  onPrint: (o: any) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const isAuthorized = o.paymentStatus === 'authorized';
+  const isPaid       = o.paymentStatus === 'paid';
 
   return (
     <div style={{ background: 'white', borderRadius: '16px', border: isAuthorized ? '2px solid #f97316' : '1px solid var(--stone-light)', overflow: 'hidden', transition: 'box-shadow 0.2s' }}>
@@ -111,7 +174,7 @@ function OrderCard({ o, updating, capturing, btStatus, onUpdate, onCapture, onPr
           )}
         </div>
 
-        {/* Accept / Reject for authorized */}
+        {/* Accept / Reject for authorized orders */}
         {isAuthorized && (
           <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
             <button
@@ -133,16 +196,35 @@ function OrderCard({ o, updating, capturing, btStatus, onUpdate, onCapture, onPr
 
         {/* Status progression + print */}
         <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', alignItems: 'center' }}>
-          {ALL_STATUSES.map(s => (
-            <button key={s} onClick={() => onUpdate(o._id, s)} disabled={updating === o._id}
-              style={{ padding: '5px 11px', borderRadius: '8px', border: '1.5px solid', borderColor: o.status === s ? SC[s] : 'var(--stone-light)', background: o.status === s ? SC[s] + '20' : 'white', color: o.status === s ? SC[s] : 'var(--brown-mid)', fontSize: '11px', fontWeight: o.status === s ? 700 : 400, cursor: updating === o._id ? 'wait' : 'pointer', fontFamily: 'Poppins, sans-serif', textTransform: 'capitalize', opacity: updating === o._id && o.status !== s ? 0.5 : 1, transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
-              {s}
-            </button>
-          ))}
+          {ALL_STATUSES.map(s => {
+            // Prevent cancelling a paid/confirmed order accidentally
+            const isCancelLocked = s === 'cancelled' && isPaid;
+            return (
+              <button
+                key={s}
+                onClick={() => onUpdate(o._id, s)}
+                disabled={updating === o._id || isCancelLocked}
+                title={isCancelLocked ? 'Cannot cancel a paid order' : undefined}
+                style={{
+                  padding: '5px 11px', borderRadius: '8px', border: '1.5px solid',
+                  borderColor: o.status === s ? SC[s] : isCancelLocked ? '#e5e7eb' : 'var(--stone-light)',
+                  background: o.status === s ? SC[s] + '20' : 'white',
+                  color: o.status === s ? SC[s] : isCancelLocked ? '#d1d5db' : 'var(--brown-mid)',
+                  fontSize: '11px', fontWeight: o.status === s ? 700 : 400,
+                  cursor: (updating === o._id || isCancelLocked) ? 'not-allowed' : 'pointer',
+                  fontFamily: 'Poppins, sans-serif', textTransform: 'capitalize',
+                  opacity: updating === o._id && o.status !== s ? 0.5 : 1,
+                  transition: 'all 0.15s', whiteSpace: 'nowrap',
+                }}
+              >
+                {s}
+              </button>
+            );
+          })}
           <button
-            onClick={() => onPrint(o)}
-            style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '5px', background: btStatus === 'connected' ? 'var(--brown-dark)' : '#e5e7eb', color: btStatus === 'connected' ? 'white' : '#9ca3af', border: 'none', borderRadius: '8px', padding: '6px 12px', cursor: btStatus === 'connected' ? 'pointer' : 'default', fontSize: '11px', fontFamily: 'Poppins, sans-serif', fontWeight: 500, whiteSpace: 'nowrap' }}
-            title={btStatus === 'connected' ? 'Print kitchen ticket' : 'Connect a printer first'}
+            onClick={() => printReceipt(o)}
+            style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '5px', background: 'var(--brown-dark)', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', fontSize: '11px', fontFamily: 'Poppins, sans-serif', fontWeight: 500, whiteSpace: 'nowrap' }}
+            title="Print receipt (uses system printer — Star TSP100 or any connected printer)"
           >
             <Printer size={12} /> Print
           </button>
@@ -162,12 +244,10 @@ export default function AdminOrdersPage() {
   const [dateTo,       setDateTo]      = useState('');
   const [updating,     setUpdating]    = useState<string | null>(null);
   const [capturing,    setCapturing]   = useState<string | null>(null);
-  const [autoPrint,    setAutoPrint]   = useState(true);
-
-  const { connect, disconnect, printOrder, status: btStatus, deviceName } = useBluetoothPrinter();
 
   const load = () =>
     fetch('/api/orders').then(r => r.ok ? r.json() : Promise.reject(r.status)).then(d => { setOrders(Array.isArray(d) ? d : []); setLoading(false); }).catch(() => setLoading(false));
+
   useEffect(() => {
     load();
     const interval = setInterval(load, 30_000);
@@ -205,10 +285,7 @@ export default function AdminOrdersPage() {
       if (res.ok) {
         if (action === 'accept') {
           toast.success('Order accepted — payment captured!');
-          // Auto-print if printer is connected and option enabled
-          if (autoPrint && btStatus === 'connected' && order) {
-            await printOrder(order as PrintOrder);
-          }
+          if (order) printReceipt(order);
         } else {
           toast.success('Order rejected — payment released.');
         }
@@ -247,31 +324,9 @@ export default function AdminOrdersPage() {
             {filteredRevenue > 0 && <> · Revenue: <strong style={{ color: '#22c55e' }}>${filteredRevenue.toFixed(2)} AUD</strong></>}
           </p>
         </div>
-
-        {/* Printer + export controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          {btStatus === 'connected' ? (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '10px', padding: '7px 12px', fontSize: '12px', fontWeight: 600, color: '#15803d' }}>
-                <Bluetooth size={13} /> {deviceName || 'Printer'} connected
-              </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: 'var(--brown-mid)', cursor: 'pointer', userSelect: 'none' }}>
-                <input type="checkbox" checked={autoPrint} onChange={e => setAutoPrint(e.target.checked)} style={{ accentColor: 'var(--red-korean)' }} />
-                Auto-print on accept
-              </label>
-              <button onClick={disconnect} style={{ padding: '7px 12px', background: 'none', border: '1px solid #fecaca', borderRadius: '10px', cursor: 'pointer', color: '#ef4444', fontSize: '12px', fontFamily: 'Poppins, sans-serif', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                Disconnect
-              </button>
-            </>
-          ) : (
-            <button onClick={connect} disabled={btStatus === 'connecting'} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: btStatus === 'connecting' ? 'var(--stone-light)' : '#1d4ed8', color: btStatus === 'connecting' ? 'var(--brown-mid)' : 'white', border: 'none', borderRadius: '10px', padding: '8px 14px', cursor: btStatus === 'connecting' ? 'wait' : 'pointer', fontSize: '12px', fontWeight: 500, fontFamily: 'Poppins, sans-serif' }}>
-              <Bluetooth size={13} /> {btStatus === 'connecting' ? 'Connecting…' : 'Connect Printer'}
-            </button>
-          )}
-          <button onClick={() => downloadCSV(filtered)} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '10px', padding: '8px 14px', cursor: 'pointer', fontSize: '12px', fontFamily: 'Poppins, sans-serif', fontWeight: 500 }}>
-            <Download size={13} /> Export CSV
-          </button>
-        </div>
+        <button onClick={() => downloadCSV(filtered)} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '10px', padding: '8px 14px', cursor: 'pointer', fontSize: '12px', fontFamily: 'Poppins, sans-serif', fontWeight: 500 }}>
+          <Download size={13} /> Export CSV
+        </button>
       </div>
 
       {/* Filters */}
@@ -324,10 +379,8 @@ export default function AdminOrdersPage() {
               o={o}
               updating={updating}
               capturing={capturing}
-              btStatus={btStatus}
               onUpdate={update}
               onCapture={capture}
-              onPrint={printOrder}
             />
           ))}
         </div>
