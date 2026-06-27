@@ -30,67 +30,25 @@ function downloadCSV(orders: any[]) {
 }
 
 // ── Receipt printer ───────────────────────────────────────────────────────────
-// Opens a formatted 80mm receipt in a popup and triggers the system print
-// dialog. Works with any printer connected to the OS (USB, network, etc.)
-// including the Star TSP100III — no drivers or apps needed.
-function printReceipt(order: any) {
-  const typeLabel = order.orderType === 'dinein' ? 'DINE-IN' : 'TAKEAWAY';
-  const time = new Date().toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' });
-  const date = new Date().toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
-  const id   = order._id.slice(-6).toUpperCase();
-
-  const itemRows = (order.items || []).map((i: any) =>
-    `<tr><td class="b">${i.quantity}&times; ${i.name}</td><td class="r">$${(i.price * i.quantity).toFixed(2)}</td></tr>`
-  ).join('');
-
-  const html = `<!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>Receipt #${id}</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Courier New',Courier,monospace;font-size:13px;width:72mm;padding:3mm}
-.c{text-align:center}.b{font-weight:bold}.r{text-align:right}
-.xl{font-size:18px;font-weight:bold}.lg{font-size:15px;font-weight:bold}
-hr{border:none;border-top:1px dashed #000;margin:5px 0}
-table{width:100%;border-collapse:collapse}
-td{padding:2px 0;vertical-align:top}
-.footer{margin-top:8px}
-@media print{@page{size:80mm auto;margin:0}body{padding:3mm;width:72mm}}
-</style></head>
-<body>
-<div class="c xl">MUM'S KITCHEN</div>
-<div class="c">Tranmere SA 5073</div>
-<hr>
-<div class="c b">ORDER #${id}</div>
-<div class="c">${date}&nbsp;&nbsp;${time}</div>
-<hr>
-<div class="c lg">${typeLabel}</div>
-<div>Customer: <b>${order.customerName}</b></div>
-${order.customerPhone ? `<div>Phone: ${order.customerPhone}</div>` : ''}
-${order.pickupTime     ? `<div>Pickup: ${order.pickupTime}</div>`  : ''}
-${order.deliveryAddress ? `<div>Address: ${order.deliveryAddress}</div>` : ''}
-<hr>
-<table>${itemRows}</table>
-<hr>
-${order.subtotal != null && order.deliveryFee ? `
-<table>
-  <tr><td>Subtotal</td><td class="r">$${(order.subtotal||0).toFixed(2)}</td></tr>
-  <tr><td>Delivery</td><td class="r">$${(order.deliveryFee||0).toFixed(2)}</td></tr>
-</table>
-<hr>` : ''}
-<table><tr><td class="b lg">TOTAL</td><td class="r b lg">$${(order.total||0).toFixed(2)} AUD</td></tr></table>
-<hr>
-${order.specialInstructions ? `<div class="b">SPECIAL INSTRUCTIONS:</div><div>${order.specialInstructions}</div><hr>` : ''}
-<div class="c footer">Thank you!</div>
-<script>window.onload=function(){window.print();}<\/script>
-</body></html>`;
-
-  const w = window.open('', '_blank', 'width=380,height=600,left=100,top=80');
-  if (!w) {
-    toast.error('Allow popups for this site to enable printing.');
-    return;
+// Sends ESC/POS data to the Star TSP100III at 192.168.1.102:9100 via the
+// server-side /api/printer/print route (Node.js raw TCP — no browser limits).
+async function printReceipt(order: any) {
+  const tid = toast.loading('Sending to printer…');
+  try {
+    const res = await fetch('/api/printer/print', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(order),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      toast.success('Printed!', { id: tid });
+    } else {
+      toast.error(data.error || 'Print failed', { id: tid });
+    }
+  } catch {
+    toast.error('Could not reach printer service', { id: tid });
   }
-  w.document.write(html);
-  w.document.close();
 }
 
 // ── Order card ────────────────────────────────────────────────────────────────
