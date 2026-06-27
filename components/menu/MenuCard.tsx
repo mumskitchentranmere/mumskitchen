@@ -78,7 +78,7 @@ export function MenuCard({ item, discount = 0 }: { item: any; discount?: number 
         }}
       >
         {/* ── Image ─────────────────────────────── */}
-        <div style={{ position: 'relative', height: '175px', background: '#f3ede6', overflow: 'hidden', flexShrink: 0 }}>
+        <div className="menu-card-img" style={{ position: 'relative', height: '175px', background: '#f3ede6', overflow: 'hidden', flexShrink: 0 }}>
           <img
             key={displayImages[activeIndex]}
             src={displayImages[activeIndex]}
@@ -140,11 +140,11 @@ export function MenuCard({ item, discount = 0 }: { item: any; discount?: number 
         </div>
 
         {/* ── Content ───────────────────────────── */}
-        <div style={{ padding: '13px 15px 14px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+        <div className="menu-card-body" style={{ padding: '13px 15px 14px', display: 'flex', flexDirection: 'column', flex: 1 }}>
 
           {/* Name row + Rate button */}
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '4px' }}>
-            <h3 className="font-display" style={{ fontSize: '16px', fontWeight: 700, color: 'var(--brown-dark)', lineHeight: 1.25, margin: 0 }}>
+            <h3 className="font-display menu-card-title" style={{ fontSize: '16px', fontWeight: 700, color: 'var(--brown-dark)', lineHeight: 1.25, margin: 0 }}>
               {item.name}
             </h3>
             <button
@@ -199,7 +199,7 @@ export function MenuCard({ item, discount = 0 }: { item: any; discount?: number 
           {/* ── Price + Add to Cart (same line) ─── */}
           <div style={{ marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '5px' }}>
-              <span className="font-display" style={{ fontSize: '20px', fontWeight: 800, color: 'var(--red-korean)', letterSpacing: '-0.01em' }}>
+              <span className="font-display menu-card-price" style={{ fontSize: '20px', fontWeight: 800, color: 'var(--red-korean)', letterSpacing: '-0.01em' }}>
                 ${discountedPrice.toFixed(2)}
               </span>
               {discount > 0 && (

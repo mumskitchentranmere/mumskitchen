@@ -233,8 +233,56 @@ img        { max-width: 100%; display: block; }
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 20px;
 }
+@media (max-width: 640px) {
+  .menu-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+}
+@media (max-width: 420px) {
+  .menu-grid { grid-template-columns: 1fr; gap: 12px; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CHECKOUT RECEIPT
+═══════════════════════════════════════════════════════════ */
+.receipt-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 22px;
+}
 @media (max-width: 500px) {
-  .menu-grid { grid-template-columns: 1fr; }
+  .receipt-meta-grid { grid-template-columns: 1fr; gap: 10px; }
+}
+
+.receipt-items-header {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--brown-dark);
+  border-radius: 8px 8px 0 0;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(232,224,213,0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+.receipt-item-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  padding: 10px;
+  align-items: center;
+  border-bottom: 1px solid #f0ebe4;
+}
+@media (max-width: 500px) {
+  .receipt-items-header { grid-template-columns: 1fr auto; }
+  .receipt-item-row     { grid-template-columns: 1fr auto; }
+  .receipt-unit-price   { display: none !important; }
+}
+
+/* Checkout page container padding on mobile */
+@media (max-width: 480px) {
+  .checkout-grid { padding: 0; }
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -243,4 +291,57 @@ img        { max-width: 100%; display: block; }
 @media (max-width: 640px) {
   .section-py { padding-top: 48px !important; padding-bottom: 48px !important; }
   .section-px { padding-left: 16px !important; padding-right: 16px !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DINE-IN TABLE SELECTOR
+═══════════════════════════════════════════════════════════ */
+.table-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+@media (max-width: 480px) {
+  .table-selector-grid { grid-template-columns: repeat(5, 1fr); gap: 6px; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ADMIN ORDERS PAGE
+═══════════════════════════════════════════════════════════ */
+.admin-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+@media (max-width: 640px) {
+  .admin-filter-bar > * { flex: 1 1 calc(50% - 4px); min-width: 0; }
+  .admin-filter-bar input[type="text"] { flex: 1 1 100%; }
+}
+
+/* Order card badges wrap on small screens */
+@media (max-width: 480px) {
+  .order-badge-row { gap: 4px !important; }
+  .order-badge-row span { font-size: 10px !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   HOME PAGE
+═══════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  .about-grid { padding: 0 4px; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MENU CARD
+═══════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  .menu-card-img { height: 140px !important; }
+  .menu-card-title { font-size: 14px !important; }
+  .menu-card-price { font-size: 17px !important; }
+  .menu-card-body { padding: 10px 12px 12px !important; }
+}
+@media (max-width: 420px) {
+  .menu-card-img { height: 160px !important; }
 }

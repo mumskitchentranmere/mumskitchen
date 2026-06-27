@@ -21,7 +21,7 @@ export function Footer() {
               </div>
             </Link>
             <p style={{ fontSize: '13px', lineHeight: 1.8, color: 'rgba(232,224,213,0.65)' }}>
-              Authentic Korean &amp; Bangladeshi dishes freshly prepared to order in Tranmere, South Australia. 100% Halal.
+              Authentic Korean &amp; Bangladeshi dishes freshly prepared to order in Tranmere, South Australia.
             </p>
             <OpenStatus />
           </div>

@@ -11,6 +11,7 @@ const OrderSchema = new Schema({
   status: { type: String, enum: ['pending','confirmed','preparing','ready','out-for-delivery','delivered','cancelled'], default: 'pending' },
   paymentStatus: { type: String, enum: ['pending','authorized','capturing','paid','failed','refunded','cancelled'], default: 'pending' },
   paymentIntentId: String,
+  tableNumber: { type: Number, min: 1, max: 10 },
   deliveryAddress: String, pickupTime: String, specialInstructions: String,
 }, { timestamps: true });
 

@@ -30,14 +30,65 @@ function downloadCSV(orders: any[]) {
 }
 
 // ── Receipt printer ───────────────────────────────────────────────────────────
-// Step 1: /api/printer/print on the hosted server builds ESC/POS → returns hex.
-// Step 2: Browser POSTs that hex to printer-bridge.js on localhost:9102
-//         (restaurant computer, same LAN as printer) which does the TCP write.
-// Chrome allows http://localhost from https:// pages per the Secure Contexts spec.
+// Primary path: server builds ESC/POS hex → browser sends to printer-bridge.js
+// on localhost:9102 → bridge writes TCP to 192.168.1.102:9100 (silent, no dialog).
+//
+// Fallback: if the bridge isn't running (or Chrome blocks it), opens a
+// formatted 80mm receipt in a popup and triggers the system print dialog so
+// the admin can select the Star TSP100III manually. Printing always works.
+
+function openBrowserPrint(order: any) {
+  const id        = String(order._id || '').slice(-6).toUpperCase();
+  const typeLabel = order.orderType === 'dinein' ? 'DINE-IN' : 'TAKEAWAY';
+  const now       = new Date();
+  const date      = now.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+  const time      = now.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' });
+
+  const itemRows = (order.items || []).map((i: any) =>
+    `<tr><td class="b">${i.quantity}&times; ${i.name}</td><td class="r">$${((i.price||0)*(i.quantity||1)).toFixed(2)}</td></tr>`
+  ).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Receipt #${id}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Courier New',monospace;font-size:13px;width:72mm;padding:3mm}
+.c{text-align:center}.b{font-weight:bold}.r{text-align:right}
+.xl{font-size:18px;font-weight:bold}.lg{font-size:15px;font-weight:bold}
+hr{border:none;border-top:1px dashed #000;margin:5px 0}
+table{width:100%;border-collapse:collapse}td{padding:2px 0;vertical-align:top}
+@media print{@page{size:80mm auto;margin:0}body{padding:3mm;width:72mm}}
+</style></head><body>
+<div class="c xl">MUM'S KITCHEN</div>
+<div class="c">Tranmere SA 5073</div><hr>
+<div class="c b">ORDER #${id}</div>
+<div class="c">${date}&nbsp;&nbsp;${time}</div><hr>
+<div class="c lg">${typeLabel}</div>
+<div>Customer: <b>${order.customerName||''}</b></div>
+${order.tableNumber     ? `<div class="b" style="font-size:15px">Table: ${order.tableNumber}</div>` : ''}
+${order.customerPhone   ? `<div>Phone: ${order.customerPhone}</div>`       : ''}
+${order.pickupTime      ? `<div>Pickup: ${order.pickupTime}</div>`          : ''}
+${order.deliveryAddress ? `<div>Address: ${order.deliveryAddress}</div>`   : ''}
+<hr><table>${itemRows}</table><hr>
+${order.subtotal!=null&&order.deliveryFee?`<table>
+<tr><td>Subtotal</td><td class="r">$${(order.subtotal||0).toFixed(2)}</td></tr>
+<tr><td>Delivery</td><td class="r">$${(order.deliveryFee||0).toFixed(2)}</td></tr>
+</table><hr>`:''}
+<table><tr><td class="b lg">TOTAL</td><td class="r b lg">$${(order.total||0).toFixed(2)} AUD</td></tr></table><hr>
+${order.specialInstructions?`<div class="b">SPECIAL INSTRUCTIONS:</div><div>${order.specialInstructions}</div><hr>`:''}
+<div class="c">Thank you!</div>
+<script>window.onload=function(){window.print();}<\/script>
+</body></html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url  = URL.createObjectURL(blob);
+  const w    = window.open(url, '_blank', 'width=380,height=600,left=100,top=80');
+  if (!w) { URL.revokeObjectURL(url); toast.error('Allow popups on this site for printing.'); return; }
+  w.addEventListener('unload', () => URL.revokeObjectURL(url));
+}
+
 async function printReceipt(order: any) {
   const tid = toast.loading('Sending to printer…');
   try {
-    // Step 1 — build receipt on server (no TCP, just ESC/POS hex)
     const res = await fetch('/api/printer/print', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -48,32 +99,36 @@ async function printReceipt(order: any) {
       toast.error(d.error || 'Failed to build receipt', { id: tid });
       return;
     }
-    const { hex } = await res.json();
+    const data = await res.json();
 
-    // Step 2 — forward hex to local bridge running on the restaurant computer
-    let bridgeRes: Response;
-    try {
-      bridgeRes = await fetch('http://localhost:9102/print', {
-        method: 'POST',
-        body:   hex,
-      });
-    } catch {
-      toast.error(
-        '⚠️ Printer bridge not running.\n' +
-        'Open Terminal on the restaurant computer and run:\n' +
-        'node printer-bridge.js',
-        { id: tid, duration: 8000 }
-      );
+    // Server printed directly via TCP (works on localhost:3000 — same LAN as printer)
+    if (data.printed) {
+      toast.success('Printed!', { id: tid });
       return;
     }
 
-    if (bridgeRes.ok) {
-      toast.success('Printed!', { id: tid });
-    } else {
-      toast.error((await bridgeRes.text()) || 'Printer error', { id: tid });
+    // Server is on Hostinger (can't reach printer) — forward hex to local bridge
+    const { hex } = data;
+    try {
+      const bridgeRes = await fetch('http://localhost:9102/print', {
+        method: 'POST',
+        body:   hex,
+      });
+      if (bridgeRes.ok) {
+        toast.success('Printed!', { id: tid });
+        return;
+      }
+      const errText = await bridgeRes.text();
+      toast.error(errText || 'Printer error', { id: tid });
+      return;
+    } catch {
+      // Bridge not running — open browser print dialog as last resort
+      toast.dismiss(tid);
+      openBrowserPrint(order);
     }
-  } catch (e: any) {
-    toast.error('Print error: ' + (e?.message || 'Unknown'), { id: tid });
+  } catch {
+    toast.dismiss(tid);
+    openBrowserPrint(order);
   }
 }
 
@@ -103,7 +158,7 @@ function OrderCard({ o, updating, capturing, onUpdate, onCapture }: {
         {/* Header row */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px', marginBottom: '14px' }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+            <div className="order-badge-row" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
               <span style={{ fontFamily: 'monospace', fontSize: '12px', fontWeight: 700, color: 'var(--brown-mid)', background: 'var(--stone-light)', padding: '2px 7px', borderRadius: '5px' }}>
                 #{o._id.slice(-6).toUpperCase()}
               </span>
@@ -113,6 +168,11 @@ function OrderCard({ o, updating, capturing, onUpdate, onCapture }: {
               <span style={{ fontSize: '11px', background: 'var(--stone-light)', color: 'var(--brown-mid)', padding: '2px 8px', borderRadius: '8px', textTransform: 'capitalize' }}>
                 {o.orderType === 'dinein' ? '🍽️ Dine-in' : '🥡 Takeaway'}
               </span>
+              {o.orderType === 'dinein' && o.tableNumber && (
+                <span style={{ fontSize: '11px', background: '#fef3c7', color: '#92400e', padding: '2px 8px', borderRadius: '8px', fontWeight: 700 }}>
+                  Table {o.tableNumber}
+                </span>
+              )}
               {o.paymentStatus === 'authorized' && <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '8px', fontWeight: 600, background: '#fff7ed', color: '#ea580c' }}>💳 Authorized</span>}
               {o.paymentStatus === 'paid'       && <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '8px', fontWeight: 600, background: '#dcfce7', color: '#16a34a' }}>✓ Paid</span>}
             </div>

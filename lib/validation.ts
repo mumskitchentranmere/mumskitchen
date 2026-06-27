@@ -56,6 +56,7 @@ export const CreateOrderSchema = z.object({
   subtotal:            z.number().positive(),
   deliveryFee:         z.number().min(0).optional().default(0),
   total:               z.number().positive(),
+  tableNumber:         z.number().int().min(1).max(10).optional(),
   deliveryAddress:     z.string().max(500).optional(),
   pickupTime:          z.string().optional(),
   specialInstructions: z.string().max(500).optional(),

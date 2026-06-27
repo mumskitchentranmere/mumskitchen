@@ -109,7 +109,7 @@ function orderHtml(d: OrderEmailData): string {
         <!-- Footer -->
         <tr>
           <td style="background:#FAF7F2;padding:20px 32px;text-align:center;border-top:1px solid #E8E0D5">
-            <p style="margin:0;font-size:12px;color:#A0522D">66 Reid Avenue, Tranmere SA 5073 · All meat 100% Halal</p>
+            <p style="margin:0;font-size:12px;color:#A0522D">66 Reid Avenue, Tranmere SA 5073</p>
           </td>
         </tr>
 

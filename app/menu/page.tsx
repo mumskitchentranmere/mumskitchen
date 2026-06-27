@@ -86,15 +86,15 @@ export default function MenuPage() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--cream)', paddingTop: '68px' }}>
       {/* Header */}
-      <div style={{ background: 'var(--brown-dark)', padding: '56px 24px', textAlign: 'center' }}>
+      <div style={{ background: 'var(--brown-dark)', padding: 'clamp(32px,5vw,56px) clamp(12px,4vw,24px)', textAlign: 'center' }}>
         <p style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: '10px' }}>
-          Authentic · Halal · Freshly Made
+          Authentic · Freshly Made
         </p>
         <h1 className="font-display" style={{ fontSize: 'clamp(36px, 5vw, 64px)', fontWeight: 700, color: 'white', marginBottom: '8px' }}>Our Menu</h1>
-        <p style={{ fontSize: '15px', color: 'rgba(232,224,213,0.65)', fontStyle: 'italic' }}>Freshly prepared to order · All meat 100% Halal</p>
+        <p style={{ fontSize: '15px', color: 'rgba(232,224,213,0.65)', fontStyle: 'italic' }}>Freshly prepared to order</p>
       </div>
 
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px 24px' }}>
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: 'clamp(20px,3vw,32px) clamp(12px,4vw,24px)' }}>
 
         {/* Search */}
         <div style={{ position: 'relative', maxWidth: '480px', marginBottom: '28px' }}>

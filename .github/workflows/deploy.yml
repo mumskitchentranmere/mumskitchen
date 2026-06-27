@@ -1,0 +1,56 @@
+name: Deploy to Hostinger VPS
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: SSH deploy & PM2 restart
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Validate required secrets exist ──────────────────────────
+      - name: Check required secrets
+        run: |
+          missing=()
+          [ -z "${{ secrets.HOST }}"            ] && missing+=("HOST")
+          [ -z "${{ secrets.USERNAME }}"         ] && missing+=("USERNAME")
+          [ -z "${{ secrets.SSH_PRIVATE_KEY }}"  ] && missing+=("SSH_PRIVATE_KEY")
+          [ -z "${{ secrets.DEPLOY_PATH }}"      ] && missing+=("DEPLOY_PATH")
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "❌ Missing GitHub Secrets: ${missing[*]}"
+            echo "Go to: Settings → Secrets and variables → Actions → New repository secret"
+            exit 1
+          fi
+          echo "✅ All required secrets are set"
+
+      # ── 2. SSH into server and deploy ───────────────────────────────
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host:     ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key:      ${{ secrets.SSH_PRIVATE_KEY }}
+          port:     ${{ secrets.PORT || 22 }}
+          timeout:  60s
+          command_timeout: 600s
+          script: |
+            set -e
+
+            cd "${{ secrets.DEPLOY_PATH }}"
+
+            echo "▶ Pulling latest code..."
+            git pull origin main
+
+            echo "▶ Installing dependencies..."
+            npm ci --prefer-offline 2>/dev/null || npm install
+
+            echo "▶ Building..."
+            npm run build
+
+            echo "▶ Restarting app..."
+            pm2 restart mumskitchen --update-env || pm2 start ecosystem.config.cjs
+            pm2 save
+
+            echo "✅ Deploy complete — $(date)"

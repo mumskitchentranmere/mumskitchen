@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import net from 'net';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,6 +48,7 @@ function buildReceipt(order: any): Buffer {
   r.divider('=');
   r.align('C').bold(true).size(1, 2).line(typeLabel).size(1, 1).bold(false);
   r.align('L').line(`Customer: ${order.customerName || ''}`);
+  if (order.tableNumber)     r.bold(true).line(`Table:    ${order.tableNumber}`).bold(false);
   if (order.customerPhone)   r.line(`Phone:    ${order.customerPhone}`);
   if (order.pickupTime)      r.line(`Pickup:   ${order.pickupTime}`);
   if (order.deliveryAddress) r.line(`Address:  ${order.deliveryAddress}`);
@@ -79,10 +81,40 @@ function buildReceipt(order: any): Buffer {
   return r.build();
 }
 
+// ── Path 1: Cloudflare Tunnel (production, any OS, any device) ────────────────
+// Set PRINTER_BRIDGE_URL in Hostinger env vars to the tunnel URL.
+// The server calls it directly — no browser involvement at all.
+async function printViaTunnel(hex: string): Promise<void> {
+  const url = process.env.PRINTER_BRIDGE_URL!.replace(/\/$/, '') + '/print';
+  const res = await fetch(url, {
+    method:  'POST',
+    body:    hex,
+    signal:  AbortSignal.timeout(8000),
+  });
+  if (!res.ok) throw new Error(await res.text());
+}
+
+// ── Path 2: Direct TCP (local dev — server is on the same LAN as printer) ─────
+function tcpPrint(data: Buffer): Promise<void> {
+  const host    = process.env.PRINTER_IP   || '192.168.1.102';
+  const port    = parseInt(process.env.PRINTER_PORT || '9100', 10);
+
+  return new Promise((resolve, reject) => {
+    const socket = net.createConnection({ host, port });
+    socket.setTimeout(1500);
+    socket.on('connect', () => socket.write(data, () => socket.end()));
+    socket.on('close',   resolve);
+    socket.on('timeout', () => { socket.destroy(); reject(new Error('timeout')); });
+    socket.on('error',   reject);
+  });
+}
+
 // ── Route ─────────────────────────────────────────────────────────────────────
-// Returns the ESC/POS receipt as a hex string. The browser then forwards it
-// to printer-bridge.js running on localhost:9102 on the restaurant computer.
-// No TCP is attempted here — the hosted server cannot reach a local printer.
+// Priority:
+//   1. PRINTER_BRIDGE_URL set → server calls Cloudflare tunnel directly (production)
+//   2. Direct TCP works       → server prints via TCP (local dev, same LAN)
+//   3. Returns { hex }        → browser forwards to localhost:9102 bridge
+//      └─ bridge not running  → browser opens print dialog (last resort)
 export async function POST(req: NextRequest) {
   const session = await auth();
   if ((session?.user as any)?.role !== 'admin') {
@@ -101,5 +133,24 @@ export async function POST(req: NextRequest) {
   }
 
   const receipt = buildReceipt(order);
-  return NextResponse.json({ hex: receipt.toString('hex') });
+  const hex     = receipt.toString('hex');
+
+  // Path 1 — Cloudflare tunnel (deployed, any OS, any device)
+  if (process.env.PRINTER_BRIDGE_URL) {
+    try {
+      await printViaTunnel(hex);
+      return NextResponse.json({ printed: true });
+    } catch (e: any) {
+      return NextResponse.json({ error: `Tunnel error: ${e.message}` }, { status: 502 });
+    }
+  }
+
+  // Path 2 — Direct TCP (local dev: server and printer on same LAN)
+  try {
+    await tcpPrint(receipt);
+    return NextResponse.json({ printed: true });
+  } catch {
+    // Path 3 — Return hex for browser-side bridge / print dialog fallback
+    return NextResponse.json({ hex });
+  }
 }

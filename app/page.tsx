@@ -10,7 +10,7 @@ function FeaturedReviews() {
     fetch('/api/reviews?featured=true&type=restaurant&limit=3')
       .then(r => r.json())
       .then(d => setReviews(d.reviews || []))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
   if (reviews.length === 0) return null;
   return (
@@ -24,13 +24,13 @@ function FeaturedReviews() {
           {reviews.map((r: any) => (
             <div key={r._id} style={{ background: 'white', borderRadius: '16px', padding: '20px', border: '1px solid var(--stone-light)' }}>
               <div style={{ display: 'flex', gap: '5px', marginBottom: '10px' }}>
-                {Array.from({length:5}).map((_,i)=>(
+                {Array.from({ length: 5 }).map((_, i) => (
                   <svg key={i} width="14" height="14" viewBox="0 0 24 24">
-                    <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" fill={i < r.rating ? '#C8922A' : '#E8E0D5'} stroke="#C8922A" strokeWidth="1"/>
+                    <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" fill={i < r.rating ? '#C8922A' : '#E8E0D5'} stroke="#C8922A" strokeWidth="1" />
                   </svg>
                 ))}
               </div>
-              <p style={{ fontSize: '13px', color: 'var(--brown-mid)', lineHeight: 1.7, marginBottom: '12px', fontStyle: 'italic' }}>"{r.body?.slice(0,160)}{r.body?.length > 160 ? '…' : ''}"</p>
+              <p style={{ fontSize: '13px', color: 'var(--brown-mid)', lineHeight: 1.7, marginBottom: '12px', fontStyle: 'italic' }}>"{r.body?.slice(0, 160)}{r.body?.length > 160 ? '…' : ''}"</p>
               <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--brown-dark)' }}>— {r.customerName}</div>
             </div>
           ))}
@@ -48,7 +48,7 @@ function FeaturedReviews() {
 export default function HomePage() {
   const [featured, setFeatured] = useState<any[]>([]);
   useEffect(() => {
-    fetch('/api/menu?featured=true').then(r => r.json()).then(d => setFeatured(Array.isArray(d) ? d : [])).catch(() => {});
+    fetch('/api/menu?featured=true').then(r => r.json()).then(d => setFeatured(Array.isArray(d) ? d : [])).catch(() => { });
   }, []);
 
   return (
@@ -58,14 +58,14 @@ export default function HomePage() {
         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', pointerEvents: 'none' }}>
           <span className="font-display" style={{ fontSize: 'clamp(100px, 18vw, 260px)', fontWeight: 700, color: 'rgba(200,146,42,0.06)', whiteSpace: 'nowrap', userSelect: 'none', lineHeight: 1 }}>한국 요리</span>
         </div>
-        <div style={{ position: 'relative', zIndex: 10, textAlign: 'center', padding: '0 24px', maxWidth: '800px' }}>
+        <div style={{ position: 'relative', zIndex: 10, textAlign: 'center', padding: '0 clamp(16px, 5vw, 24px)', maxWidth: '800px' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(200,146,42,0.15)', border: '1px solid rgba(200,146,42,0.3)', color: '#E8B84B', fontSize: '12px', fontWeight: 500, padding: '6px 16px', borderRadius: '20px', marginBottom: '28px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
             <Star size={11} fill="currentColor" /> Tranmere's Authentic Korean Kitchen
           </div>
           <h1 className="font-display" style={{ fontSize: 'clamp(52px, 8vw, 96px)', fontWeight: 700, color: 'white', lineHeight: 1.05, marginBottom: '8px' }}>Mum's</h1>
           <h1 className="font-display" style={{ fontSize: 'clamp(52px, 8vw, 96px)', fontWeight: 700, color: '#C8922A', lineHeight: 1.05, marginBottom: '28px', fontStyle: 'italic' }}>Kitchen</h1>
           <p style={{ fontSize: 'clamp(15px, 2vw, 18px)', color: 'rgba(232,224,213,0.8)', lineHeight: 1.7, marginBottom: '40px', maxWidth: '540px', margin: '0 auto 40px' }}>
-            Korean traditional authentic food — freshly prepared to order. Fried Chicken, Bibimbap, Rice Bowls, Soups & more.
+            Korean traditional authentic food, freshly prepared to order. Fried Chicken, Bibimbap, Rice Bowls, Soups & more.
           </p>
           <div className="hero-btns" style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link href="/order" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--red-korean)', color: 'white', padding: '14px 32px', borderRadius: '14px', textDecoration: 'none', fontSize: '15px', fontWeight: 600 }}>
@@ -76,7 +76,7 @@ export default function HomePage() {
             </Link>
           </div>
           <div className="hero-stats" style={{ display: 'flex', justifyContent: 'center', gap: '28px', marginTop: '56px', flexWrap: 'wrap' }}>
-            {['🕐 Open Tue–Sun', '📍 Tranmere SA', '100% Halal', '✨ Freshly made'].map(label => (
+            {['🕐 Open Tue–Sun', '📍 Tranmere SA', '✨ Freshly made'].map(label => (
               <span key={label} style={{ fontSize: '13px', color: 'rgba(232,224,213,0.55)' }}>{label}</span>
             ))}
           </div>
@@ -101,12 +101,12 @@ export default function HomePage() {
 
       {/* Featured dishes */}
       {featured.length > 0 && (
-        <section style={{ padding: '80px 24px', maxWidth: '1280px', margin: '0 auto' }}>
+        <section style={{ padding: 'clamp(40px,6vw,80px) clamp(12px,4vw,24px)', maxWidth: '1280px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '48px' }}>
             <p style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--red-korean)', marginBottom: '10px' }}>Freshly Prepared</p>
             <h2 className="font-display" style={{ fontSize: 'clamp(32px, 4vw, 52px)', fontWeight: 700, color: 'var(--brown-dark)' }}>Chef's Favourites</h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(260px,100%), 1fr))', gap: 'clamp(12px,2vw,20px)' }}>
             {featured.slice(0, 6).map((item: any) => (
               <div key={item._id} style={{ background: 'white', borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--stone-light)', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ height: '160px', overflow: 'hidden', background: 'var(--stone-light)', flexShrink: 0 }}>
@@ -133,7 +133,7 @@ export default function HomePage() {
       )}
 
       {/* About */}
-      <section style={{ background: 'var(--warm-white)', padding: '80px 24px' }}>
+      <section style={{ background: 'var(--warm-white)', padding: 'clamp(40px,6vw,80px) clamp(12px,4vw,24px)' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }} className="about-grid">
           <div>
             <p style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--red-korean)', marginBottom: '12px' }}>About Us</p>
@@ -142,7 +142,7 @@ export default function HomePage() {
               At Mum's Kitchen in Tranmere, every dish is freshly prepared to order using authentic Korean recipes and traditional flavours. From crispy Korean Fried Chicken to warming Jjigae stews, we bring the heart of Korean home cooking to Adelaide.
             </p>
             <p style={{ fontSize: '15px', color: 'var(--brown-mid)', lineHeight: 1.8, marginBottom: '32px' }}>
-              All our meat is 100% Halal certified. Dine in, takeaway, or get delivery right to your door.
+              Dine in, takeaway, or get delivery right to your door.
             </p>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               <a href={`tel:${process.env.NEXT_PUBLIC_RESTAURANT_PHONE}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--brown-dark)', color: 'white', padding: '12px 24px', borderRadius: '12px', textDecoration: 'none', fontSize: '14px', fontWeight: 600 }}>

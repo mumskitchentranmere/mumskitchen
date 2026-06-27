@@ -188,7 +188,7 @@ export default function CheckoutPage() {
   const [clientSecret, setClientSecret] = useState('');
   const [loading, setLoading] = useState(false);
   const [orderType, setOrderType] = useState<'takeaway' | 'dinein'>('takeaway');
-  const [form, setForm] = useState({ name: '', email: '', phone: '', pickupTime: '', instructions: '' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', pickupTime: '', instructions: '', tableNumber: 0 });
   const [savedOrder, setSavedOrder] = useState<any>(null);
   const [orderDate] = useState(new Date());
   const [isOpen, setIsOpen] = useState<boolean | null>(null);
@@ -242,6 +242,7 @@ export default function CheckoutPage() {
     }
     const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRe.test(form.email)) { toast.error('Please enter a valid email address'); return; }
+    if (orderType === 'dinein' && !form.tableNumber) { toast.error('Please select your table number'); return; }
     if (!isOpen) { toast.error('We are currently closed. Please order during opening hours.'); return; }
 
     setLoading(true);
@@ -287,6 +288,7 @@ export default function CheckoutPage() {
           subtotal: orderTotal,
           deliveryFee: 0,
           total: orderTotal,
+          tableNumber: orderType === 'dinein' ? form.tableNumber : undefined,
           pickupTime: form.pickupTime,
           specialInstructions: form.instructions.trim(),
         }),
@@ -363,7 +365,7 @@ export default function CheckoutPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--cream)', paddingTop: '68px' }}>
-      <div style={{ maxWidth: '1080px', margin: '0 auto', padding: '36px 24px' }}>
+      <div style={{ maxWidth: '1080px', margin: '0 auto', padding: 'clamp(16px, 3vw, 36px) clamp(12px, 4vw, 24px)' }}>
 
         {step < 3 && (
           <h1 className="font-display" style={{ fontSize: 'clamp(26px,4vw,40px)', fontWeight: 700, color: 'var(--brown-dark)', marginBottom: '32px' }}>Checkout</h1>
@@ -433,6 +435,39 @@ export default function CheckoutPage() {
                     ))}
                   </div>
                 </div>
+
+                {/* ── Table selector (dine-in only) ── */}
+                {orderType === 'dinein' && (
+                  <div style={{ marginBottom: '22px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--brown-mid)', display: 'block', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Table Number <span style={{ color: 'var(--red-korean)' }}>*</span>
+                    </label>
+                    <div className="table-selector-grid">
+                      {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => setForm(f => ({ ...f, tableNumber: n }))}
+                          style={{
+                            padding: '12px 4px', borderRadius: '10px', cursor: 'pointer',
+                            border: `2px solid ${form.tableNumber === n ? 'var(--red-korean)' : 'var(--stone-light)'}`,
+                            background: form.tableNumber === n ? 'var(--red-korean)' : 'white',
+                            color: form.tableNumber === n ? 'white' : 'var(--brown-dark)',
+                            fontSize: '16px', fontWeight: 700, fontFamily: 'Poppins, sans-serif',
+                            transition: 'all 0.15s',
+                          }}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                    {form.tableNumber > 0 && (
+                      <p style={{ fontSize: '12px', color: 'var(--red-korean)', fontWeight: 600, marginTop: '8px' }}>
+                        Table {form.tableNumber} selected
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 {/* ── Customer fields ── */}
                 {([
@@ -578,7 +613,7 @@ export default function CheckoutPage() {
                   <div style={{ padding: '24px 28px' }}>
 
                     {/* Customer + order meta grid */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '22px' }}>
+                    <div className="receipt-meta-grid">
                       <div style={{ background: '#faf7f2', borderRadius: '10px', padding: '12px 14px' }}>
                         <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--brown-mid)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>Bill To</div>
                         <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--brown-dark)' }}>{form.name}</div>
@@ -588,6 +623,9 @@ export default function CheckoutPage() {
                       <div style={{ background: '#faf7f2', borderRadius: '10px', padding: '12px 14px' }}>
                         <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--brown-mid)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>Order Details</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', fontWeight: 600, color: 'var(--red-korean)' }}>{orderTypeLabel}</div>
+                        {(savedOrder?.orderType ?? orderType) === 'dinein' && (savedOrder?.tableNumber ?? form.tableNumber) > 0 && (
+                          <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--brown-dark)', marginTop: '3px' }}>Table {savedOrder?.tableNumber ?? form.tableNumber}</div>
+                        )}
                         {orderType === 'takeaway' && form.pickupTime && (
                           <div style={{ fontSize: '12px', color: 'var(--brown-mid)', marginTop: '3px' }}>Pickup: {form.pickupTime}</div>
                         )}
@@ -599,18 +637,18 @@ export default function CheckoutPage() {
 
                     {/* Items table */}
                     <div style={{ marginBottom: '18px' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: '8px', padding: '8px 10px', background: 'var(--brown-dark)', borderRadius: '8px 8px 0 0', fontSize: '10px', fontWeight: 700, color: 'rgba(232,224,213,0.6)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                      <div className="receipt-items-header">
                         <span>Item</span>
-                        <span style={{ textAlign: 'right' }}>Unit Price</span>
+                        <span className="receipt-unit-price" style={{ textAlign: 'right' }}>Unit Price</span>
                         <span style={{ textAlign: 'right', minWidth: '72px' }}>Amount</span>
                       </div>
                       {receiptItems.map((item: any, i: number) => (
-                        <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: '8px', padding: '10px 10px', background: i % 2 === 0 ? '#fefcf9' : 'white', borderBottom: '1px solid #f0ebe4', alignItems: 'center' }}>
+                        <div key={i} className="receipt-item-row" style={{ background: i % 2 === 0 ? '#fefcf9' : 'white' }}>
                           <div>
                             <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--brown-dark)' }}>{item.name}</span>
                             <span style={{ fontSize: '11px', color: 'var(--brown-mid)', marginLeft: '8px' }}>× {item.quantity}</span>
                           </div>
-                          <span style={{ fontSize: '12px', color: 'var(--brown-mid)', textAlign: 'right', whiteSpace: 'nowrap' }}>${item.price.toFixed(2)}</span>
+                          <span className="receipt-unit-price" style={{ fontSize: '12px', color: 'var(--brown-mid)', textAlign: 'right', whiteSpace: 'nowrap' }}>${item.price.toFixed(2)}</span>
                           <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--brown-dark)', textAlign: 'right', minWidth: '72px', whiteSpace: 'nowrap' }}>${(item.price * item.quantity).toFixed(2)}</span>
                         </div>
                       ))}
@@ -650,7 +688,7 @@ export default function CheckoutPage() {
                         {RESTAURANT.phone} · {RESTAURANT.email}
                       </div>
                       <div style={{ display: 'inline-block', background: '#fef3c7', color: '#92400e', fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: '6px', border: '1px solid #fde68a' }}>
-                        🌿 All meat 100% Halal certified
+                        🌿 Freshly prepared to order
                       </div>
                       <div style={{ fontSize: '11px', color: 'var(--brown-mid)', marginTop: '8px' }}>Thank you for your order!</div>
                     </div>

@@ -21,7 +21,11 @@
 const net  = require('net');
 const http = require('http');
 
+// ── CHANGE THIS if the printer's IP changes ──────────────────────────────────
+// To find the current IP: turn OFF printer, hold FEED, turn ON → self-test prints IP.
+// You can also override with: PRINTER_IP=x.x.x.x node printer-bridge.js
 const PRINTER_HOST = process.env.PRINTER_IP   || '192.168.1.102';
+// ─────────────────────────────────────────────────────────────────────────────
 const PRINTER_PORT = parseInt(process.env.PRINTER_PORT || '9100', 10);
 const BRIDGE_PORT  = parseInt(process.env.BRIDGE_PORT  || '9102', 10);
 

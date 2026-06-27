@@ -16,12 +16,12 @@ export const metadata: Metadata = {
     template: "%s | Mum's Kitchen Tranmere",
   },
   description:
-    "Authentic Korean & Bangladeshi cuisine in Tranmere, South Australia. Order online for takeaway. 100% Halal. Open 7 days. 66 Reid Avenue, Tranmere SA 5073.",
+    "Authentic Korean & Bangladeshi cuisine in Tranmere, South Australia. Order online for takeaway. Open 7 days. 66 Reid Avenue, Tranmere SA 5073.",
   keywords: [
     "Korean restaurant Tranmere",
     "Bangladeshi restaurant Adelaide",
     "Korean food Adelaide",
-    "Halal restaurant Tranmere",
+    "restaurant Tranmere",
     "Korean fried chicken Adelaide",
     "Bibimbap Adelaide",
     "takeaway Tranmere SA",
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
     url:         BASE,
     siteName:    "Mum's Kitchen",
     title:       "Mum's Kitchen | Authentic Korean & Bangladeshi Cuisine — Tranmere SA",
-    description: "Authentic Korean & Bangladeshi cuisine in Tranmere. Order online for takeaway. 100% Halal.",
+    description: "Authentic Korean & Bangladeshi cuisine in Tranmere. Order online for takeaway.",
     images: [
       {
         url:    '/og-image.jpg',
@@ -67,7 +67,7 @@ export const metadata: Metadata = {
   twitter: {
     card:        'summary_large_image',
     title:       "Mum's Kitchen | Tranmere SA",
-    description: "Authentic Korean & Bangladeshi cuisine. Order online for takeaway. 100% Halal.",
+    description: "Authentic Korean & Bangladeshi cuisine. Order online for takeaway.",
     images:      ['/og-image.jpg'],
   },
 
@@ -90,7 +90,7 @@ const jsonLd = {
   '@context': 'https://schema.org',
   '@type':    'Restaurant',
   name:       "Mum's Kitchen",
-  description:"Authentic Korean & Bangladeshi cuisine in Tranmere, South Australia. 100% Halal.",
+  description:"Authentic Korean & Bangladeshi cuisine in Tranmere, South Australia.",
   url:        BASE,
   telephone:  '+61406878202',
   email:      'mumskitchentranmere@gmail.com',
