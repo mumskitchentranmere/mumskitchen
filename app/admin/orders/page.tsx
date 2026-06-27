@@ -30,24 +30,48 @@ function downloadCSV(orders: any[]) {
 }
 
 // ── Receipt printer ───────────────────────────────────────────────────────────
-// Sends ESC/POS data to the Star TSP100III at 192.168.1.102:9100 via the
-// server-side /api/printer/print route (Node.js raw TCP — no browser limits).
+// Step 1: Hosted server builds the ESC/POS receipt and returns it as hex.
+// Step 2: Browser sends the hex to printer-bridge.js running on localhost:9102
+//         on the restaurant computer (same LAN as the printer).
+// Chrome allows http://localhost calls from HTTPS pages, so this works even
+// when the admin site is hosted remotely.
+const BRIDGE_URL = 'http://localhost:9102';
+
 async function printReceipt(order: any) {
   const tid = toast.loading('Sending to printer…');
   try {
-    const res = await fetch('/api/printer/print', {
-      method: 'POST',
+    // Step 1 — get ESC/POS hex from the hosted server
+    const prepRes = await fetch('/api/printer/prepare', {
+      method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(order),
+      body:    JSON.stringify(order),
     });
-    const data = await res.json();
-    if (res.ok) {
+    if (!prepRes.ok) {
+      const d = await prepRes.json().catch(() => ({}));
+      toast.error(d.error || 'Failed to prepare receipt', { id: tid });
+      return;
+    }
+    const { hex } = await prepRes.json();
+
+    // Step 2 — forward to local bridge → printer
+    const printRes = await fetch(`${BRIDGE_URL}/print`, {
+      method: 'POST',
+      body:   hex,
+    });
+    if (printRes.ok) {
       toast.success('Printed!', { id: tid });
     } else {
-      toast.error(data.error || 'Print failed', { id: tid });
+      toast.error((await printRes.text()) || 'Printer error', { id: tid });
     }
-  } catch {
-    toast.error('Could not reach printer service', { id: tid });
+  } catch (e: any) {
+    if (e?.message?.includes('Failed to fetch') || e?.name === 'TypeError') {
+      toast.error(
+        'Printer bridge not running.\nOpen a terminal and run: node printer-bridge.js',
+        { id: tid, duration: 6000 }
+      );
+    } else {
+      toast.error('Print error: ' + (e?.message || 'Unknown'), { id: tid });
+    }
   }
 }
 
