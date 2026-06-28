@@ -115,39 +115,24 @@ ${order.specialInstructions?`<div class="b">SPECIAL INSTRUCTIONS:</div><div>${or
   w.addEventListener('unload', () => URL.revokeObjectURL(url));
 }
 
-async function printReceipt(order: any) {
-  const tid = toast.loading('Sending to printer…');
-  try {
-    const res  = await fetch('/api/printer/print', {
+// Queues a print job on the server — printer polls /api/cloudprint and prints it.
+async function silentPrint(order: any): Promise<boolean> {
+  return Promise.resolve()
+    .then(() => fetch('/api/printer/print', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(order),
-    });
-    const data = await res.json().catch(() => ({}));
+    }))
+    .then(r => r.ok)
+    .catch(() => false);
+}
 
-    // Server (or tunnel/TCP) printed successfully
-    if (data.printed) {
-      toast.success('Printed!', { id: tid });
-      return;
-    }
-
-    // Server returned hex — forward to the local bridge running on this machine
-    if (data.hex) {
-      const bridgeOk = await fetch('http://localhost:9102/print', {
-        method: 'POST',
-        body:   data.hex,
-      }).then(r => r.ok).catch(() => false);
-
-      if (bridgeOk) {
-        toast.success('Printed!', { id: tid });
-        return;
-      }
-    }
-
-    // Last resort: open formatted receipt in a popup for manual printing
-    toast.dismiss(tid);
-    openBrowserPrint(order);
-  } catch {
+async function printReceipt(order: any) {
+  const tid = toast.loading('Sending to printer…');
+  const ok = await silentPrint(order);
+  if (ok) {
+    toast.success('Print job queued — receipt printing shortly!', { id: tid });
+  } else {
     toast.dismiss(tid);
     openBrowserPrint(order);
   }
@@ -360,6 +345,8 @@ export default function AdminOrdersPage() {
 
         if (brandNew.length > 0) {
           startRing(brandNew.length);
+          // Auto-print each new order (Uber Eats style — no click needed)
+          brandNew.forEach(o => silentPrint(o));
         } else if (needsAction.length === 0) {
           stopRing();
         }

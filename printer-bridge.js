@@ -2,52 +2,109 @@
 /**
  * Mum's Kitchen — Printer Bridge
  *
- * Run this on the restaurant computer (the one on the same Wi-Fi as the printer):
+ * Run this on the restaurant tablet via Termux:
  *   node printer-bridge.js
  *
- * It listens on http://localhost:9102 and forwards ESC/POS data to the
- * Star TSP100III at 192.168.1.102:9100 via raw TCP.
+ * Two endpoints:
+ *   POST /print  — body is raw hex (legacy / Cloudflare tunnel path)
+ *   POST /order  — body is JSON order object; bridge builds the receipt itself
  *
- * Chrome allows http://localhost calls from HTTPS pages, so the hosted admin
- * site at mumskitchentranmere.com.au can reach this bridge without any
- * security warnings.
- *
- * To start automatically on Mac login:
- *   1. Open Automator → New Document → Application
- *   2. Add "Run Shell Script" → command: node /path/to/printer-bridge.js
- *   3. Save to ~/Applications and add to Login Items in System Settings
+ * The /order endpoint means the browser can print instantly without a
+ * server roundtrip — the same way Uber Eats works (local device, local printer).
  */
 
 const net  = require('net');
 const http = require('http');
 
-// ── CHANGE THIS if the printer's IP changes ──────────────────────────────────
-// To find the current IP: turn OFF printer, hold FEED, turn ON → self-test prints IP.
-// You can also override with: PRINTER_IP=x.x.x.x node printer-bridge.js
 const PRINTER_HOST = process.env.PRINTER_IP   || '192.168.1.102';
-// ─────────────────────────────────────────────────────────────────────────────
 const PRINTER_PORT = parseInt(process.env.PRINTER_PORT || '9100', 10);
 const BRIDGE_PORT  = parseInt(process.env.BRIDGE_PORT  || '9102', 10);
 
-function sendToPrinter(hexData) {
-  return new Promise((resolve, reject) => {
-    const data   = Buffer.from(hexData.trim(), 'hex');
-    const socket = net.createConnection({ host: PRINTER_HOST, port: PRINTER_PORT });
+// ── ESC/POS builder (mirrors the server-side Receipt class) ──────────────────
+const LINE_WIDTH = 42;
 
+class Receipt {
+  constructor() { this.chunks = []; }
+  cmd(...b)  { this.chunks.push(Buffer.from(b)); return this; }
+  txt(s)     { this.chunks.push(Buffer.from(s.replace(/[^\x20-\x7E]/g, '?'), 'ascii')); return this; }
+  lf()       { return this.cmd(0x0A); }
+  feed(n=1)  { for (let i=0;i<n;i++) this.lf(); return this; }
+  init()     { return this.cmd(0x1B, 0x40); }
+  cut()      { return this.cmd(0x1D, 0x56, 0x41, 0x03); }
+  align(a)   { return this.cmd(0x1B, 0x61, {L:0,C:1,R:2}[a]); }
+  bold(on)   { return this.cmd(0x1B, 0x45, on ? 1 : 0); }
+  size(w,h)  { return this.cmd(0x1D, 0x21, ((w-1)<<4)|(h-1)); }
+  line(s)    { return this.txt(s).lf(); }
+  divider(ch='-', w=LINE_WIDTH) { return this.line(ch.repeat(w)); }
+  row(left, right, w=LINE_WIDTH) {
+    const gap = w - left.length - right.length;
+    return this.line((left + (gap>0?' '.repeat(gap):' ') + right).slice(0,w));
+  }
+  build() { return Buffer.concat(this.chunks); }
+}
+
+function buildReceipt(order) {
+  const r         = new Receipt();
+  const id        = String(order._id || '').slice(-6).toUpperCase();
+  const typeLabel = order.orderType === 'dinein' ? 'DINE-IN' : 'TAKEAWAY';
+  const now       = new Date();
+  const date      = now.toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' });
+  const time      = now.toLocaleTimeString('en-AU', { hour:'2-digit', minute:'2-digit' });
+
+  r.init();
+  r.align('C').size(2,2).bold(true).line("MUM'S KITCHEN").size(1,1).bold(false);
+  r.align('C').line('Tranmere SA 5073').feed();
+  r.align('C').bold(true).line(`ORDER #${id}`).bold(false);
+  r.align('C').line(`${date}  ${time}`);
+  r.divider('=');
+  r.align('C').bold(true).size(1,2).line(typeLabel).size(1,1).bold(false);
+  r.align('L').line(`Customer: ${order.customerName || ''}`);
+  if (order.tableNumber)     r.bold(true).line(`Table:    ${order.tableNumber}`).bold(false);
+  if (order.customerPhone)   r.line(`Phone:    ${order.customerPhone}`);
+  if (order.pickupTime)      r.line(`Pickup:   ${order.pickupTime}`);
+  if (order.deliveryAddress) r.line(`Address:  ${order.deliveryAddress}`);
+  r.divider('-');
+
+  for (const item of (order.items || [])) {
+    r.align('L').bold(true)
+     .row(`${item.quantity}x ${item.name}`, `$${((item.price||0)*(item.quantity||1)).toFixed(2)}`)
+     .bold(false);
+  }
+  r.divider('-');
+
+  if (order.subtotal != null && order.deliveryFee) {
+    r.row('Subtotal', `$${(order.subtotal  ||0).toFixed(2)}`);
+    r.row('Delivery', `$${(order.deliveryFee||0).toFixed(2)}`);
+    r.divider('-');
+  }
+  r.bold(true).size(1,2)
+   .row('TOTAL', `$${(order.total||0).toFixed(2)} AUD`)
+   .size(1,1).bold(false);
+  r.divider('=');
+
+  if (order.specialInstructions) {
+    r.align('L').bold(true).line('SPECIAL INSTRUCTIONS:').bold(false);
+    r.line(order.specialInstructions);
+    r.divider('-');
+  }
+  r.align('C').line('Thank you!').feed(4).cut();
+  return r.build();
+}
+
+// ── TCP send ─────────────────────────────────────────────────────────────────
+function sendToPrinter(data) {
+  return new Promise((resolve, reject) => {
+    const socket = net.createConnection({ host: PRINTER_HOST, port: PRINTER_PORT });
     socket.setTimeout(6000);
-    socket.on('connect', () => { socket.write(data, () => socket.end()); });
+    socket.on('connect', () => socket.write(data, () => socket.end()));
     socket.on('close',   resolve);
     socket.on('error',   reject);
-    socket.on('timeout', () => {
-      socket.destroy();
-      reject(new Error(`Printer at ${PRINTER_HOST}:${PRINTER_PORT} timed out`));
-    });
+    socket.on('timeout', () => { socket.destroy(); reject(new Error(`Printer timed out`)); });
   });
 }
 
+// ── HTTP server ───────────────────────────────────────────────────────────────
 const server = http.createServer((req, res) => {
-  // Standard CORS + Chrome Private Network Access header (required since Chrome 115
-  // for https:// pages calling http://localhost).
   res.setHeader('Access-Control-Allow-Origin',          '*');
   res.setHeader('Access-Control-Allow-Methods',         'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers',         'Content-Type');
@@ -59,16 +116,27 @@ const server = http.createServer((req, res) => {
   const chunks = [];
   req.on('data', c => chunks.push(c));
   req.on('end', async () => {
-    const hex = Buffer.concat(chunks).toString('utf8');
     try {
-      await sendToPrinter(hex);
-      console.log(`[${new Date().toLocaleTimeString()}] ✅ Receipt printed`);
-      res.writeHead(200, { 'Content-Type': 'text/plain' });
-      res.end('OK');
+      let data;
+
+      if (req.url === '/order') {
+        // New path: JSON order → build ESC/POS locally
+        const order = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+        data = buildReceipt(order);
+      } else {
+        // Legacy path: raw hex forwarded from server or tunnel
+        const hex = Buffer.concat(chunks).toString('utf8').trim();
+        data = Buffer.from(hex, 'hex');
+      }
+
+      await sendToPrinter(data);
+      console.log(`[${new Date().toLocaleTimeString()}] ✅ Printed`);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true }));
     } catch (e) {
       console.error(`[${new Date().toLocaleTimeString()}] ❌ ${e.message}`);
-      res.writeHead(502, { 'Content-Type': 'text/plain' });
-      res.end(e.message);
+      res.writeHead(502, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message }));
     }
   });
 });
@@ -79,14 +147,13 @@ server.listen(BRIDGE_PORT, '127.0.0.1', () => {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log(`  Bridge:  http://localhost:${BRIDGE_PORT}`);
   console.log(`  Printer: ${PRINTER_HOST}:${PRINTER_PORT}`);
-  console.log('  Ready to print. Keep this window open.');
+  console.log('  Ready. Orders auto-print when they arrive.');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 });
 
 server.on('error', e => {
   if (e.code === 'EADDRINUSE') {
-    console.error(`\n❌ Port ${BRIDGE_PORT} is already in use.`);
-    console.error('   Is another copy of printer-bridge.js already running?\n');
+    console.error(`\n❌ Port ${BRIDGE_PORT} is already in use. Is another copy running?\n`);
   } else {
     console.error('\n❌ Server error:', e.message, '\n');
   }

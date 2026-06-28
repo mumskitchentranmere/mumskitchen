@@ -11,12 +11,12 @@ export async function GET() {
     await connectDB();
     const s = await Settings.findOne().lean() as any;
     return NextResponse.json(
-      { globalDiscount: s?.globalDiscount ?? 0, categoryOrder: s?.categoryOrder ?? [] },
+      { globalDiscount: s?.globalDiscount ?? 0, categoryOrder: s?.categoryOrder ?? [], dineInEnabled: s?.dineInEnabled ?? true },
       { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } }
     );
   } catch {
     return NextResponse.json(
-      { globalDiscount: 0, categoryOrder: [] },
+      { globalDiscount: 0, categoryOrder: [], dineInEnabled: true },
       { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } }
     );
   }
@@ -38,8 +38,11 @@ export async function PUT(req: NextRequest) {
   if (body.categoryOrder !== undefined) {
     update.categoryOrder = body.categoryOrder;
   }
+  if (body.dineInEnabled !== undefined) {
+    update.dineInEnabled = Boolean(body.dineInEnabled);
+  }
 
   await connectDB();
   const s = await Settings.findOneAndUpdate({}, { $set: update }, { upsert: true, new: true });
-  return NextResponse.json({ ok: true, globalDiscount: s.globalDiscount, categoryOrder: s.categoryOrder });
+  return NextResponse.json({ ok: true, globalDiscount: s.globalDiscount, categoryOrder: s.categoryOrder, dineInEnabled: s.dineInEnabled });
 }

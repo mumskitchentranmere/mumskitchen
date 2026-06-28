@@ -83,7 +83,7 @@ function SizeManager({ sizes, onChange }: { sizes: SizeEntry[]; onChange: (s: Si
               </div>
               <div>
                 <label style={{ fontSize: '11px', color: 'var(--brown-mid)', display: 'block', marginBottom: '4px', fontWeight: 500 }}>Price (AUD)</label>
-                <input type="number" step="0.01" min="0" value={sz.price} onChange={e => update(i, 'price', e.target.value)} placeholder="0.00" style={inp} />
+                <input type="number" step="0.01" min="0" value={sz.price} onChange={e => update(i, 'price', e.target.value)} onWheel={e => (e.target as HTMLInputElement).blur()} placeholder="0.00" style={inp} />
               </div>
               <button type="button" onClick={() => remove(i)} style={{ background: 'none', border: '1px solid #fecaca', borderRadius: '8px', padding: '8px 10px', cursor: 'pointer', color: '#ef4444', display: 'flex', alignItems: 'center' }}>
                 <Trash2 size={13} />
@@ -583,12 +583,12 @@ export default function AdminMenuPage() {
             <div className="admin-form-3" style={{ marginBottom: '14px' }}>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 500, color: 'var(--brown-mid)', display: 'block', marginBottom: '5px' }}>Base Price (AUD) *</label>
-                <input type="number" step="0.01" min="0" value={form.price} onChange={e => setForm((f: any) => ({ ...f, price: e.target.value }))} placeholder="0.00" style={inp} />
+                <input type="number" step="0.01" min="0" value={form.price} onChange={e => setForm((f: any) => ({ ...f, price: e.target.value }))} onWheel={e => (e.target as HTMLInputElement).blur()} placeholder="0.00" style={inp} />
                 <p style={{ fontSize: '10px', color: 'var(--brown-mid)', marginTop: '3px' }}>Used when no sizes defined</p>
               </div>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 500, color: 'var(--brown-mid)', display: 'block', marginBottom: '5px' }}>Discount (%)</label>
-                <input type="number" step="1" min="0" max="100" value={form.discount ?? ''} onChange={e => setForm((f: any) => ({ ...f, discount: e.target.value }))} placeholder="0" style={inp} />
+                <input type="number" step="1" min="0" max="100" value={form.discount ?? ''} onChange={e => setForm((f: any) => ({ ...f, discount: e.target.value }))} onWheel={e => (e.target as HTMLInputElement).blur()} placeholder="0" style={inp} />
                 <p style={{ fontSize: '10px', color: 'var(--brown-mid)', marginTop: '3px' }}>Item-level discount (0 = none)</p>
               </div>
               <div>

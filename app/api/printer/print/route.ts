@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import net from 'net';
+import { connectDB } from '@/lib/mongodb';
+import { PrintJob } from '@/models/PrintJob';
 
 export const dynamic = 'force-dynamic';
 
@@ -81,40 +82,8 @@ function buildReceipt(order: any): Buffer {
   return r.build();
 }
 
-// ── Path 1: Cloudflare Tunnel (production, any OS, any device) ────────────────
-// Set PRINTER_BRIDGE_URL in Hostinger env vars to the tunnel URL.
-// The server calls it directly — no browser involvement at all.
-async function printViaTunnel(hex: string): Promise<void> {
-  const url = process.env.PRINTER_BRIDGE_URL!.replace(/\/$/, '') + '/print';
-  const res = await fetch(url, {
-    method:  'POST',
-    body:    hex,
-    signal:  AbortSignal.timeout(4000),
-  });
-  if (!res.ok) throw new Error(await res.text());
-}
-
-// ── Path 2: Direct TCP (local dev — server is on the same LAN as printer) ─────
-function tcpPrint(data: Buffer): Promise<void> {
-  const host    = process.env.PRINTER_IP   || '192.168.1.102';
-  const port    = parseInt(process.env.PRINTER_PORT || '9100', 10);
-
-  return new Promise((resolve, reject) => {
-    const socket = net.createConnection({ host, port });
-    socket.setTimeout(1500);
-    socket.on('connect', () => socket.write(data, () => socket.end()));
-    socket.on('close',   resolve);
-    socket.on('timeout', () => { socket.destroy(); reject(new Error('timeout')); });
-    socket.on('error',   reject);
-  });
-}
-
 // ── Route ─────────────────────────────────────────────────────────────────────
-// Priority:
-//   1. PRINTER_BRIDGE_URL set → server calls Cloudflare tunnel directly (production)
-//   2. Direct TCP works       → server prints via TCP (local dev, same LAN)
-//   3. Returns { hex }        → browser forwards to localhost:9102 bridge
-//      └─ bridge not running  → browser opens print dialog (last resort)
+// Queues the job in MongoDB. The printer polls /api/cloudprint and picks it up.
 export async function POST(req: NextRequest) {
   const session = await auth();
   if ((session?.user as any)?.role !== 'admin') {
@@ -135,23 +104,7 @@ export async function POST(req: NextRequest) {
   const receipt = buildReceipt(order);
   const hex     = receipt.toString('hex');
 
-  // Path 1 — Cloudflare tunnel (deployed, any OS, any device)
-  if (process.env.PRINTER_BRIDGE_URL) {
-    try {
-      await printViaTunnel(hex);
-      return NextResponse.json({ printed: true });
-    } catch (e: any) {
-      // Tunnel failed — fall through to TCP then hex fallback
-      console.error('[Printer] Tunnel failed:', e.message);
-    }
-  }
-
-  // Path 2 — Direct TCP (local dev: server and printer on same LAN)
-  try {
-    await tcpPrint(receipt);
-    return NextResponse.json({ printed: true });
-  } catch {
-    // Path 3 — Return hex so the browser can forward to localhost bridge or open print dialog
-    return NextResponse.json({ hex });
-  }
+  await connectDB();
+  await PrintJob.create({ hex });
+  return NextResponse.json({ queued: true });
 }

@@ -425,7 +425,7 @@ export default function CheckoutPage() {
                   <div style={{ display: 'flex', gap: '10px' }}>
                     {([
                       { value: 'takeaway', label: 'Takeaway', icon: Package, emoji: '🥡', desc: 'Pick up your order', disabled: false },
-                      { value: 'dinein',   label: 'Dine-in',  icon: UtensilsCrossed, emoji: '🍽️', desc: dineInEnabled ? 'Eat at the restaurant' : 'Currently unavailable', disabled: !dineInEnabled },
+                      { value: 'dinein',   label: 'Dine-in',  icon: UtensilsCrossed, emoji: '🍽️', desc: dineInEnabled ? 'Eat at the restaurant' : 'Dining full for now, check after a moment', disabled: !dineInEnabled },
                     ] as const).map(opt => (
                       <button
                         key={opt.value}
@@ -443,7 +443,7 @@ export default function CheckoutPage() {
                         <div style={{ fontSize: '22px', marginBottom: '4px' }}>{opt.emoji}</div>
                         <div style={{ fontSize: '14px', fontWeight: 700, color: opt.disabled ? 'var(--brown-mid)' : orderType === opt.value ? 'var(--red-korean)' : 'var(--brown-dark)', marginBottom: '2px' }}>{opt.label}</div>
                         <div style={{ fontSize: '11px', color: 'var(--brown-mid)' }}>{opt.desc}</div>
-                        {opt.disabled && <div style={{ fontSize: '10px', color: '#dc2626', fontWeight: 600, marginTop: '4px' }}>FULLY BOOKED</div>}
+                        {opt.disabled && <div style={{ fontSize: '10px', color: '#dc2626', fontWeight: 600, marginTop: '4px' }}>DINING FULL</div>}
                       </button>
                     ))}
                   </div>
