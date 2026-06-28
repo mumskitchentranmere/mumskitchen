@@ -309,8 +309,10 @@ export default function AdminOrdersPage() {
   const [dateTo,       setDateTo]      = useState('');
   const [updating,     setUpdating]    = useState<string | null>(null);
   const [capturing,    setCapturing]   = useState<string | null>(null);
-  const [alertActive,  setAlertActive] = useState(false);
+  const [alertActive,   setAlertActive]  = useState(false);
   const [newOrderCount, setNewOrderCount] = useState(0);
+  const [dineInEnabled, setDineInEnabled] = useState(true);
+  const [togglingDineIn, setTogglingDineIn] = useState(false);
 
   const seenOrderIds   = useRef<Set<string>>(new Set());
   const isFirstLoad    = useRef(true);
@@ -332,7 +334,8 @@ export default function AdminOrdersPage() {
   }, []);
 
   const load = useCallback(() =>
-    fetch('/api/orders')
+    Promise.resolve()
+      .then(() => fetch('/api/orders'))
       .then(r => r.ok ? r.json() : Promise.reject(r.status))
       .then((d: any[]) => {
         const data = Array.isArray(d) ? d : [];
@@ -367,8 +370,18 @@ export default function AdminOrdersPage() {
   useEffect(() => {
     load();
     const interval = setInterval(load, 30_000);
+    fetch('/api/settings').then(r => r.json()).then(d => { if (typeof d.dineInEnabled === 'boolean') setDineInEnabled(d.dineInEnabled); });
     return () => { clearInterval(interval); stopRing(); };
   }, [load, stopRing]);
+
+  const toggleDineIn = async () => {
+    setTogglingDineIn(true);
+    const next = !dineInEnabled;
+    await fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dineInEnabled: next }) });
+    setDineInEnabled(next);
+    setTogglingDineIn(false);
+    toast.success(next ? 'Dine-in orders enabled' : 'Dine-in orders paused');
+  };
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -461,9 +474,44 @@ export default function AdminOrdersPage() {
             {filteredRevenue > 0 && <> · Revenue: <strong style={{ color: '#22c55e' }}>${filteredRevenue.toFixed(2)} AUD</strong></>}
           </p>
         </div>
-        <button onClick={() => downloadCSV(filtered)} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '10px', padding: '8px 14px', cursor: 'pointer', fontSize: '12px', fontFamily: 'Poppins, sans-serif', fontWeight: 500 }}>
-          <Download size={13} /> Export CSV
-        </button>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          {/* Dine-in toggle */}
+          <button
+            onClick={toggleDineIn}
+            disabled={togglingDineIn}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              background: dineInEnabled ? '#dcfce7' : '#fee2e2',
+              border: `1.5px solid ${dineInEnabled ? '#16a34a' : '#dc2626'}`,
+              borderRadius: '10px', padding: '8px 14px',
+              cursor: togglingDineIn ? 'wait' : 'pointer',
+              fontSize: '12px', fontFamily: 'Poppins, sans-serif', fontWeight: 600,
+              color: dineInEnabled ? '#15803d' : '#dc2626',
+              transition: 'all 0.2s',
+              opacity: togglingDineIn ? 0.6 : 1,
+            }}
+          >
+            <span style={{ fontSize: '15px' }}>🍽️</span>
+            Dine-in
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              width: '34px', height: '18px', borderRadius: '9px',
+              background: dineInEnabled ? '#16a34a' : '#dc2626',
+              position: 'relative', transition: 'background 0.2s', flexShrink: 0,
+            }}>
+              <span style={{
+                position: 'absolute', width: '12px', height: '12px', borderRadius: '50%',
+                background: 'white', transition: 'left 0.2s',
+                left: dineInEnabled ? '18px' : '4px',
+              }} />
+            </span>
+            {dineInEnabled ? 'ON' : 'OFF'}
+          </button>
+
+          <button onClick={() => downloadCSV(filtered)} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '10px', padding: '8px 14px', cursor: 'pointer', fontSize: '12px', fontFamily: 'Poppins, sans-serif', fontWeight: 500 }}>
+            <Download size={13} /> Export CSV
+          </button>
+        </div>
       </div>
 
       {/* Filters */}

@@ -34,12 +34,17 @@ const SUBCATS: Record<string, { id: string; label: string }[]> = {
 };
 
 export default function OrderPage() {
-  const [items,   setItems]   = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [cuisine, setCuisine] = useState('all');
-  const [cat,     setCat]     = useState('all');
+  const [items,      setItems]      = useState<any[]>([]);
+  const [loading,    setLoading]    = useState(true);
+  const [cuisine,    setCuisine]    = useState('all');
+  const [cat,        setCat]        = useState('all');
+  const [catOrder,   setCatOrder]   = useState<string[]>([]);
 
   const selectCuisine = (c: string) => { setCuisine(c); setCat('all'); };
+
+  useEffect(() => {
+    fetch('/api/settings').then(r => r.json()).then(d => { if (d.categoryOrder?.length) setCatOrder(d.categoryOrder); });
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -51,12 +56,23 @@ export default function OrderPage() {
       .then(r => r.json())
       .then(d => {
         const arr: any[] = Array.isArray(d) ? d : [];
-        // items with multiple sizes first, then single/no-size items
         arr.sort((a, b) => (b.sizes?.length > 1 ? 1 : 0) - (a.sizes?.length > 1 ? 1 : 0));
         setItems(arr);
         setLoading(false);
       });
   }, [cuisine, cat]);
+
+  const sortedSubcats = (cuis: string) => {
+    const base = SUBCATS[cuis] ?? [];
+    if (!catOrder.length) return base;
+    const [all, rest] = [base.filter(s => s.id === 'all'), base.filter(s => s.id !== 'all')];
+    rest.sort((a, b) => {
+      const ai = catOrder.indexOf(a.id);
+      const bi = catOrder.indexOf(b.id);
+      return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+    });
+    return [...all, ...rest];
+  };
 
   const tabBtn = (active: boolean): React.CSSProperties => ({
     padding: '7px 16px', borderRadius: '20px', border: '1.5px solid',
@@ -106,7 +122,7 @@ export default function OrderPage() {
         {/* Level 2 — Subcategories */}
         {cuisine !== 'all' && (
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '24px', borderLeft: '3px solid var(--red-korean)', paddingLeft: '12px' }}>
-            {SUBCATS[cuisine].map(c => (
+            {sortedSubcats(cuisine).map(c => (
               <button key={c.id} onClick={() => setCat(c.id)} style={tabBtn(cat === c.id)}>
                 {c.label}
               </button>
@@ -127,7 +143,7 @@ export default function OrderPage() {
               <p>No dishes found in this category yet.</p>
             </div>
           : <div className="menu-grid">
-              {items.map(item => <MenuCard key={item._id} item={item} />)}
+              {items.map(item => <MenuCard key={item._id} item={item} discount={item.discount || 0} />)}
             </div>
         }
       </div>

@@ -193,6 +193,7 @@ export default function CheckoutPage() {
   const [orderDate] = useState(new Date());
   const [isOpen, setIsOpen] = useState<boolean | null>(null);
   const [openLabel, setOpenLabel] = useState('');
+  const [dineInEnabled, setDineInEnabled] = useState(true);
   const hoursRef = useRef(HOURS);
 
   const orderTotal = total();
@@ -200,6 +201,15 @@ export default function CheckoutPage() {
     if (i.originalPrice && i.originalPrice > i.price) return sum + (i.originalPrice - i.price) * i.quantity;
     return sum;
   }, 0);
+
+  useEffect(() => {
+    fetch('/api/settings').then(r => r.json()).then(d => {
+      if (typeof d.dineInEnabled === 'boolean') {
+        setDineInEnabled(d.dineInEnabled);
+        if (!d.dineInEnabled) setOrderType('takeaway');
+      }
+    }).catch(() => {});
+  }, []);
 
   // Check opening hours on mount + every minute
   useEffect(() => {
@@ -414,23 +424,26 @@ export default function CheckoutPage() {
                   <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--brown-mid)', display: 'block', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Order Type</label>
                   <div style={{ display: 'flex', gap: '10px' }}>
                     {([
-                      { value: 'takeaway', label: 'Takeaway', icon: Package, emoji: '🥡', desc: 'Pick up your order' },
-                      { value: 'dinein', label: 'Dine-in', icon: UtensilsCrossed, emoji: '🍽️', desc: 'Eat at the restaurant' },
+                      { value: 'takeaway', label: 'Takeaway', icon: Package, emoji: '🥡', desc: 'Pick up your order', disabled: false },
+                      { value: 'dinein',   label: 'Dine-in',  icon: UtensilsCrossed, emoji: '🍽️', desc: dineInEnabled ? 'Eat at the restaurant' : 'Currently unavailable', disabled: !dineInEnabled },
                     ] as const).map(opt => (
                       <button
                         key={opt.value}
                         type="button"
-                        onClick={() => setOrderType(opt.value)}
+                        onClick={() => !opt.disabled && setOrderType(opt.value)}
                         style={{
-                          flex: 1, padding: '14px', borderRadius: '12px', cursor: 'pointer',
+                          flex: 1, padding: '14px', borderRadius: '12px',
+                          cursor: opt.disabled ? 'not-allowed' : 'pointer',
                           border: `2px solid ${orderType === opt.value ? 'var(--red-korean)' : 'var(--stone-light)'}`,
-                          background: orderType === opt.value ? '#fdf0ee' : 'white',
+                          background: opt.disabled ? '#f5f5f5' : orderType === opt.value ? '#fdf0ee' : 'white',
                           textAlign: 'center', transition: 'all 0.15s', fontFamily: 'Poppins, sans-serif',
+                          opacity: opt.disabled ? 0.5 : 1,
                         }}
                       >
                         <div style={{ fontSize: '22px', marginBottom: '4px' }}>{opt.emoji}</div>
-                        <div style={{ fontSize: '14px', fontWeight: 700, color: orderType === opt.value ? 'var(--red-korean)' : 'var(--brown-dark)', marginBottom: '2px' }}>{opt.label}</div>
+                        <div style={{ fontSize: '14px', fontWeight: 700, color: opt.disabled ? 'var(--brown-mid)' : orderType === opt.value ? 'var(--red-korean)' : 'var(--brown-dark)', marginBottom: '2px' }}>{opt.label}</div>
                         <div style={{ fontSize: '11px', color: 'var(--brown-mid)' }}>{opt.desc}</div>
+                        {opt.disabled && <div style={{ fontSize: '10px', color: '#dc2626', fontWeight: 600, marginTop: '4px' }}>FULLY BOOKED</div>}
                       </button>
                     ))}
                   </div>

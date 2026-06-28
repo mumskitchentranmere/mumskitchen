@@ -160,7 +160,7 @@ export default function MenuPage() {
           </div>
         ) : (
           <div className="menu-grid">
-            {filtered.map(item => <MenuCard key={item._id} item={item} discount={discount} />)}
+            {filtered.map(item => <MenuCard key={item._id} item={item} discount={item.discount > 0 ? item.discount : discount} />)}
           </div>
         )}
       </div>

@@ -1,21 +1,21 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
-import { Plus, Edit, Trash2, X, Check, Upload, Images, Star, Search } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Check, Upload, Images, Star, Search, GripVertical } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 type SizeEntry = { label: string; price: string; image: string };
 
-const EMPTY_SIZES: SizeEntry[] = [];
-const EMPTY = {
-  name: '', description: '', price: '', category: 'snack', cuisine: 'korean',
-  tags: '', images: [] as string[], primaryImage: '', isAvailable: true,
-  isFeatured: false, sizes: EMPTY_SIZES,
-};
-
-const CATS = [
+const DEFAULT_CATS = [
   'snack','rice-bowl','noodle','bibimbap','soup','fried-chicken',
   'side','drink','set-menu','bangladeshi-main','bangladeshi-snack','biryani','curry',
 ];
+
+const EMPTY_SIZES: SizeEntry[] = [];
+const EMPTY = {
+  name: '', description: '', price: '', discount: '', category: 'snack', cuisine: 'korean',
+  tags: '', images: [] as string[], primaryImage: '', isAvailable: true,
+  isFeatured: false, sizes: EMPTY_SIZES,
+};
 
 // ── Per-size image manager ──────────────────────────────────────────────────
 function SizeManager({ sizes, onChange }: { sizes: SizeEntry[]; onChange: (s: SizeEntry[]) => void }) {
@@ -124,6 +124,81 @@ function SizeManager({ sizes, onChange }: { sizes: SizeEntry[]; onChange: (s: Si
   );
 }
 
+// ── Category drag-sort section ────────────────────────────────────────────────
+function CategoryOrderPanel({ allCats, order, onSave }: {
+  allCats: string[];
+  order: string[];
+  onSave: (o: string[]) => void;
+}) {
+  const merged = [...new Set([...order, ...allCats])];
+  const [list, setList] = useState(merged);
+  const [newCat, setNewCat] = useState('');
+  const dragIdx = useRef<number | null>(null);
+
+  useEffect(() => {
+    setList([...new Set([...order, ...allCats])]);
+  }, [order, allCats]);
+
+  const onDragStart = (i: number) => { dragIdx.current = i; };
+  const onDragOver  = (e: React.DragEvent, i: number) => {
+    e.preventDefault();
+    if (dragIdx.current === null || dragIdx.current === i) return;
+    const next = [...list];
+    const [moved] = next.splice(dragIdx.current, 1);
+    next.splice(i, 0, moved);
+    dragIdx.current = i;
+    setList(next);
+  };
+  const onDrop = () => { onSave(list); dragIdx.current = null; };
+
+  const addCat = () => {
+    const v = newCat.trim().toLowerCase().replace(/\s+/g, '-');
+    if (!v || list.includes(v)) return;
+    const next = [...list, v];
+    setList(next);
+    onSave(next);
+    setNewCat('');
+  };
+
+  return (
+    <div style={{ background: 'white', borderRadius: '14px', border: '1px solid var(--stone-light)', padding: '20px', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+        <div>
+          <h2 className="font-display" style={{ fontSize: '16px', fontWeight: 700, color: 'var(--brown-dark)' }}>Category Order</h2>
+          <p style={{ fontSize: '12px', color: 'var(--brown-mid)', marginTop: '2px' }}>Drag to reorder — customers see categories in this order</p>
+        </div>
+        <div style={{ display: 'flex', gap: '6px' }}>
+          <input
+            value={newCat}
+            onChange={e => setNewCat(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && addCat()}
+            placeholder="New category name…"
+            style={{ border: '1px solid var(--stone-light)', borderRadius: '8px', padding: '6px 10px', fontSize: '12px', fontFamily: 'Poppins, sans-serif', outline: 'none', width: '170px' }}
+          />
+          <button onClick={addCat} style={{ background: 'var(--red-korean)', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Poppins, sans-serif', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <Plus size={12} /> Add
+          </button>
+        </div>
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+        {list.map((cat, i) => (
+          <div
+            key={cat}
+            draggable
+            onDragStart={() => onDragStart(i)}
+            onDragOver={e => onDragOver(e, i)}
+            onDrop={onDrop}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#f9f5f0', border: '1px solid var(--stone-light)', borderRadius: '8px', padding: '6px 10px', cursor: 'grab', userSelect: 'none', fontSize: '12px', fontWeight: 500, color: 'var(--brown-dark)' }}
+          >
+            <GripVertical size={12} color="var(--brown-mid)" />
+            {cat}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function AdminMenuPage() {
   const [items,     setItems]    = useState<any[]>([]);
@@ -134,11 +209,22 @@ export default function AdminMenuPage() {
   const [uploading, setUploading] = useState(false);
   const [search,       setSearch]       = useState('');
   const [catFilter,    setCatFilter]    = useState('all');
+  const [catOrder, setCatOrder] = useState<string[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = () =>
     fetch('/api/menu').then(r => r.json()).then(d => { setItems(Array.isArray(d) ? d : []); setLoading(false); });
-  useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    load();
+    fetch('/api/settings').then(r => r.json()).then(d => { if (d.categoryOrder?.length) setCatOrder(d.categoryOrder); });
+  }, []);
+
+  const saveOrder = (order: string[]) => {
+    setCatOrder(order);
+    fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ categoryOrder: order }) })
+      .then(() => toast.success('Category order saved'));
+  };
 
   const openAdd = () => {
     setEditing(null);
@@ -155,9 +241,11 @@ export default function AdminMenuPage() {
     }));
     setForm({
       ...item,
-      price: item.price?.toString() || '',
-      tags:  (item.tags || []).join(', '),
+      price:    item.price?.toString() || '',
+      discount: item.discount?.toString() ?? '0',
+      tags:     (item.tags || []).join(', '),
       sizes,
+      _newCat:  '',
     });
     setModal(true);
   };
@@ -206,9 +294,11 @@ export default function AdminMenuPage() {
     const body = {
       ...form,
       price:        parseFloat(form.price),
+      discount:     Math.min(100, Math.max(0, parseFloat(form.discount) || 0)),
       tags:         form.tags.split(',').map((t: string) => t.trim()).filter(Boolean),
       sizes,
       primaryImage: form.images[0] || form.primaryImage,
+      _newCat:      undefined,
     };
 
     const url = editing ? `/api/menu/${editing._id}` : '/api/menu';
@@ -237,6 +327,8 @@ export default function AdminMenuPage() {
     outline: 'none', fontFamily: 'Poppins, sans-serif', boxSizing: 'border-box',
   };
 
+  const allCats = [...new Set([...catOrder, ...DEFAULT_CATS, ...items.map((i: any) => i.category).filter(Boolean)])];
+
   const q = search.toLowerCase().trim();
   const filtered = items.filter(i => {
     if (catFilter !== 'all' && i.category !== catFilter) return false;
@@ -262,6 +354,9 @@ export default function AdminMenuPage() {
         </button>
       </div>
 
+      {/* Category drag-sort */}
+      <CategoryOrderPanel allCats={allCats} order={catOrder} onSave={saveOrder} />
+
       {/* Search + filter bar */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
         <div style={{ position: 'relative', flex: '1 1 220px' }}>
@@ -285,7 +380,7 @@ export default function AdminMenuPage() {
           style={{ ...inp, width: 'auto', background: 'white', border: '1px solid var(--stone-light)', borderRadius: '12px', paddingLeft: '12px', fontSize: '13px', flex: '0 1 180px' }}
         >
           <option value="all">All Categories</option>
-          {CATS.map(c => <option key={c} value={c}>{c}</option>)}
+          {allCats.map((c: string) => <option key={c} value={c}>{c}</option>)}
         </select>
         {(search || catFilter !== 'all') && (
           <button onClick={() => { setSearch(''); setCatFilter('all'); }} style={{ background: 'none', border: '1px solid var(--stone-light)', borderRadius: '12px', padding: '0 14px', cursor: 'pointer', fontSize: '12px', color: 'var(--brown-mid)', fontFamily: 'Poppins, sans-serif', whiteSpace: 'nowrap' }}>
@@ -484,7 +579,7 @@ export default function AdminMenuPage() {
               <input type="text" value={form.tags} onChange={e => setForm((f: any) => ({ ...f, tags: e.target.value }))} placeholder="halal, spicy, vegan, vegetarian, gluten-free" style={inp} />
             </div>
 
-            {/* Price / Category / Cuisine row */}
+            {/* Price / Discount / Cuisine row */}
             <div className="admin-form-3" style={{ marginBottom: '14px' }}>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 500, color: 'var(--brown-mid)', display: 'block', marginBottom: '5px' }}>Base Price (AUD) *</label>
@@ -492,10 +587,9 @@ export default function AdminMenuPage() {
                 <p style={{ fontSize: '10px', color: 'var(--brown-mid)', marginTop: '3px' }}>Used when no sizes defined</p>
               </div>
               <div>
-                <label style={{ fontSize: '12px', fontWeight: 500, color: 'var(--brown-mid)', display: 'block', marginBottom: '5px' }}>Category</label>
-                <select value={form.category} onChange={e => setForm((f: any) => ({ ...f, category: e.target.value }))} style={inp}>
-                  {CATS.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
+                <label style={{ fontSize: '12px', fontWeight: 500, color: 'var(--brown-mid)', display: 'block', marginBottom: '5px' }}>Discount (%)</label>
+                <input type="number" step="1" min="0" max="100" value={form.discount ?? ''} onChange={e => setForm((f: any) => ({ ...f, discount: e.target.value }))} placeholder="0" style={inp} />
+                <p style={{ fontSize: '10px', color: 'var(--brown-mid)', marginTop: '3px' }}>Item-level discount (0 = none)</p>
               </div>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 500, color: 'var(--brown-mid)', display: 'block', marginBottom: '5px' }}>Cuisine</label>
@@ -503,6 +597,45 @@ export default function AdminMenuPage() {
                   {['korean', 'bangladeshi', 'both'].map(c => <option key={c}>{c}</option>)}
                 </select>
               </div>
+            </div>
+
+            {/* Category row with inline new-category creator */}
+            <div style={{ marginBottom: '14px' }}>
+              <label style={{ fontSize: '12px', fontWeight: 500, color: 'var(--brown-mid)', display: 'block', marginBottom: '5px' }}>Category</label>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <select
+                  value={allCats.includes(form.category) ? form.category : '__new__'}
+                  onChange={e => { if (e.target.value !== '__new__') setForm((f: any) => ({ ...f, category: e.target.value })); }}
+                  style={{ ...inp, flex: 1 }}
+                >
+                  {allCats.map((c: string) => <option key={c} value={c}>{c}</option>)}
+                  <option value="__new__">+ New category…</option>
+                </select>
+                <input
+                  type="text"
+                  placeholder="Type new category"
+                  value={form._newCat ?? ''}
+                  onChange={e => setForm((f: any) => ({ ...f, _newCat: e.target.value }))}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      const v = (form._newCat ?? '').trim().toLowerCase().replace(/\s+/g, '-');
+                      if (v) { saveOrder([...allCats, v]); setForm((f: any) => ({ ...f, category: v, _newCat: '' })); }
+                    }
+                  }}
+                  style={{ ...inp, width: '160px', flexShrink: 0 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const v = (form._newCat ?? '').trim().toLowerCase().replace(/\s+/g, '-');
+                    if (v) { saveOrder([...allCats, v]); setForm((f: any) => ({ ...f, category: v, _newCat: '' })); }
+                  }}
+                  style={{ background: 'var(--red-korean)', color: 'white', border: 'none', borderRadius: '10px', padding: '0 12px', cursor: 'pointer', fontFamily: 'Poppins, sans-serif', fontSize: '12px', fontWeight: 600, flexShrink: 0 }}
+                >
+                  Add
+                </button>
+              </div>
+              <p style={{ fontSize: '10px', color: 'var(--brown-mid)', marginTop: '3px' }}>Type a new name and press Add to create a custom category</p>
             </div>
 
             {/* Checkboxes */}
