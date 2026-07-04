@@ -18,7 +18,7 @@ const http  = require('http');
 const https = require('https');
 const fs    = require('fs');
 
-const PRINTER_TTY    = process.env.PRINTER_TTY    || '/dev/tty.TSP100-K8110';
+const PRINTER_TTY    = process.env.PRINTER_TTY    || '/dev/cu.TSP100-K8110';
 const PRINTER_HOST   = process.env.PRINTER_IP     || '192.168.1.102';
 const PRINTER_PORT   = parseInt(process.env.PRINTER_PORT  || '9100', 10);
 const BRIDGE_PORT    = parseInt(process.env.BRIDGE_PORT   || '9102', 10);
@@ -97,16 +97,8 @@ function buildReceipt(order) {
   return r.build();
 }
 
-// ── Send to printer (Bluetooth serial port, fallback TCP) ────────────────────
+// ── Send to printer via TCP (LAN printer on port 9100) ───────────────────────
 function sendToPrinter(data) {
-  if (fs.existsSync(PRINTER_TTY)) {
-    return new Promise((resolve, reject) => {
-      fs.writeFile(PRINTER_TTY, data, (err) => {
-        if (err) reject(err); else resolve();
-      });
-    });
-  }
-  // Fallback: TCP (e.g. network print server)
   return new Promise((resolve, reject) => {
     const socket = net.createConnection({ host: PRINTER_HOST, port: PRINTER_PORT });
     socket.setTimeout(6000);
@@ -194,20 +186,41 @@ async function pollLoop() {
   setTimeout(pollLoop, POLL_INTERVAL);
 }
 
+// ── Raw TCP server on port 9100 (for Lightspeed POS) ─────────────────────────
+const RAW_PORT = parseInt(process.env.RAW_PORT || '9100', 10);
+const rawServer = net.createServer((socket) => {
+  const chunks = [];
+  socket.on('data', c => chunks.push(c));
+  socket.on('end', async () => {
+    if (chunks.length === 0) return;
+    const data = Buffer.concat(chunks);
+    console.log(`[${new Date().toLocaleTimeString()}] 🖨  RAW print job (${data.length} bytes) from Lightspeed`);
+    try {
+      await sendToPrinter(data);
+      console.log(`[${new Date().toLocaleTimeString()}] ✅ Printed (Lightspeed)`);
+    } catch (e) {
+      console.error(`[${new Date().toLocaleTimeString()}] ❌ ${e.message}`);
+    }
+  });
+  socket.on('error', () => {});
+});
+
 server.listen(BRIDGE_PORT, '127.0.0.1', () => {
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log("  Mum's Kitchen — Printer Bridge");
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  const printerDesc = fs.existsSync(PRINTER_TTY)
-    ? `BT serial  ${PRINTER_TTY}`
-    : `TCP        ${PRINTER_HOST}:${PRINTER_PORT} (BT port not found)`;
-  console.log(`  Bridge:  http://localhost:${BRIDGE_PORT}`);
-  console.log(`  Printer: ${printerDesc}`);
-  console.log(`  Polling: ${POLL_URL} every ${POLL_INTERVAL}ms`);
-  console.log('  Ready. Orders auto-print when they arrive.');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  // Start polling after a short delay so the server is fully up
-  setTimeout(pollLoop, 2000);
+  rawServer.listen(RAW_PORT, '0.0.0.0', () => {
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log("  Mum's Kitchen — Printer Bridge");
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    const printerDesc = fs.existsSync(PRINTER_TTY)
+      ? `BT serial  ${PRINTER_TTY}`
+      : `TCP        ${PRINTER_HOST}:${PRINTER_PORT} (BT port not found)`;
+    console.log(`  Printer:  ${printerDesc}`);
+    console.log(`  HTTP:     http://localhost:${BRIDGE_PORT}  (web app)`);
+    console.log(`  TCP 9100: 0.0.0.0:${RAW_PORT}             (Lightspeed POS)`);
+    console.log(`  Polling:  ${POLL_URL} every ${POLL_INTERVAL}ms`);
+    console.log('  Ready. Orders auto-print when they arrive.');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    setTimeout(pollLoop, 2000);
+  });
 });
 
 server.on('error', e => {

@@ -58,12 +58,90 @@ function downloadCSV(orders: any[]) {
   URL.revokeObjectURL(url);
 }
 
-// ── Receipt printer ───────────────────────────────────────────────────────────
-// Browser calls /api/printer/print → Hostinger server → Cloudflare tunnel
-// → printer-bridge.js (running locally) → TCP 192.168.1.102:9100 → Star TSP100III
-// No localhost calls, no print dialog — fully silent.
+// ── ESC/POS builder (runs in browser, mirrors printer-bridge.js) ──────────────
+function buildEscPos(order: any): Uint8Array {
+  const chunks: Uint8Array[] = [];
+  const enc = new TextEncoder();
+  const W = 42;
+  const cmd  = (...b: number[]) => chunks.push(new Uint8Array(b));
+  const txt  = (s: string) => chunks.push(enc.encode(s.replace(/[^\x20-\x7E]/g, '?')));
+  const lf   = () => cmd(0x0A);
+  const feed = (n = 1) => { for (let i = 0; i < n; i++) lf(); };
+  const init  = () => cmd(0x1B, 0x40);
+  const cut   = () => cmd(0x1D, 0x56, 0x41, 0x03);
+  const align = (a: 'L'|'C'|'R') => cmd(0x1B, 0x61, {L:0,C:1,R:2}[a]);
+  const bold  = (on: boolean) => cmd(0x1B, 0x45, on ? 1 : 0);
+  const size  = (w: number, h: number) => cmd(0x1D, 0x21, ((w-1)<<4)|(h-1));
+  const line  = (s: string) => { txt(s); lf(); };
+  const div   = (ch = '-') => line(ch.repeat(W));
+  const row   = (l: string, r: string) => {
+    const gap = W - l.length - r.length;
+    line((l + (gap > 0 ? ' '.repeat(gap) : ' ') + r).slice(0, W));
+  };
 
+  const id   = String(order._id || '').slice(-6).toUpperCase();
+  const type = order.orderType === 'dinein' ? 'DINE-IN' : 'TAKEAWAY';
+  const now  = new Date();
+  const date = now.toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' });
+  const time = now.toLocaleTimeString('en-AU', { hour:'2-digit', minute:'2-digit' });
+
+  init();
+  align('C'); size(2,2); bold(true);  line("MUM'S KITCHEN"); size(1,1); bold(false);
+  align('C'); line('Tranmere SA 5073'); feed();
+  align('C'); bold(true); line(`ORDER #${id}`); bold(false);
+  align('C'); line(`${date}  ${time}`);
+  div('=');
+  align('C'); bold(true); size(1,2); line(type); size(1,1); bold(false);
+  align('L'); line(`Customer: ${order.customerName || ''}`);
+  if (order.tableNumber)     { bold(true); line(`Table:    ${order.tableNumber}`); bold(false); }
+  if (order.customerPhone)   line(`Phone:    ${order.customerPhone}`);
+  if (order.pickupTime)      line(`Pickup:   ${order.pickupTime}`);
+  if (order.deliveryAddress) line(`Address:  ${order.deliveryAddress}`);
+  div('-');
+  for (const item of (order.items || [])) {
+    align('L'); bold(true);
+    row(`${item.quantity}x ${item.name}`, `$${((item.price||0)*(item.quantity||1)).toFixed(2)}`);
+    bold(false);
+  }
+  div('-');
+  if (order.subtotal != null && order.deliveryFee) {
+    row('Subtotal', `$${(order.subtotal||0).toFixed(2)}`);
+    row('Delivery', `$${(order.deliveryFee||0).toFixed(2)}`);
+    div('-');
+  }
+  bold(true); size(1,2); row('TOTAL', `$${(order.total||0).toFixed(2)} AUD`); size(1,1); bold(false);
+  div('=');
+  if (order.specialInstructions) {
+    align('L'); bold(true); line('SPECIAL INSTRUCTIONS:'); bold(false);
+    line(order.specialInstructions); div('-');
+  }
+  align('C'); line('Thank you!'); feed(4); cut();
+
+  const total = chunks.reduce((s, c) => s + c.length, 0);
+  const out = new Uint8Array(total);
+  let off = 0;
+  for (const c of chunks) { out.set(c, off); off += c.length; }
+  return out;
+}
+
+// ── Receipt printer ───────────────────────────────────────────────────────────
+// 1st try: RawBT on Android (http://localhost:7778/rawbt) — direct, no bridge
+// 2nd try: server polling route (/api/printer/print) — for Mac bridge fallback
 async function silentPrint(order: any): Promise<boolean> {
+  // Try RawBT (Android tablet with RawBT app installed)
+  try {
+    const escpos = buildEscPos(order);
+    const ok = await Promise.resolve()
+      .then(() => fetch('http://localhost:7778/rawbt', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/octet-stream' },
+        body:    escpos,
+      }))
+      .then(r => r.ok)
+      .catch(() => false);
+    if (ok) return true;
+  } catch {}
+  // Fallback: server-side polling bridge
   return Promise.resolve()
     .then(() => fetch('/api/printer/print', {
       method:  'POST',
