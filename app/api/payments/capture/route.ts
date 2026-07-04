@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { stripe } from '@/lib/stripe';
 import { connectDB } from '@/lib/mongodb';
 import { Order } from '@/models/Order';
+import { sendOrderConfirmed, sendOrderCancelled } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
 
@@ -58,12 +59,27 @@ export async function POST(req: NextRequest) {
       await stripe.paymentIntents.capture(order.paymentIntentId);
       await Order.findByIdAndUpdate(orderId, { $set: { paymentStatus: 'paid', status: 'confirmed' } });
       console.log(`[Capture] ✅ Payment captured for order ${orderId}`);
+      if (order.customerEmail) {
+        sendOrderConfirmed({
+          orderId: orderId, customerName: order.customerName, customerEmail: order.customerEmail,
+          orderType: order.orderType, items: order.items, subtotal: order.subtotal ?? order.total,
+          deliveryFee: order.deliveryFee || 0, total: order.total,
+          pickupTime: order.pickupTime, specialInstructions: order.specialInstructions,
+        }).catch(() => {});
+      }
       return NextResponse.json({ ok: true, status: 'confirmed' });
     } else {
       console.log(`[Capture] ▶ Admin (${admin}) rejecting order ${orderId} | PI: ${order.paymentIntentId}`);
       await stripe.paymentIntents.cancel(order.paymentIntentId);
       await Order.findByIdAndUpdate(orderId, { $set: { paymentStatus: 'cancelled', status: 'cancelled' } });
       console.log(`[Capture] ✅ Payment cancelled (void) for order ${orderId}`);
+      if (order.customerEmail) {
+        sendOrderCancelled({
+          orderId: orderId, customerName: order.customerName, customerEmail: order.customerEmail,
+          orderType: order.orderType, items: order.items, subtotal: order.subtotal ?? order.total,
+          deliveryFee: order.deliveryFee || 0, total: order.total,
+        }, false).catch(() => {});
+      }
       return NextResponse.json({ ok: true, status: 'cancelled' });
     }
   } catch (e: any) {

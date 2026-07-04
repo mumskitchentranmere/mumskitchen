@@ -5,7 +5,7 @@ import { Order } from '@/models/Order';
 import { auth } from '@/lib/auth';
 import { rateLimit, LIMITS } from '@/lib/rateLimit';
 import { validateBody, CreateOrderSchema } from '@/lib/validation';
-import { sendOrderConfirmation, sendOrderNotificationToRestaurant } from '@/lib/email';
+import { sendOrderReceived, sendOrderNotificationToRestaurant } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
 
@@ -87,10 +87,10 @@ export async function POST(req: NextRequest) {
       pickupTime:          order.pickupTime,
       specialInstructions: order.specialInstructions,
     };
-    sendOrderConfirmation(emailData).catch(() => {});
+    sendOrderReceived(emailData).catch(() => {});
     const sessionEmail = session?.user?.email;
     if (sessionEmail && sessionEmail.toLowerCase() !== order.customerEmail.toLowerCase()) {
-      sendOrderConfirmation({ ...emailData, customerEmail: sessionEmail }).catch(() => {});
+      sendOrderReceived({ ...emailData, customerEmail: sessionEmail }).catch(() => {});
     }
     sendOrderNotificationToRestaurant(emailData).catch(() => {});
 

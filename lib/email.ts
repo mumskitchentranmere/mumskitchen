@@ -51,8 +51,11 @@ function orderHtml(d: OrderEmailData): string {
         <!-- Body -->
         <tr>
           <td style="padding:32px">
-            <h1 style="margin:0 0 6px;font-size:24px;font-weight:700;color:#2C1A0E">Order Confirmed! 🎉</h1>
-            <p style="margin:0 0 24px;font-size:14px;color:#6B3A1F">Hi ${d.customerName}, your order has been received.</p>
+            <h1 style="margin:0 0 6px;font-size:24px;font-weight:700;color:#2C1A0E">Order Received! ⏳</h1>
+            <p style="margin:0 0 8px;font-size:14px;color:#6B3A1F">Hi ${d.customerName}, your order has been placed successfully.</p>
+            <div style="background:#fef9ee;border:1.5px solid #f59e0b;border-radius:10px;padding:12px 16px;margin-bottom:20px;font-size:13px;color:#92400e;font-weight:500">
+              🕐 Your order is <strong>pending confirmation</strong> from the restaurant. We will send you another email once it is confirmed.
+            </div>
 
             <!-- Order meta -->
             <table width="100%" cellpadding="0" cellspacing="0" style="background:#FAF7F2;border-radius:12px;padding:14px 16px;margin-bottom:24px">
@@ -120,17 +123,156 @@ function orderHtml(d: OrderEmailData): string {
 </html>`;
 }
 
-export async function sendOrderConfirmation(data: OrderEmailData) {
+export async function sendOrderReceived(data: OrderEmailData) {
   if (!process.env.RESEND_API_KEY) return;
   try {
     await resend.emails.send({
       from:    FROM,
       to:      data.customerEmail,
-      subject: `Order Confirmed #${data.orderId.slice(-6).toUpperCase()} — Mum's Kitchen`,
+      subject: `Order Received #${data.orderId.slice(-6).toUpperCase()} — Pending Confirmation`,
       html:    orderHtml(data),
     });
   } catch (e) {
-    console.error('[Email] Failed to send order confirmation:', e);
+    console.error('[Email] Failed to send order received email:', e);
+  }
+}
+
+export async function sendOrderConfirmed(data: OrderEmailData) {
+  if (!process.env.RESEND_API_KEY) return;
+  const typeLabel = data.orderType === 'dinein' ? '🍽️ Dine In' : '🥡 Takeaway';
+  const rows = data.items.map(i =>
+    `<tr>
+      <td style="padding:8px 0;color:#2C1A0E;font-size:14px">${i.quantity}× ${i.name}</td>
+      <td style="padding:8px 0;color:#2C1A0E;font-size:14px;text-align:right">$${(i.price * i.quantity).toFixed(2)}</td>
+    </tr>`
+  ).join('');
+  const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#FAF7F2;font-family:'Helvetica Neue',Arial,sans-serif">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#FAF7F2;padding:32px 16px">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(44,26,14,0.08)">
+        <tr>
+          <td style="background:#2C1A0E;padding:24px 32px;text-align:center">
+            <img src="${LOGO_URL}" alt="Mum's Kitchen" width="64" height="64" style="display:inline-block;margin-bottom:10px;object-fit:contain" />
+            <div style="font-size:22px;font-weight:700;color:#C8922A;letter-spacing:0.03em">Mum's Kitchen</div>
+            <div style="font-size:12px;color:rgba(232,224,213,0.6);margin-top:4px;letter-spacing:0.12em;text-transform:uppercase">Tranmere · Authentic Korean</div>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px">
+            <h1 style="margin:0 0 6px;font-size:24px;font-weight:700;color:#2C1A0E">Order Confirmed! 🎉</h1>
+            <p style="margin:0 0 8px;font-size:14px;color:#6B3A1F">Hi ${data.customerName}, great news — your order has been confirmed!</p>
+            <div style="background:#f0fdf4;border:1.5px solid #22c55e;border-radius:10px;padding:12px 16px;margin-bottom:20px;font-size:13px;color:#15803d;font-weight:500">
+              ✅ The restaurant has confirmed your order and is now preparing it.
+            </div>
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#FAF7F2;border-radius:12px;padding:14px 16px;margin-bottom:24px">
+              <tr>
+                <td style="font-size:12px;color:#6B3A1F;font-weight:600;text-transform:uppercase;letter-spacing:0.08em">Order ID</td>
+                <td style="font-size:12px;color:#2C1A0E;font-weight:700;text-align:right;font-family:monospace">#${data.orderId.slice(-6).toUpperCase()}</td>
+              </tr>
+              <tr>
+                <td style="font-size:12px;color:#6B3A1F;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding-top:8px">Order Type</td>
+                <td style="font-size:12px;color:#2C1A0E;font-weight:600;text-align:right;padding-top:8px">${typeLabel}</td>
+              </tr>
+              ${data.pickupTime ? `<tr><td style="font-size:12px;color:#6B3A1F;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding-top:8px">Pickup Time</td><td style="font-size:12px;color:#2C1A0E;text-align:right;padding-top:8px">${data.pickupTime}</td></tr>` : ''}
+            </table>
+            <h2 style="margin:0 0 12px;font-size:15px;font-weight:600;color:#2C1A0E">Your Order</h2>
+            <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #E8E0D5">
+              ${rows}
+              <tr><td colspan="2"><hr style="border:none;border-top:1px solid #E8E0D5;margin:4px 0"></td></tr>
+              <tr>
+                <td style="padding:10px 0 0;color:#2C1A0E;font-size:17px;font-weight:700">Total</td>
+                <td style="padding:10px 0 0;color:#C0392B;font-size:18px;font-weight:700;text-align:right">$${data.total.toFixed(2)} AUD</td>
+              </tr>
+            </table>
+            <div style="margin-top:28px;text-align:center">
+              <p style="font-size:13px;color:#6B3A1F;margin:0 0 16px">Questions? Call or message us anytime.</p>
+              <a href="tel:${PHONE}" style="display:inline-block;background:#2C1A0E;color:white;text-decoration:none;padding:12px 28px;border-radius:12px;font-size:14px;font-weight:600">${PHONE}</a>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#FAF7F2;padding:20px 32px;text-align:center;border-top:1px solid #E8E0D5">
+            <p style="margin:0;font-size:12px;color:#A0522D">66 Reid Avenue, Tranmere SA 5073</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+  try {
+    await resend.emails.send({
+      from:    FROM,
+      to:      data.customerEmail,
+      subject: `Order Confirmed! #${data.orderId.slice(-6).toUpperCase()} — Mum's Kitchen`,
+      html,
+    });
+  } catch (e) {
+    console.error('[Email] Failed to send order confirmed email:', e);
+  }
+}
+
+// refunded = true  → payment was already captured, Stripe refund has been issued
+// refunded = false → payment was never charged (authorized then voided)
+export async function sendOrderCancelled(data: OrderEmailData, refunded: boolean) {
+  if (!process.env.RESEND_API_KEY) return;
+  const id = data.orderId.slice(-6).toUpperCase();
+  const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#FAF7F2;font-family:'Helvetica Neue',Arial,sans-serif">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#FAF7F2;padding:32px 16px">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(44,26,14,0.08)">
+        <tr>
+          <td style="background:#2C1A0E;padding:24px 32px;text-align:center">
+            <img src="${LOGO_URL}" alt="Mum's Kitchen" width="64" height="64" style="display:inline-block;margin-bottom:10px;object-fit:contain" />
+            <div style="font-size:22px;font-weight:700;color:#C8922A">Mum's Kitchen</div>
+            <div style="font-size:12px;color:rgba(232,224,213,0.6);margin-top:4px;letter-spacing:0.12em;text-transform:uppercase">Tranmere · Authentic Korean</div>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px">
+            <h1 style="margin:0 0 6px;font-size:24px;font-weight:700;color:#2C1A0E">Order Cancelled ❌</h1>
+            <p style="margin:0 0 16px;font-size:14px;color:#6B3A1F">Hi ${data.customerName}, unfortunately your order <strong>#${id}</strong> has been cancelled.</p>
+            ${refunded
+              ? `<div style="background:#f0fdf4;border:1.5px solid #22c55e;border-radius:10px;padding:12px 16px;margin-bottom:20px;font-size:13px;color:#15803d;font-weight:500">
+                  💳 A full refund of <strong>$${data.total.toFixed(2)} AUD</strong> has been processed and will appear in your account within 5–10 business days.
+                </div>`
+              : `<div style="background:#fef9ee;border:1.5px solid #f59e0b;border-radius:10px;padding:12px 16px;margin-bottom:20px;font-size:13px;color:#92400e;font-weight:500">
+                  ℹ️ You have <strong>not been charged</strong> for this order.
+                </div>`
+            }
+            <p style="font-size:13px;color:#6B3A1F">We apologise for the inconvenience. If you have any questions, please call us.</p>
+            <div style="margin-top:24px;text-align:center">
+              <a href="tel:${PHONE}" style="display:inline-block;background:#2C1A0E;color:white;text-decoration:none;padding:12px 28px;border-radius:12px;font-size:14px;font-weight:600">${PHONE}</a>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#FAF7F2;padding:20px 32px;text-align:center;border-top:1px solid #E8E0D5">
+            <p style="margin:0;font-size:12px;color:#A0522D">66 Reid Avenue, Tranmere SA 5073</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+  try {
+    await resend.emails.send({
+      from:    FROM,
+      to:      data.customerEmail,
+      subject: refunded
+        ? `Order Cancelled & Refund Processed #${id} — Mum's Kitchen`
+        : `Order Cancelled #${id} — Mum's Kitchen`,
+      html,
+    });
+  } catch (e) {
+    console.error('[Email] Failed to send cancellation email:', e);
   }
 }
 

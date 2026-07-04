@@ -4,7 +4,7 @@ import { Order } from '@/models/Order';
 import { auth } from '@/lib/auth';
 import { rateLimit, LIMITS } from '@/lib/rateLimit';
 import { validateBody, CreateOrderSchema } from '@/lib/validation';
-import { sendOrderConfirmation, sendOrderNotificationToRestaurant } from '@/lib/email';
+import { sendOrderReceived, sendOrderNotificationToRestaurant } from '@/lib/email';
 
 export async function GET(_req: NextRequest) {
   try {
@@ -49,12 +49,12 @@ export async function POST(req: NextRequest) {
       specialInstructions: order.specialInstructions,
     };
     // Send to the email entered in the checkout form
-    sendOrderConfirmation(emailData).catch(() => {});
+    sendOrderReceived(emailData).catch(() => {});
 
     // If logged in and their account Gmail differs from the entered email, also send there
     const sessionEmail = session?.user?.email;
     if (sessionEmail && sessionEmail.toLowerCase() !== order.customerEmail.toLowerCase()) {
-      sendOrderConfirmation({ ...emailData, customerEmail: sessionEmail }).catch(() => {});
+      sendOrderReceived({ ...emailData, customerEmail: sessionEmail }).catch(() => {});
     }
 
     sendOrderNotificationToRestaurant(emailData).catch(() => {});

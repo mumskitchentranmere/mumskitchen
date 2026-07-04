@@ -59,12 +59,96 @@ function downloadCSV(orders: any[]) {
 }
 
 // ── Receipt printer ───────────────────────────────────────────────────────────
-// Primary path: server builds ESC/POS hex → browser sends to printer-bridge.js
-// on localhost:9102 → bridge writes TCP to 192.168.1.102:9100 (silent, no dialog).
-//
-// Fallback: if the bridge isn't running (or Chrome blocks it), opens a
-// formatted 80mm receipt in a popup and triggers the system print dialog so
-// the admin can select the Star TSP100III manually. Printing always works.
+// Silent path : browser builds ESC/POS → POST to RawBT local HTTP server
+//   (install RawBT from Play Store, pair Bluetooth printer, enable HTTP server)
+// Fallback    : opens a styled receipt page → system print dialog
+
+// Build ESC/POS bytes in the browser (mirrors the server-side Receipt class)
+function buildEscPos(order: any): Uint8Array {
+  const W   = 42;
+  const buf: Uint8Array[] = [];
+  const enc  = new TextEncoder();
+  const push = (...b: number[]) => buf.push(new Uint8Array(b));
+  const text = (s: string) => buf.push(enc.encode(s.replace(/[^\x20-\x7E]/g, '?')));
+  const lf   = () => push(0x0A);
+  const line = (s: string) => { text(s); lf(); };
+  const align  = (a: 'L'|'C'|'R') => push(0x1B, 0x61, ({L:0,C:1,R:2} as any)[a]);
+  const bold   = (on: boolean)     => push(0x1B, 0x45, on ? 1 : 0);
+  const size   = (w: number, h: number) => push(0x1D, 0x21, ((w-1)<<4)|(h-1));
+  const div    = (ch = '-') => line(ch.repeat(W));
+  const row    = (left: string, right: string) => {
+    const gap = W - left.length - right.length;
+    line((left + (gap > 0 ? ' '.repeat(gap) : ' ') + right).slice(0, W));
+  };
+
+  const id        = String(order._id || '').slice(-6).toUpperCase();
+  const typeLabel = order.orderType === 'dinein' ? 'DINE-IN' : 'TAKEAWAY';
+  const now       = new Date();
+  const date      = now.toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' });
+  const time      = now.toLocaleTimeString('en-AU', { hour:'2-digit', minute:'2-digit' });
+
+  push(0x1B, 0x40);                                    // init
+  align('C'); size(2,2); bold(true);  line("MUM'S KITCHEN");
+              size(1,1); bold(false); line('Tranmere SA 5073'); lf();
+  align('C'); bold(true);  line(`ORDER #${id}`);
+              bold(false); line(`${date}  ${time}`);
+  div('=');
+  align('C'); bold(true); size(1,2); line(typeLabel); size(1,1); bold(false);
+  align('L');
+  line(`Customer: ${order.customerName || ''}`);
+  if (order.tableNumber)     { bold(true); line(`Table:    ${order.tableNumber}`); bold(false); }
+  if (order.customerPhone)   line(`Phone:    ${order.customerPhone}`);
+  if (order.pickupTime)      line(`Pickup:   ${order.pickupTime}`);
+  if (order.deliveryAddress) line(`Address:  ${order.deliveryAddress}`);
+  div('-');
+
+  for (const item of (order.items || [])) {
+    bold(true);
+    row(`${item.quantity}x ${item.name}`, `$${((item.price||0)*(item.quantity||1)).toFixed(2)}`);
+    bold(false);
+  }
+  div('-');
+
+  if (order.subtotal != null && order.deliveryFee) {
+    row('Subtotal', `$${(order.subtotal||0).toFixed(2)}`);
+    row('Delivery', `$${(order.deliveryFee||0).toFixed(2)}`);
+    div('-');
+  }
+  bold(true); size(1,2); row('TOTAL', `$${(order.total||0).toFixed(2)} AUD`); size(1,1); bold(false);
+  div('=');
+
+  if (order.specialInstructions) {
+    align('L'); bold(true); line('SPECIAL INSTRUCTIONS:'); bold(false);
+    line(order.specialInstructions);
+    div('-');
+  }
+  align('C'); line('Thank you!');
+  push(0x0A, 0x0A, 0x0A, 0x0A);   // feed
+  push(0x1D, 0x56, 0x41, 0x03);   // cut
+
+  const total  = buf.reduce((s, c) => s + c.length, 0);
+  const result = new Uint8Array(total);
+  let off = 0;
+  for (const c of buf) { result.set(c, off); off += c.length; }
+  return result;
+}
+
+// POST ESC/POS bytes to RawBT's local HTTP server (silent, no dialog)
+const RAWBT_URL = 'http://localhost:18995/rawbt';
+
+async function rawbtPrint(order: any): Promise<boolean> {
+  try {
+    const data = buildEscPos(order);
+    const res  = await fetch(RAWBT_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/octet-stream' },
+      body:    new Blob([data], { type: 'application/octet-stream' }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
 
 function openBrowserPrint(order: any) {
   const id        = String(order._id || '').slice(-6).toUpperCase();
@@ -110,32 +194,14 @@ ${order.specialInstructions?`<div class="b">SPECIAL INSTRUCTIONS:</div><div>${or
 
   const blob = new Blob([html], { type: 'text/html' });
   const url  = URL.createObjectURL(blob);
-  const w    = window.open(url, '_blank', 'width=380,height=600,left=100,top=80');
+  const w    = window.open(url, '_blank');
   if (!w) { URL.revokeObjectURL(url); toast.error('Allow popups on this site for printing.'); return; }
-  w.addEventListener('unload', () => URL.revokeObjectURL(url));
-}
-
-// Queues a print job on the server — printer polls /api/cloudprint and prints it.
-async function silentPrint(order: any): Promise<boolean> {
-  return Promise.resolve()
-    .then(() => fetch('/api/printer/print', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(order),
-    }))
-    .then(r => r.ok)
-    .catch(() => false);
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
 async function printReceipt(order: any) {
-  const tid = toast.loading('Sending to printer…');
-  const ok = await silentPrint(order);
-  if (ok) {
-    toast.success('Print job queued — receipt printing shortly!', { id: tid });
-  } else {
-    toast.dismiss(tid);
-    openBrowserPrint(order);
-  }
+  const ok = await rawbtPrint(order);
+  if (!ok) openBrowserPrint(order);
 }
 
 // ── Order card ────────────────────────────────────────────────────────────────
@@ -345,8 +411,6 @@ export default function AdminOrdersPage() {
 
         if (brandNew.length > 0) {
           startRing(brandNew.length);
-          // Auto-print each new order (Uber Eats style — no click needed)
-          brandNew.forEach(o => silentPrint(o));
         } else if (needsAction.length === 0) {
           stopRing();
         }
