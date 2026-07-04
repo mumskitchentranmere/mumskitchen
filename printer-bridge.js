@@ -13,12 +13,18 @@
  * server roundtrip — the same way Uber Eats works (local device, local printer).
  */
 
-const net  = require('net');
-const http = require('http');
+const net   = require('net');
+const http  = require('http');
+const https = require('https');
+const fs    = require('fs');
 
-const PRINTER_HOST = process.env.PRINTER_IP   || '192.168.1.102';
-const PRINTER_PORT = parseInt(process.env.PRINTER_PORT || '9100', 10);
-const BRIDGE_PORT  = parseInt(process.env.BRIDGE_PORT  || '9102', 10);
+const PRINTER_TTY    = process.env.PRINTER_TTY    || '/dev/tty.TSP100-K8110';
+const PRINTER_HOST   = process.env.PRINTER_IP     || '192.168.1.102';
+const PRINTER_PORT   = parseInt(process.env.PRINTER_PORT  || '9100', 10);
+const BRIDGE_PORT    = parseInt(process.env.BRIDGE_PORT   || '9102', 10);
+const POLL_URL       = process.env.POLL_URL       || 'https://mumskitchentranmere.com.au/api/printer/poll';
+const PRINTER_API_KEY = process.env.PRINTER_API_KEY || '';
+const POLL_INTERVAL  = parseInt(process.env.POLL_INTERVAL || '4000', 10);
 
 // ── ESC/POS builder (mirrors the server-side Receipt class) ──────────────────
 const LINE_WIDTH = 42;
@@ -91,15 +97,23 @@ function buildReceipt(order) {
   return r.build();
 }
 
-// ── TCP send ─────────────────────────────────────────────────────────────────
+// ── Send to printer (Bluetooth serial port, fallback TCP) ────────────────────
 function sendToPrinter(data) {
+  if (fs.existsSync(PRINTER_TTY)) {
+    return new Promise((resolve, reject) => {
+      fs.writeFile(PRINTER_TTY, data, (err) => {
+        if (err) reject(err); else resolve();
+      });
+    });
+  }
+  // Fallback: TCP (e.g. network print server)
   return new Promise((resolve, reject) => {
     const socket = net.createConnection({ host: PRINTER_HOST, port: PRINTER_PORT });
     socket.setTimeout(6000);
     socket.on('connect', () => socket.write(data, () => socket.end()));
     socket.on('close',   resolve);
     socket.on('error',   reject);
-    socket.on('timeout', () => { socket.destroy(); reject(new Error(`Printer timed out`)); });
+    socket.on('timeout', () => { socket.destroy(); reject(new Error('Printer timed out')); });
   });
 }
 
@@ -141,14 +155,59 @@ const server = http.createServer((req, res) => {
   });
 });
 
+// ── Poll Hostinger for pending print jobs ────────────────────────────────────
+function fetchJob() {
+  return new Promise((resolve) => {
+    const opts = {
+      method:  'GET',
+      headers: PRINTER_API_KEY ? { 'x-printer-key': PRINTER_API_KEY } : {},
+    };
+    const req = (POLL_URL.startsWith('https') ? https : http).request(POLL_URL, opts, (res) => {
+      const chunks = [];
+      res.on('data', c => chunks.push(c));
+      res.on('end', () => {
+        try {
+          const body = Buffer.concat(chunks).toString('utf8');
+          resolve(JSON.parse(body));
+        } catch { resolve(null); }
+      });
+    });
+    req.on('error', () => resolve(null));
+    req.setTimeout(8000, () => { req.destroy(); resolve(null); });
+    req.end();
+  });
+}
+
+async function pollLoop() {
+  try {
+    const order = await fetchJob();
+    if (order && order._id) {
+      console.log(`[${new Date().toLocaleTimeString()}] 🖨  Printing order #${String(order._id).slice(-6).toUpperCase()}`);
+      try {
+        await sendToPrinter(buildReceipt(order));
+        console.log(`[${new Date().toLocaleTimeString()}] ✅ Printed`);
+      } catch (e) {
+        console.error(`[${new Date().toLocaleTimeString()}] ❌ Print failed: ${e.message}`);
+      }
+    }
+  } catch {}
+  setTimeout(pollLoop, POLL_INTERVAL);
+}
+
 server.listen(BRIDGE_PORT, '127.0.0.1', () => {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log("  Mum's Kitchen — Printer Bridge");
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  const printerDesc = fs.existsSync(PRINTER_TTY)
+    ? `BT serial  ${PRINTER_TTY}`
+    : `TCP        ${PRINTER_HOST}:${PRINTER_PORT} (BT port not found)`;
   console.log(`  Bridge:  http://localhost:${BRIDGE_PORT}`);
-  console.log(`  Printer: ${PRINTER_HOST}:${PRINTER_PORT}`);
+  console.log(`  Printer: ${printerDesc}`);
+  console.log(`  Polling: ${POLL_URL} every ${POLL_INTERVAL}ms`);
   console.log('  Ready. Orders auto-print when they arrive.');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  // Start polling after a short delay so the server is fully up
+  setTimeout(pollLoop, 2000);
 });
 
 server.on('error', e => {
