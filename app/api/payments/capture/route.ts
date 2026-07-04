@@ -83,11 +83,30 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, status: 'cancelled' });
     }
   } catch (e: any) {
-    // If Stripe reports the PI was already captured, sync the DB and return success.
+    // PI already captured — sync DB and treat as success
     if (action === 'accept' && e?.code === 'payment_intent_unexpected_state') {
       await Order.findByIdAndUpdate(orderId, { $set: { paymentStatus: 'paid', status: 'confirmed' } });
       console.log(`[Capture] ℹ️ PI already captured for order ${orderId} — DB synced`);
       return NextResponse.json({ ok: true, status: 'confirmed' });
+    }
+    // PI already succeeded (captured) but admin tried to reject — issue refund instead
+    if (action === 'reject' && e?.code === 'payment_intent_unexpected_state') {
+      console.log(`[Capture] ℹ️ PI already succeeded for order ${orderId} — issuing refund instead`);
+      try {
+        await stripe.refunds.create({ payment_intent: order.paymentIntentId });
+        await Order.findByIdAndUpdate(orderId, { $set: { paymentStatus: 'refunded', status: 'cancelled' } });
+        if (order.customerEmail) {
+          sendOrderCancelled({
+            orderId, customerName: order.customerName, customerEmail: order.customerEmail,
+            orderType: order.orderType, items: order.items, subtotal: order.subtotal ?? order.total,
+            deliveryFee: order.deliveryFee || 0, total: order.total,
+          }, true).catch(() => {});
+        }
+        return NextResponse.json({ ok: true, status: 'cancelled', refunded: true });
+      } catch (refundErr: any) {
+        console.error(`[Capture] ❌ Refund failed for order ${orderId}:`, refundErr.message);
+        return NextResponse.json({ error: refundErr.message }, { status: 500 });
+      }
     }
     // Revert the 'capturing' lock so the order can be retried
     await Order.findByIdAndUpdate(orderId, { $set: { paymentStatus: 'authorized' } });

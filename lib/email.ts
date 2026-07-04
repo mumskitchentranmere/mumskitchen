@@ -124,16 +124,20 @@ function orderHtml(d: OrderEmailData): string {
 }
 
 export async function sendOrderReceived(data: OrderEmailData) {
-  if (!process.env.RESEND_API_KEY) return;
+  if (!process.env.RESEND_API_KEY) {
+    console.error('[Email] RESEND_API_KEY is not set — email not sent');
+    return;
+  }
   try {
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from:    FROM,
       to:      data.customerEmail,
       subject: `Order Received #${data.orderId.slice(-6).toUpperCase()} — Pending Confirmation`,
       html:    orderHtml(data),
     });
+    console.log('[Email] Order received sent to', data.customerEmail, '| id:', (result as any)?.data?.id, '| error:', (result as any)?.error);
   } catch (e) {
-    console.error('[Email] Failed to send order received email:', e);
+    console.error('[Email] sendOrderReceived failed:', e);
   }
 }
 
@@ -204,14 +208,15 @@ export async function sendOrderConfirmed(data: OrderEmailData) {
 </body>
 </html>`;
   try {
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from:    FROM,
       to:      data.customerEmail,
       subject: `Order Confirmed! #${data.orderId.slice(-6).toUpperCase()} — Mum's Kitchen`,
       html,
     });
+    console.log('[Email] Order confirmed sent to', data.customerEmail, '| id:', (result as any)?.data?.id, '| error:', (result as any)?.error);
   } catch (e) {
-    console.error('[Email] Failed to send order confirmed email:', e);
+    console.error('[Email] sendOrderConfirmed failed:', e);
   }
 }
 
@@ -263,7 +268,7 @@ export async function sendOrderCancelled(data: OrderEmailData, refunded: boolean
 </body>
 </html>`;
   try {
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from:    FROM,
       to:      data.customerEmail,
       subject: refunded
@@ -271,8 +276,9 @@ export async function sendOrderCancelled(data: OrderEmailData, refunded: boolean
         : `Order Cancelled #${id} — Mum's Kitchen`,
       html,
     });
+    console.log('[Email] Order cancelled sent to', data.customerEmail, '| id:', (result as any)?.data?.id, '| error:', (result as any)?.error);
   } catch (e) {
-    console.error('[Email] Failed to send cancellation email:', e);
+    console.error('[Email] sendOrderCancelled failed:', e);
   }
 }
 

@@ -59,149 +59,29 @@ function downloadCSV(orders: any[]) {
 }
 
 // ── Receipt printer ───────────────────────────────────────────────────────────
-// Silent path : browser builds ESC/POS → POST to RawBT local HTTP server
-//   (install RawBT from Play Store, pair Bluetooth printer, enable HTTP server)
-// Fallback    : opens a styled receipt page → system print dialog
+// Browser calls /api/printer/print → Hostinger server → Cloudflare tunnel
+// → printer-bridge.js (running locally) → TCP 192.168.1.102:9100 → Star TSP100III
+// No localhost calls, no print dialog — fully silent.
 
-// Build ESC/POS bytes in the browser (mirrors the server-side Receipt class)
-function buildEscPos(order: any): Uint8Array {
-  const W   = 42;
-  const buf: Uint8Array[] = [];
-  const enc  = new TextEncoder();
-  const push = (...b: number[]) => buf.push(new Uint8Array(b));
-  const text = (s: string) => buf.push(enc.encode(s.replace(/[^\x20-\x7E]/g, '?')));
-  const lf   = () => push(0x0A);
-  const line = (s: string) => { text(s); lf(); };
-  const align  = (a: 'L'|'C'|'R') => push(0x1B, 0x61, ({L:0,C:1,R:2} as any)[a]);
-  const bold   = (on: boolean)     => push(0x1B, 0x45, on ? 1 : 0);
-  const size   = (w: number, h: number) => push(0x1D, 0x21, ((w-1)<<4)|(h-1));
-  const div    = (ch = '-') => line(ch.repeat(W));
-  const row    = (left: string, right: string) => {
-    const gap = W - left.length - right.length;
-    line((left + (gap > 0 ? ' '.repeat(gap) : ' ') + right).slice(0, W));
-  };
-
-  const id        = String(order._id || '').slice(-6).toUpperCase();
-  const typeLabel = order.orderType === 'dinein' ? 'DINE-IN' : 'TAKEAWAY';
-  const now       = new Date();
-  const date      = now.toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' });
-  const time      = now.toLocaleTimeString('en-AU', { hour:'2-digit', minute:'2-digit' });
-
-  push(0x1B, 0x40);                                    // init
-  align('C'); size(2,2); bold(true);  line("MUM'S KITCHEN");
-              size(1,1); bold(false); line('Tranmere SA 5073'); lf();
-  align('C'); bold(true);  line(`ORDER #${id}`);
-              bold(false); line(`${date}  ${time}`);
-  div('=');
-  align('C'); bold(true); size(1,2); line(typeLabel); size(1,1); bold(false);
-  align('L');
-  line(`Customer: ${order.customerName || ''}`);
-  if (order.tableNumber)     { bold(true); line(`Table:    ${order.tableNumber}`); bold(false); }
-  if (order.customerPhone)   line(`Phone:    ${order.customerPhone}`);
-  if (order.pickupTime)      line(`Pickup:   ${order.pickupTime}`);
-  if (order.deliveryAddress) line(`Address:  ${order.deliveryAddress}`);
-  div('-');
-
-  for (const item of (order.items || [])) {
-    bold(true);
-    row(`${item.quantity}x ${item.name}`, `$${((item.price||0)*(item.quantity||1)).toFixed(2)}`);
-    bold(false);
-  }
-  div('-');
-
-  if (order.subtotal != null && order.deliveryFee) {
-    row('Subtotal', `$${(order.subtotal||0).toFixed(2)}`);
-    row('Delivery', `$${(order.deliveryFee||0).toFixed(2)}`);
-    div('-');
-  }
-  bold(true); size(1,2); row('TOTAL', `$${(order.total||0).toFixed(2)} AUD`); size(1,1); bold(false);
-  div('=');
-
-  if (order.specialInstructions) {
-    align('L'); bold(true); line('SPECIAL INSTRUCTIONS:'); bold(false);
-    line(order.specialInstructions);
-    div('-');
-  }
-  align('C'); line('Thank you!');
-  push(0x0A, 0x0A, 0x0A, 0x0A);   // feed
-  push(0x1D, 0x56, 0x41, 0x03);   // cut
-
-  const total  = buf.reduce((s, c) => s + c.length, 0);
-  const result = new Uint8Array(total);
-  let off = 0;
-  for (const c of buf) { result.set(c, off); off += c.length; }
-  return result;
-}
-
-// POST ESC/POS bytes to RawBT's local HTTP server (silent, no dialog)
-const RAWBT_URL = 'http://localhost:18995/rawbt';
-
-async function rawbtPrint(order: any): Promise<boolean> {
-  try {
-    const data = buildEscPos(order);
-    const res  = await fetch(RAWBT_URL, {
+async function silentPrint(order: any): Promise<boolean> {
+  return Promise.resolve()
+    .then(() => fetch('/api/printer/print', {
       method:  'POST',
-      headers: { 'Content-Type': 'application/octet-stream' },
-      body:    new Blob([data], { type: 'application/octet-stream' }),
-    });
-    return res.ok;
-  } catch {
-    return false;
-  }
-}
-
-function openBrowserPrint(order: any) {
-  const id        = String(order._id || '').slice(-6).toUpperCase();
-  const typeLabel = order.orderType === 'dinein' ? 'DINE-IN' : 'TAKEAWAY';
-  const now       = new Date();
-  const date      = now.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
-  const time      = now.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' });
-
-  const itemRows = (order.items || []).map((i: any) =>
-    `<tr><td class="b">${i.quantity}&times; ${i.name}</td><td class="r">$${((i.price||0)*(i.quantity||1)).toFixed(2)}</td></tr>`
-  ).join('');
-
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Receipt #${id}</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Courier New',monospace;font-size:13px;width:72mm;padding:3mm}
-.c{text-align:center}.b{font-weight:bold}.r{text-align:right}
-.xl{font-size:18px;font-weight:bold}.lg{font-size:15px;font-weight:bold}
-hr{border:none;border-top:1px dashed #000;margin:5px 0}
-table{width:100%;border-collapse:collapse}td{padding:2px 0;vertical-align:top}
-@media print{@page{size:80mm auto;margin:0}body{padding:3mm;width:72mm}}
-</style></head><body>
-<div class="c xl">MUM'S KITCHEN</div>
-<div class="c">Tranmere SA 5073</div><hr>
-<div class="c b">ORDER #${id}</div>
-<div class="c">${date}&nbsp;&nbsp;${time}</div><hr>
-<div class="c lg">${typeLabel}</div>
-<div>Customer: <b>${order.customerName||''}</b></div>
-${order.tableNumber     ? `<div class="b" style="font-size:15px">Table: ${order.tableNumber}</div>` : ''}
-${order.customerPhone   ? `<div>Phone: ${order.customerPhone}</div>`       : ''}
-${order.pickupTime      ? `<div>Pickup: ${order.pickupTime}</div>`          : ''}
-${order.deliveryAddress ? `<div>Address: ${order.deliveryAddress}</div>`   : ''}
-<hr><table>${itemRows}</table><hr>
-${order.subtotal!=null&&order.deliveryFee?`<table>
-<tr><td>Subtotal</td><td class="r">$${(order.subtotal||0).toFixed(2)}</td></tr>
-<tr><td>Delivery</td><td class="r">$${(order.deliveryFee||0).toFixed(2)}</td></tr>
-</table><hr>`:''}
-<table><tr><td class="b lg">TOTAL</td><td class="r b lg">$${(order.total||0).toFixed(2)} AUD</td></tr></table><hr>
-${order.specialInstructions?`<div class="b">SPECIAL INSTRUCTIONS:</div><div>${order.specialInstructions}</div><hr>`:''}
-<div class="c">Thank you!</div>
-<script>window.onload=function(){window.print();}<\/script>
-</body></html>`;
-
-  const blob = new Blob([html], { type: 'text/html' });
-  const url  = URL.createObjectURL(blob);
-  const w    = window.open(url, '_blank');
-  if (!w) { URL.revokeObjectURL(url); toast.error('Allow popups on this site for printing.'); return; }
-  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(order),
+    }))
+    .then(r => r.ok)
+    .catch(() => false);
 }
 
 async function printReceipt(order: any) {
-  const ok = await rawbtPrint(order);
-  if (!ok) openBrowserPrint(order);
+  const tid = toast.loading('Sending to printer…');
+  const ok  = await silentPrint(order);
+  if (ok) {
+    toast.success('Printed!', { id: tid });
+  } else {
+    toast.error('Printer offline — is the bridge running?', { id: tid });
+  }
 }
 
 // ── Order card ────────────────────────────────────────────────────────────────
@@ -411,6 +291,7 @@ export default function AdminOrdersPage() {
 
         if (brandNew.length > 0) {
           startRing(brandNew.length);
+          brandNew.forEach(o => silentPrint(o));
         } else if (needsAction.length === 0) {
           stopRing();
         }
