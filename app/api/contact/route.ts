@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
 
     const resend = new Resend(resendKey);
     await resend.emails.send({
-      from:    'Contact Form <noreply@mumskitchen.com.au>',
+      from:    "Contact Form <noreply@mumskitchentranmere.com.au>",
       to:      toEmail,
       reply_to: email,
       subject: `New contact message from ${name}`,
