@@ -19,7 +19,7 @@ const https = require('https');
 const fs    = require('fs');
 
 const PRINTER_TTY    = process.env.PRINTER_TTY    || '/dev/cu.TSP100-K8110';
-const PRINTER_HOST   = process.env.PRINTER_IP     || '192.168.1.102';
+const PRINTER_HOST   = process.env.PRINTER_IP     || '192.168.1.113';
 const PRINTER_PORT   = parseInt(process.env.PRINTER_PORT  || '9100', 10);
 const BRIDGE_PORT    = parseInt(process.env.BRIDGE_PORT   || '9102', 10);
 const POLL_URL       = process.env.POLL_URL       || 'https://mumskitchentranmere.com.au/api/printer/poll';
