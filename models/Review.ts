@@ -37,6 +37,10 @@ const ReviewSchema = new Schema({
 
 }, { timestamps: true });
 
+ReviewSchema.index({ status: 1, type: 1, createdAt: -1 });
+ReviewSchema.index({ status: 1, featured: 1 });
+ReviewSchema.index({ menuItemId: 1, status: 1 });
+
 // Auto-update MenuItem average rating when a dish review is saved
 ReviewSchema.post('save', async function () {
   if (this.type === 'dish' && this.menuItemId && this.status === 'approved') {

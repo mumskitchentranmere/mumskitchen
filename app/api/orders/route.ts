@@ -15,7 +15,7 @@ export async function GET(_req: NextRequest) {
     const userId  = (session.user as any)?.id;
     const email   = session.user?.email;
     const query   = isAdmin ? {} : { $or: [{ userId }, { customerEmail: email }] };
-    const orders  = await Order.find(query).sort({ createdAt: -1 });
+    const orders  = await Order.find(query).sort({ createdAt: -1 }).limit(isAdmin ? 500 : 100).lean();
     return NextResponse.json(orders);
   } catch (err) {
     console.error('[Orders GET]', err);

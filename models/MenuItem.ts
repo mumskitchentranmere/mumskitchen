@@ -25,7 +25,8 @@ const MenuItemSchema = new Schema({
   reviewCount:     { type: Number, default: 0 },
 }, { timestamps: true });
 
-MenuItemSchema.index({ category: 1, isAvailable: 1 });
-MenuItemSchema.index({ isFeatured: 1 });
+MenuItemSchema.index({ isAvailable: 1, category: 1 });
+MenuItemSchema.index({ isAvailable: 1, isFeatured: 1 });
+MenuItemSchema.index({ cuisine: 1, isAvailable: 1, category: 1 });
 
 export const MenuItem = models.MenuItem || model('MenuItem', MenuItemSchema);

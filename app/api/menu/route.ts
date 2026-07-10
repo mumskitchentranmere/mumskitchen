@@ -8,16 +8,18 @@ export async function GET(req: NextRequest) {
     await connectDB();
     const { searchParams } = new URL(req.url);
     const category = searchParams.get('category');
-    const cuisine = searchParams.get('cuisine');
+    const cuisine  = searchParams.get('cuisine');
     const featured = searchParams.get('featured');
-    const query: any = { isAvailable: true };
+    const session  = await auth();
+    const isAdmin  = (session?.user as any)?.role === 'admin';
+    const query: any = isAdmin ? {} : { isAvailable: true };
     if (category && category !== 'all') query.category = category;
-    if (cuisine && cuisine !== 'all') query.cuisine = { $in: [cuisine, 'both'] };
+    if (cuisine  && cuisine  !== 'all') query.cuisine = { $in: [cuisine, 'both'] };
     if (featured === 'true') query.isFeatured = true;
-    const session = await auth();
-    if ((session?.user as any)?.role === 'admin') delete query.isAvailable;
-    const items = await MenuItem.find(query).sort({ name: 1 });
-    return NextResponse.json(items);
+    const items = await MenuItem.find(query).sort({ sortOrder: 1, name: 1 }).lean();
+    const res = NextResponse.json(items);
+    if (!isAdmin) res.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+    return res;
   } catch { return NextResponse.json({ error: 'Failed' }, { status: 500 }); }
 }
 

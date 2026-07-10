@@ -26,17 +26,26 @@ export async function GET(req: NextRequest) {
       sortParam === 'rating_asc'  ? { rating:  1, createdAt: -1 } :
       sortParam === 'helpful_desc'? { helpfulVotes: -1, createdAt: -1 } :
       { createdAt: -1 };
-    const page = parseInt(searchParams.get('page') || '1');
+    const page  = parseInt(searchParams.get('page')  || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
-    const [reviews, total] = await Promise.all([
+    const needStats = searchParams.get('stats') !== 'false' && !searchParams.get('featured');
+
+    const ops: Promise<any>[] = [
       Review.find(query).sort(sortObj).skip((page-1)*limit).limit(limit).lean(),
       Review.countDocuments(query),
-    ]);
-    const stats = await Review.aggregate([
-      { $match: { status: 'approved', type: 'restaurant' } },
-      { $group: { _id: null, avgRating: { $avg: '$rating' }, total: { $sum: 1 }, five: { $sum: { $cond: [{ $eq: ['$rating',5] },1,0] } }, four: { $sum: { $cond: [{ $eq: ['$rating',4] },1,0] } }, three: { $sum: { $cond: [{ $eq: ['$rating',3] },1,0] } }, two: { $sum: { $cond: [{ $eq: ['$rating',2] },1,0] } }, one: { $sum: { $cond: [{ $eq: ['$rating',1] },1,0] } } } },
-    ]);
-    return NextResponse.json({ reviews, total, page, pages: Math.ceil(total/limit), stats: stats[0] || { avgRating:0,total:0,five:0,four:0,three:0,two:0,one:0 } });
+    ];
+    if (needStats) {
+      ops.push(Review.aggregate([
+        { $match: { status: 'approved', type: 'restaurant' } },
+        { $group: { _id: null, avgRating: { $avg: '$rating' }, total: { $sum: 1 }, five: { $sum: { $cond: [{ $eq: ['$rating',5] },1,0] } }, four: { $sum: { $cond: [{ $eq: ['$rating',4] },1,0] } }, three: { $sum: { $cond: [{ $eq: ['$rating',3] },1,0] } }, two: { $sum: { $cond: [{ $eq: ['$rating',2] },1,0] } }, one: { $sum: { $cond: [{ $eq: ['$rating',1] },1,0] } } } },
+      ]));
+    }
+
+    const [reviews, total, statsArr] = await Promise.all(ops);
+    const stats = statsArr?.[0] || { avgRating:0,total:0,five:0,four:0,three:0,two:0,one:0 };
+    const res = NextResponse.json({ reviews, total, page, pages: Math.ceil(total/limit), stats });
+    if (!isAdmin) res.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+    return res;
   } catch { return NextResponse.json({ error: 'Failed to fetch reviews' }, { status: 500 }); }
 }
 
