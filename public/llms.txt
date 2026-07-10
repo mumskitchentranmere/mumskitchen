@@ -1,0 +1,30 @@
+# Mum's Kitchen
+
+> Authentic Korean & Bangladeshi home-style food in Tranmere, South Australia.
+
+Mum's Kitchen is a restaurant located at 66 Reid Avenue, Tranmere SA 5073, Australia.
+Phone: +61 406 878 202
+
+## What We Offer
+
+- Korean fried chicken, bibimbap, rice bowls, soups & stews, noodles, snacks
+- Bangladeshi mains, biryani, curry, snacks
+- Dine-in, takeaway, and delivery
+- Online ordering with card payment via Stripe
+
+## Opening Hours
+
+- Tuesday–Thursday: 5 pm – 10 pm
+- Friday–Sunday: 10 am – 3 pm · 5 pm – 10 pm
+- Monday: Closed
+
+## Online Ordering
+
+Customers can browse the menu and place orders at mumskitchentranmere.com.au/order
+
+## Contact
+
+- Website: https://mumskitchentranmere.com.au
+- Email: mumskitchentranmere@gmail.com
+- Phone: +61 406 878 202
+- Address: 66 Reid Avenue, Tranmere SA 5073, Australia

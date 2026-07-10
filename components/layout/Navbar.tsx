@@ -140,6 +140,7 @@ export function Navbar() {
             {/* Cart button */}
             <button
               onClick={() => window.dispatchEvent(new Event('open-cart'))}
+              aria-label="Open cart"
               style={{
                 position:    'relative',
                 background:  transparent ? 'rgba(255,255,255,0.12)' : 'var(--brown-dark)',
@@ -184,6 +185,8 @@ export function Navbar() {
               <div style={{ position: 'relative' }}>
                 <button
                   onClick={() => setUserMenu(v => !v)}
+                  aria-label="Account menu"
+                  aria-expanded={userMenu}
                   style={{
                     display:      'flex',
                     alignItems:   'center',
@@ -250,6 +253,8 @@ export function Navbar() {
             {/* Mobile hamburger */}
             <button
               onClick={() => setOpen(v => !v)}
+              aria-label={open ? 'Close menu' : 'Open menu'}
+              aria-expanded={open}
               className="show-mobile"
               style={{ display: 'none', background: 'none', border: 'none', cursor: 'pointer', color: transparent ? 'white' : 'var(--brown-dark)', padding: '4px', transition: 'color 0.3s ease' }}
             >
