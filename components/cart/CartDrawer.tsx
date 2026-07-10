@@ -28,7 +28,7 @@ export function CartDrawer() {
             <span className="font-display" style={{ fontSize: '20px', fontWeight: 600, color: 'var(--brown-dark)' }}>Your Order</span>
             {itemCount() > 0 && <span style={{ background: 'var(--red-korean)', color: 'white', fontSize: '11px', padding: '2px 8px', borderRadius: '10px', fontWeight: 600 }}>{itemCount()}</span>}
           </div>
-          <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--brown-mid)' }}><X size={20} /></button>
+          <button onClick={() => setOpen(false)} aria-label="Close cart" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--brown-mid)' }}><X size={20} /></button>
         </div>
 
         {items.length === 0 ? (
@@ -57,13 +57,13 @@ export function CartDrawer() {
                         )}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
-                        <button onClick={() => updateQuantity(item.id, item.quantity - 1)} style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'var(--stone-light)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Minus size={11} /></button>
+                        <button onClick={() => updateQuantity(item.id, item.quantity - 1)} aria-label={`Decrease quantity of ${item.name}`} style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'var(--stone-light)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Minus size={11} /></button>
                         <span style={{ fontSize: '13px', fontWeight: 600, minWidth: '16px', textAlign: 'center' }}>{item.quantity}</span>
-                        <button onClick={() => updateQuantity(item.id, item.quantity + 1)} style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'var(--stone-light)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Plus size={11} /></button>
+                        <button onClick={() => updateQuantity(item.id, item.quantity + 1)} aria-label={`Increase quantity of ${item.name}`} style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'var(--stone-light)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Plus size={11} /></button>
                       </div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                      <button onClick={() => removeItem(item.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#e74c3c' }}><Trash2 size={14} /></button>
+                      <button onClick={() => removeItem(item.id)} aria-label={`Remove ${item.name} from cart`} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#e74c3c' }}><Trash2 size={14} /></button>
                       <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--brown-dark)' }}>${(item.price * item.quantity).toFixed(2)}</span>
                     </div>
                   </div>

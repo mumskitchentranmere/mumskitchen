@@ -91,7 +91,7 @@ export default function HomePage() {
               <span style={{ fontSize: '28px' }}>{s.icon}</span>
               <div>
                 <div style={{ fontSize: '14px', fontWeight: 600, color: 'white', marginBottom: '2px' }}>{s.title}</div>
-                <div style={{ fontSize: '12px', color: 'rgba(232,224,213,0.5)' }}>{s.desc}</div>
+                <div style={{ fontSize: '12px', color: 'rgba(232,224,213,0.72)' }}>{s.desc}</div>
               </div>
               <ArrowRight size={14} color="rgba(200,146,42,0.7)" style={{ marginLeft: 'auto' }} />
             </Link>

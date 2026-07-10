@@ -76,10 +76,10 @@ export function Footer() {
 
         {/* Bottom bar */}
         <div style={{ borderTop: '1px solid rgba(232,224,213,0.1)', paddingTop: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-          <span style={{ fontSize: '12px', color: 'rgba(232,224,213,0.35)' }}>© {new Date().getFullYear()} Mum's Kitchen. All rights reserved.</span>
-          <span style={{ fontSize: '12px', color: 'rgba(232,224,213,0.35)' }}>
+          <span style={{ fontSize: '12px', color: 'rgba(232,224,213,0.6)' }}>© {new Date().getFullYear()} Mum's Kitchen. All rights reserved.</span>
+          <span style={{ fontSize: '12px', color: 'rgba(232,224,213,0.6)' }}>
             Designed &amp; developed by{' '}
-            <a href="https://asrafuzzamankhan.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold)', textDecoration: 'none' }}>
+            <a href="https://asrafuzzamankhan.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold)', textDecoration: 'underline', textDecorationColor: 'rgba(200,146,42,0.4)' }}>
               Asrafuzzaman Khan
             </a>
           </span>

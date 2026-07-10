@@ -45,8 +45,8 @@ export function FooterHours() {
     <>
       {rows.map(({ day, hrs }) => (
         <div key={day} style={{ marginBottom: '10px' }}>
-          <div style={{ fontSize: '12px', color: 'rgba(232,224,213,0.45)', marginBottom: '2px' }}>{day}</div>
-          <div style={{ fontSize: '13px', color: hrs === 'Closed' ? 'rgba(232,224,213,0.4)' : 'rgba(232,224,213,0.8)', fontWeight: 500 }}>{hrs}</div>
+          <div style={{ fontSize: '12px', color: 'rgba(232,224,213,0.65)', marginBottom: '2px' }}>{day}</div>
+          <div style={{ fontSize: '13px', color: hrs === 'Closed' ? 'rgba(232,224,213,0.6)' : 'rgba(232,224,213,0.9)', fontWeight: 500 }}>{hrs}</div>
         </div>
       ))}
     </>
