@@ -104,9 +104,11 @@ const jsonLd = {
   },
   geo: {
     '@type':    'GeoCoordinates',
-    latitude:   '-34.9285',
-    longitude:  '138.6007',
+    latitude:   '-34.9179',
+    longitude:  '138.6307',
   },
+  image:              `${BASE}/og-image.jpg`,
+  logo:               `${BASE}/logo.png`,
   servesCuisine:      ['Korean', 'Bangladeshi'],
   priceRange:         '$$',
   currenciesAccepted: 'AUD',
@@ -114,6 +116,8 @@ const jsonLd = {
   hasMenu:            `${BASE}/menu`,
   acceptsReservations:'False',
   isAccessibleForFree: true,
+  areaServed:         ['Tranmere', 'Adelaide', 'South Australia'],
+  keywords:           'Korean restaurant, Bangladeshi restaurant, Korean fried chicken, Bibimbap, Biryani, Tranmere, Adelaide',
   openingHoursSpecification: [
     { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Tuesday','Wednesday','Thursday'], opens: '17:00', closes: '22:00' },
     { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Friday','Saturday','Sunday'],     opens: '10:00', closes: '15:00' },
