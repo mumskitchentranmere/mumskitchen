@@ -34,6 +34,7 @@ const SUBCATS: Record<string, { id: string; label: string }[]> = {
 };
 
 function itemPriority(item: any) {
+  if (!item.isAvailable) return 3;
   if (item.category === 'drink') return 2;
   const n = (item.name || '').toLowerCase();
   if (item.category === 'fried-chicken' || n.includes('chicken') || n.includes('beef')) return 0;
