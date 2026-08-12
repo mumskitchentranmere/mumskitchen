@@ -33,6 +33,13 @@ const SUBCATS: Record<string, { id: string; label: string }[]> = {
   ],
 };
 
+function itemPriority(item: any) {
+  if (item.category === 'drink') return 2;
+  const n = (item.name || '').toLowerCase();
+  if (item.category === 'fried-chicken' || n.includes('chicken') || n.includes('beef')) return 0;
+  return 1;
+}
+
 export default function MenuPage() {
   const [items,    setItems]    = useState<any[]>([]);
   const [loading,  setLoading]  = useState(true);
@@ -65,7 +72,12 @@ export default function MenuPage() {
     const q = params.toString() ? `?${params}` : '';
     fetch(`/api/menu${q}`)
       .then(r => r.json())
-      .then(d => { setItems(Array.isArray(d) ? d : []); setLoading(false); });
+      .then(d => {
+        const arr: any[] = Array.isArray(d) ? d : [];
+        arr.sort((a, b) => itemPriority(a) - itemPriority(b));
+        setItems(arr);
+        setLoading(false);
+      });
   }, [cuisine, cat]);
 
   const filtered = items.filter(i =>

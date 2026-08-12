@@ -33,6 +33,13 @@ const SUBCATS: Record<string, { id: string; label: string }[]> = {
   ],
 };
 
+function itemPriority(item: any) {
+  if (item.category === 'drink') return 2;
+  const n = (item.name || '').toLowerCase();
+  if (item.category === 'fried-chicken' || n.includes('chicken') || n.includes('beef')) return 0;
+  return 1;
+}
+
 export default function OrderPage() {
   const [items,      setItems]      = useState<any[]>([]);
   const [loading,    setLoading]    = useState(true);
@@ -56,7 +63,11 @@ export default function OrderPage() {
       .then(r => r.json())
       .then(d => {
         const arr: any[] = Array.isArray(d) ? d : [];
-        arr.sort((a, b) => (b.sizes?.length > 1 ? 1 : 0) - (a.sizes?.length > 1 ? 1 : 0));
+        arr.sort((a, b) => {
+          const diff = itemPriority(a) - itemPriority(b);
+          if (diff !== 0) return diff;
+          return (b.sizes?.length > 1 ? 1 : 0) - (a.sizes?.length > 1 ? 1 : 0);
+        });
         setItems(arr);
         setLoading(false);
       });

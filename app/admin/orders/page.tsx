@@ -135,7 +135,7 @@ async function silentPrint(order: any): Promise<boolean> {
       .then(() => fetch('http://localhost:7778/rawbt', {
         method:  'POST',
         headers: { 'Content-Type': 'application/octet-stream' },
-        body:    escpos,
+        body:    escpos.buffer as ArrayBuffer,
       }))
       .then(r => r.ok)
       .catch(() => false);
@@ -173,6 +173,7 @@ function OrderCard({ o, updating, capturing, onUpdate, onCapture }: {
   const [expanded, setExpanded] = useState(false);
   const isAuthorized = o.paymentStatus === 'authorized';
   const isPaid       = o.paymentStatus === 'paid';
+  const isTerminal   = o.status === 'delivered' || o.status === 'cancelled';
 
   return (
     <div style={{ background: 'white', borderRadius: '16px', border: isAuthorized ? '2px solid #f97316' : '1px solid var(--stone-light)', overflow: 'hidden', transition: 'box-shadow 0.2s' }}>
@@ -271,23 +272,23 @@ function OrderCard({ o, updating, capturing, onUpdate, onCapture }: {
         {/* Status progression + print */}
         <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', alignItems: 'center' }}>
           {ALL_STATUSES.map(s => {
-            // Prevent cancelling a paid/confirmed order accidentally
             const isCancelLocked = s === 'cancelled' && isPaid;
+            const isDisabled = updating === o._id || isCancelLocked || (isTerminal && o.status !== s);
             return (
               <button
                 key={s}
-                onClick={() => onUpdate(o._id, s)}
-                disabled={updating === o._id || isCancelLocked}
-                title={isCancelLocked ? 'Cannot cancel a paid order' : undefined}
+                onClick={() => !isTerminal && onUpdate(o._id, s)}
+                disabled={isDisabled}
+                title={isCancelLocked ? 'Cannot cancel a paid order' : isTerminal && o.status !== s ? 'Order is finalised' : undefined}
                 style={{
                   padding: '5px 11px', borderRadius: '8px', border: '1.5px solid',
-                  borderColor: o.status === s ? SC[s] : isCancelLocked ? '#e5e7eb' : 'var(--stone-light)',
+                  borderColor: o.status === s ? SC[s] : isDisabled ? '#e5e7eb' : 'var(--stone-light)',
                   background: o.status === s ? SC[s] + '20' : 'white',
-                  color: o.status === s ? SC[s] : isCancelLocked ? '#d1d5db' : 'var(--brown-mid)',
+                  color: o.status === s ? SC[s] : isDisabled ? '#d1d5db' : 'var(--brown-mid)',
                   fontSize: '11px', fontWeight: o.status === s ? 700 : 400,
-                  cursor: (updating === o._id || isCancelLocked) ? 'not-allowed' : 'pointer',
+                  cursor: isDisabled ? 'not-allowed' : 'pointer',
                   fontFamily: 'Poppins, sans-serif', textTransform: 'capitalize',
-                  opacity: updating === o._id && o.status !== s ? 0.5 : 1,
+                  opacity: isDisabled && o.status !== s ? 0.4 : 1,
                   transition: 'all 0.15s', whiteSpace: 'nowrap',
                 }}
               >
