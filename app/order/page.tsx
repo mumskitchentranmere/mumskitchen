@@ -4,9 +4,9 @@ import { MenuCard } from '@/components/menu/MenuCard';
 import { ShoppingBag } from 'lucide-react';
 
 const CUISINES = [
-  { id: 'all',         label: 'All',        flag: '🍽️' },
-  { id: 'korean',      label: 'Korean',      flag: '🇰🇷' },
-  { id: 'bangladeshi', label: 'Bangladeshi', flag: '🇧🇩' },
+  { id: 'korean',      label: 'Korean',       flag: '🇰🇷' },
+  { id: 'bangladeshi', label: 'Bangladeshi',  flag: '🇧🇩' },
+  { id: 'drinks',      label: 'Drinks',       flag: '🥤' },
 ];
 
 const SUBCATS: Record<string, { id: string; label: string }[]> = {
@@ -19,7 +19,6 @@ const SUBCATS: Record<string, { id: string; label: string }[]> = {
     { id: 'soup',          label: 'Soups' },
     { id: 'fried-chicken', label: 'Fried Chicken' },
     { id: 'side',          label: 'Sides' },
-    { id: 'drink',         label: 'Drinks' },
     { id: 'set-menu',      label: 'Set Menu' },
   ],
   bangladeshi: [
@@ -28,48 +27,47 @@ const SUBCATS: Record<string, { id: string; label: string }[]> = {
     { id: 'bangladeshi-snack', label: 'Snacks' },
     { id: 'biryani',           label: 'Biryani' },
     { id: 'curry',             label: 'Curry' },
-    { id: 'drink',             label: 'Drinks' },
     { id: 'set-menu',          label: 'Set Menu' },
   ],
 };
 
-function itemPriority(item: any) {
-  if (!item.isAvailable) return 3;
-  if (item.category === 'drink') return 2;
-  const n = (item.name || '').toLowerCase();
-  if (item.category === 'fried-chicken' || n.includes('chicken') || n.includes('beef')) return 0;
-  return 1;
-}
-
 export default function OrderPage() {
-  const [items,      setItems]      = useState<any[]>([]);
-  const [loading,    setLoading]    = useState(true);
-  const [cuisine,    setCuisine]    = useState('all');
-  const [cat,        setCat]        = useState('all');
-  const [catOrder,   setCatOrder]   = useState<string[]>([]);
+  const [items,        setItems]        = useState<any[]>([]);
+  const [loading,      setLoading]      = useState(true);
+  const [cuisine,      setCuisine]      = useState('korean');
+  const [cat,          setCat]          = useState('all');
+  const [catOrder,     setCatOrder]     = useState<string[]>([]);
+  const [catDiscounts, setCatDiscounts] = useState<Record<string,number>>({});
+  const [globalDisc,   setGlobalDisc]   = useState(0);
+  const [activeCats,   setActiveCats]   = useState<string[]>([]);
 
   const selectCuisine = (c: string) => { setCuisine(c); setCat('all'); };
 
   useEffect(() => {
-    fetch('/api/settings').then(r => r.json()).then(d => { if (d.categoryOrder?.length) setCatOrder(d.categoryOrder); });
+    fetch('/api/settings').then(r => r.json()).then(d => {
+      if (d.categoryOrder?.length) setCatOrder(d.categoryOrder);
+      if (d.categoryDiscounts)     setCatDiscounts(d.categoryDiscounts);
+      if (d.globalDiscount != null) setGlobalDisc(Number(d.globalDiscount) || 0);
+    });
+    fetch('/api/menu/categories')
+      .then(r => r.json())
+      .then(d => { if (Array.isArray(d)) setActiveCats(d); })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
     setLoading(true);
     const params = new URLSearchParams();
-    if (cuisine !== 'all') params.set('cuisine', cuisine);
-    if (cat !== 'all')     params.set('category', cat);
-    const q = params.toString() ? `?${params}` : '';
-    fetch(`/api/menu${q}`)
+    if (cuisine === 'drinks') {
+      params.set('category', 'drink');
+    } else {
+      if (cuisine !== 'all') params.set('cuisine', cuisine);
+      if (cat !== 'all')     params.set('category', cat);
+    }
+    fetch(`/api/menu${params.toString() ? `?${params}` : ''}`)
       .then(r => r.json())
       .then(d => {
-        const arr: any[] = Array.isArray(d) ? d : [];
-        arr.sort((a, b) => {
-          const diff = itemPriority(a) - itemPriority(b);
-          if (diff !== 0) return diff;
-          return (b.sizes?.length > 1 ? 1 : 0) - (a.sizes?.length > 1 ? 1 : 0);
-        });
-        setItems(arr);
+        setItems(Array.isArray(d) ? d : []);
         setLoading(false);
       });
   }, [cuisine, cat]);
@@ -131,10 +129,10 @@ export default function OrderPage() {
           ))}
         </div>
 
-        {/* Level 2 — Subcategories */}
-        {cuisine !== 'all' && (
+        {/* Level 2 — Subcategories (hidden for Drinks tab) */}
+        {cuisine !== 'drinks' && (
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '24px', borderLeft: '3px solid var(--red-korean)', paddingLeft: '12px' }}>
-            {sortedSubcats(cuisine).map(c => (
+            {sortedSubcats(cuisine).filter(c => c.id === 'all' || activeCats.length === 0 || activeCats.includes(c.id)).map(c => (
               <button key={c.id} onClick={() => setCat(c.id)} style={tabBtn(cat === c.id)}>
                 {c.label}
               </button>
@@ -142,7 +140,7 @@ export default function OrderPage() {
           </div>
         )}
 
-        {cuisine === 'all' && <div style={{ marginBottom: '12px' }} />}
+        {cuisine === 'drinks' && <div style={{ marginBottom: '12px' }} />}
 
         {/* Grid */}
         {loading
@@ -155,7 +153,10 @@ export default function OrderPage() {
               <p>No dishes found in this category yet.</p>
             </div>
           : <div className="menu-grid">
-              {items.map(item => <MenuCard key={item._id} item={item} discount={item.discount || 0} />)}
+              {items.map(item => {
+                const effectiveDiscount = item.discount > 0 ? item.discount : (catDiscounts[item.category] || globalDisc);
+                return <MenuCard key={item._id} item={item} discount={effectiveDiscount} />;
+              })}
             </div>
         }
       </div>

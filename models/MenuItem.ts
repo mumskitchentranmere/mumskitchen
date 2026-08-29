@@ -13,7 +13,7 @@ const MenuItemSchema = new Schema({
   price:           { type: Number, required: true },
   discount:        { type: Number, default: 0, min: 0, max: 100 },
   category:        { type: String, required: true },
-  cuisine:         { type: String, enum: ['korean', 'bangladeshi', 'both'], default: 'korean' },
+  cuisine:         { type: String, enum: ['korean', 'bangladeshi', 'both', 'drinks'], default: 'korean' },
   images:          [{ type: String }],
   primaryImage:    { type: String, default: '' },
   tags:            [String],

@@ -11,12 +11,17 @@ export async function GET() {
     await connectDB();
     const s = await Settings.findOne().lean() as any;
     return NextResponse.json(
-      { globalDiscount: s?.globalDiscount ?? 0, categoryOrder: s?.categoryOrder ?? [], dineInEnabled: s?.dineInEnabled ?? true },
+      {
+        globalDiscount:    s?.globalDiscount ?? 0,
+        categoryOrder:     s?.categoryOrder ?? [],
+        dineInEnabled:     s?.dineInEnabled ?? true,
+        categoryDiscounts: Object.fromEntries(s?.categoryDiscounts ?? new Map()),
+      },
       { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } }
     );
   } catch {
     return NextResponse.json(
-      { globalDiscount: 0, categoryOrder: [], dineInEnabled: true },
+      { globalDiscount: 0, categoryOrder: [], dineInEnabled: true, categoryDiscounts: {} },
       { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } }
     );
   }
@@ -41,8 +46,23 @@ export async function PUT(req: NextRequest) {
   if (body.dineInEnabled !== undefined) {
     update.dineInEnabled = Boolean(body.dineInEnabled);
   }
+  if (body.categoryDiscounts !== undefined) {
+    // Clamp each value to 0-100
+    const cleaned: Record<string, number> = {};
+    for (const [k, v] of Object.entries(body.categoryDiscounts as Record<string, number>)) {
+      const n = Math.min(100, Math.max(0, Number(v) || 0));
+      if (n > 0) cleaned[k] = n;   // only store non-zero discounts
+    }
+    update.categoryDiscounts = cleaned;
+  }
 
   await connectDB();
   const s = await Settings.findOneAndUpdate({}, { $set: update }, { upsert: true, new: true });
-  return NextResponse.json({ ok: true, globalDiscount: s.globalDiscount, categoryOrder: s.categoryOrder, dineInEnabled: s.dineInEnabled });
+  return NextResponse.json({
+    ok: true,
+    globalDiscount:    s.globalDiscount,
+    categoryOrder:     s.categoryOrder,
+    dineInEnabled:     s.dineInEnabled,
+    categoryDiscounts: Object.fromEntries(s.categoryDiscounts ?? new Map()),
+  });
 }

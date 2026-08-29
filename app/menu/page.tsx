@@ -4,9 +4,9 @@ import { MenuCard } from '@/components/menu/MenuCard';
 import { Search } from 'lucide-react';
 
 const CUISINES = [
-  { id: 'all',         label: 'All',         flag: '🍽️' },
   { id: 'korean',      label: 'Korean',       flag: '🇰🇷' },
   { id: 'bangladeshi', label: 'Bangladeshi',  flag: '🇧🇩' },
+  { id: 'drinks',      label: 'Drinks',       flag: '🥤' },
 ];
 
 const SUBCATS: Record<string, { id: string; label: string }[]> = {
@@ -19,7 +19,6 @@ const SUBCATS: Record<string, { id: string; label: string }[]> = {
     { id: 'soup',          label: 'Soups & Stews' },
     { id: 'fried-chicken', label: 'Fried Chicken' },
     { id: 'side',          label: 'Sides' },
-    { id: 'drink',         label: 'Drinks' },
     { id: 'set-menu',      label: 'Set Menu' },
   ],
   bangladeshi: [
@@ -28,26 +27,19 @@ const SUBCATS: Record<string, { id: string; label: string }[]> = {
     { id: 'bangladeshi-snack',  label: 'Snacks' },
     { id: 'biryani',            label: 'Biryani' },
     { id: 'curry',              label: 'Curry' },
-    { id: 'drink',              label: 'Drinks' },
     { id: 'set-menu',           label: 'Set Menu' },
   ],
 };
 
-function itemPriority(item: any) {
-  if (!item.isAvailable) return 3;
-  if (item.category === 'drink') return 2;
-  const n = (item.name || '').toLowerCase();
-  if (item.category === 'fried-chicken' || n.includes('chicken') || n.includes('beef')) return 0;
-  return 1;
-}
-
 export default function MenuPage() {
-  const [items,    setItems]    = useState<any[]>([]);
-  const [loading,  setLoading]  = useState(true);
-  const [cuisine,  setCuisine]  = useState('all');
-  const [cat,      setCat]      = useState('all');
-  const [search,   setSearch]   = useState('');
-  const [discount, setDiscount] = useState(0);
+  const [items,        setItems]        = useState<any[]>([]);
+  const [loading,      setLoading]      = useState(true);
+  const [cuisine,      setCuisine]      = useState('korean');
+  const [cat,          setCat]          = useState('all');
+  const [search,       setSearch]       = useState('');
+  const [discount,     setDiscount]     = useState(0);
+  const [catDiscounts, setCatDiscounts] = useState<Record<string,number>>({});
+  const [activeCats,   setActiveCats]   = useState<string[]>([]);
 
   // Fetch discount — fresh every time (no-cache) and re-fetch when tab regains focus
   const fetchDiscount = () =>
@@ -58,6 +50,14 @@ export default function MenuPage() {
 
   useEffect(() => {
     fetchDiscount();
+    fetch('/api/settings', { cache: 'no-store' })
+      .then(r => r.json())
+      .then(d => { if (d.categoryDiscounts) setCatDiscounts(d.categoryDiscounts); })
+      .catch(() => {});
+    fetch('/api/menu/categories')
+      .then(r => r.json())
+      .then(d => { if (Array.isArray(d)) setActiveCats(d); })
+      .catch(() => {});
     window.addEventListener('focus', fetchDiscount);
     return () => window.removeEventListener('focus', fetchDiscount);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -68,15 +68,17 @@ export default function MenuPage() {
   useEffect(() => {
     setLoading(true);
     const params = new URLSearchParams();
-    if (cuisine !== 'all') params.set('cuisine', cuisine);
-    if (cat !== 'all')     params.set('category', cat);
+    if (cuisine === 'drinks') {
+      params.set('category', 'drink');
+    } else {
+      if (cuisine !== 'all') params.set('cuisine', cuisine);
+      if (cat !== 'all')     params.set('category', cat);
+    }
     const q = params.toString() ? `?${params}` : '';
     fetch(`/api/menu${q}`)
       .then(r => r.json())
       .then(d => {
-        const arr: any[] = Array.isArray(d) ? d : [];
-        arr.sort((a, b) => itemPriority(a) - itemPriority(b));
-        setItems(arr);
+        setItems(Array.isArray(d) ? d : []);
         setLoading(false);
       });
   }, [cuisine, cat]);
@@ -136,10 +138,10 @@ export default function MenuPage() {
           ))}
         </div>
 
-        {/* Level 2 — Subcategory tabs (only when a cuisine is selected) */}
-        {cuisine !== 'all' && (
+        {/* Level 2 — Subcategory tabs (not shown for Drinks) */}
+        {cuisine !== 'drinks' && (
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '28px', paddingLeft: '4px', borderLeft: '3px solid var(--red-korean)', paddingTop: '4px', paddingBottom: '4px' }}>
-            {SUBCATS[cuisine].map(c => (
+            {SUBCATS[cuisine].filter(c => c.id === 'all' || activeCats.length === 0 || activeCats.includes(c.id)).map(c => (
               <button key={c.id} onClick={() => setCat(c.id)} style={tabBtn(cat === c.id)}>
                 {c.label}
               </button>
@@ -147,8 +149,8 @@ export default function MenuPage() {
           </div>
         )}
 
-        {/* Spacer when no subcategory bar */}
-        {cuisine === 'all' && <div style={{ marginBottom: '12px' }} />}
+        {/* Spacer when Drinks tab (no subcategory bar) */}
+        {cuisine === 'drinks' && <div style={{ marginBottom: '12px' }} />}
 
         {/* Discount banner */}
         {discount > 0 && (
@@ -173,7 +175,10 @@ export default function MenuPage() {
           </div>
         ) : (
           <div className="menu-grid">
-            {filtered.map(item => <MenuCard key={item._id} item={item} discount={item.discount > 0 ? item.discount : discount} />)}
+            {filtered.map(item => {
+              const effectiveDiscount = item.discount > 0 ? item.discount : (catDiscounts[item.category] || discount);
+              return <MenuCard key={item._id} item={item} discount={effectiveDiscount} />;
+            })}
           </div>
         )}
       </div>

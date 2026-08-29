@@ -209,16 +209,85 @@ export default function AdminMenuPage() {
   const [uploading, setUploading] = useState(false);
   const [search,       setSearch]       = useState('');
   const [catFilter,    setCatFilter]    = useState('all');
-  const [catOrder, setCatOrder] = useState<string[]>([]);
+  const [catOrder,       setCatOrder]       = useState<string[]>([]);
+  const [catDiscounts,   setCatDiscounts]   = useState<Record<string,number>>({});
+  const [savingDisc,     setSavingDisc]     = useState(false);
+  const [dragItems,      setDragItems]      = useState<any[]>([]);
+  const [isDirty,        setIsDirty]        = useState(false);
+  const [savingOrder,    setSavingOrder]    = useState(false);
+  const dragIdx     = useRef<number>(-1);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = () =>
-    fetch('/api/menu').then(r => r.json()).then(d => { setItems(Array.isArray(d) ? d : []); setLoading(false); });
+    fetch('/api/menu').then(r => r.json()).then(d => {
+      const arr = Array.isArray(d) ? d : [];
+      setItems(arr);
+      setDragItems(arr);
+      setIsDirty(false);
+      setLoading(false);
+    });
 
   useEffect(() => {
     load();
-    fetch('/api/settings').then(r => r.json()).then(d => { if (d.categoryOrder?.length) setCatOrder(d.categoryOrder); });
+    fetch('/api/settings').then(r => r.json()).then(d => {
+      if (d.categoryOrder?.length) setCatOrder(d.categoryOrder);
+      if (d.categoryDiscounts) setCatDiscounts(d.categoryDiscounts);
+    });
   }, []);
+
+  const saveCatDiscounts = async () => {
+    setSavingDisc(true);
+    await fetch('/api/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ categoryDiscounts: catDiscounts }),
+    });
+    setSavingDisc(false);
+    toast.success('Category discounts saved');
+  };
+
+  // ── Drag-and-drop sort ──────────────────────────────────────────────────────
+  // dragItems = full list in current custom order (source of truth for ordering)
+  // Drag indices refer to the VISIBLE (displayItems) list.
+  // On each move we splice displayItems and merge back into dragItems.
+  const onDragStart = (idx: number) => { dragIdx.current = idx; };
+
+  const onDragOver = (e: React.DragEvent, idx: number, visibleItems: any[]) => {
+    e.preventDefault();
+    if (dragIdx.current === -1 || dragIdx.current === idx) return;
+
+    // Reorder the visible slice
+    const newVisible = [...visibleItems];
+    const [moved] = newVisible.splice(dragIdx.current, 1);
+    newVisible.splice(idx, 0, moved);
+    dragIdx.current = idx;
+
+    // Merge new visible order back into the full dragItems list
+    const visibleIds = new Set(visibleItems.map((i: any) => i._id));
+    let vi = 0;
+    setDragItems(prev =>
+      prev.map(item => visibleIds.has(item._id) ? newVisible[vi++] : item)
+    );
+    setIsDirty(true);
+  };
+
+  const onDragEnd = () => { dragIdx.current = -1; };
+
+  const saveItemOrder = async () => {
+    setSavingOrder(true);
+    await Promise.all(
+      dragItems.map((item, i) =>
+        fetch(`/api/menu/${item._id}`, {
+          method:  'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ sortOrder: i * 10 }),
+        })
+      )
+    );
+    toast.success('Menu order saved!');
+    await load();
+    setSavingOrder(false);
+  };
 
   const saveOrder = (order: string[]) => {
     setCatOrder(order);
@@ -330,7 +399,8 @@ export default function AdminMenuPage() {
   const allCats = [...new Set([...catOrder, ...DEFAULT_CATS, ...items.map((i: any) => i.category).filter(Boolean)])];
 
   const q = search.toLowerCase().trim();
-  const filtered = items.filter(i => {
+  // Always filter from dragItems (which holds the current custom order)
+  const displayItems = dragItems.filter(i => {
     if (catFilter !== 'all' && i.category !== catFilter) return false;
     if (!q) return true;
     return (
@@ -349,13 +419,65 @@ export default function AdminMenuPage() {
           <h1 className="font-display" style={{ fontSize: '28px', fontWeight: 700, color: 'var(--brown-dark)' }}>Menu Items</h1>
           <p style={{ fontSize: '13px', color: 'var(--brown-mid)' }}>{items.length} item{items.length !== 1 ? 's' : ''}</p>
         </div>
-        <button onClick={openAdd} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--red-korean)', color: 'white', border: 'none', borderRadius: '12px', padding: '10px 20px', cursor: 'pointer', fontFamily: 'Poppins, sans-serif', fontSize: '13px', fontWeight: 600 }}>
-          <Plus size={15} /> Add Item
-        </button>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          {isDirty && (
+            <button
+              onClick={saveItemOrder}
+              disabled={savingOrder}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#16a34a', color: 'white', border: 'none', borderRadius: '12px', padding: '10px 20px', cursor: savingOrder ? 'wait' : 'pointer', fontFamily: 'Poppins, sans-serif', fontSize: '13px', fontWeight: 600, opacity: savingOrder ? 0.7 : 1 }}
+            >
+              <Check size={15} /> {savingOrder ? 'Saving…' : 'Save Order'}
+            </button>
+          )}
+          <button onClick={openAdd} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--red-korean)', color: 'white', border: 'none', borderRadius: '12px', padding: '10px 20px', cursor: 'pointer', fontFamily: 'Poppins, sans-serif', fontSize: '13px', fontWeight: 600 }}>
+            <Plus size={15} /> Add Item
+          </button>
+        </div>
       </div>
 
       {/* Category drag-sort */}
       <CategoryOrderPanel allCats={allCats} order={catOrder} onSave={saveOrder} />
+
+      {/* Category Discounts */}
+      <div style={{ background: 'white', borderRadius: '14px', border: '1px solid var(--stone-light)', padding: '20px', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+          <div>
+            <h2 className="font-display" style={{ fontSize: '16px', fontWeight: 700, color: 'var(--brown-dark)' }}>Category Discounts</h2>
+            <p style={{ fontSize: '12px', color: 'var(--brown-mid)', marginTop: '2px' }}>
+              Set a % off for an entire category. Item-level discounts take priority. Leave 0 for no discount.
+            </p>
+          </div>
+          <button
+            onClick={saveCatDiscounts}
+            disabled={savingDisc}
+            style={{ background: 'var(--red-korean)', color: 'white', border: 'none', borderRadius: '10px', padding: '8px 20px', cursor: savingDisc ? 'wait' : 'pointer', fontSize: '13px', fontWeight: 600, fontFamily: 'Poppins, sans-serif', opacity: savingDisc ? 0.7 : 1 }}
+          >
+            {savingDisc ? 'Saving…' : 'Save Discounts'}
+          </button>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '10px' }}>
+          {allCats.map(cat => (
+            <div key={cat} style={{ background: '#f9f5f0', borderRadius: '10px', padding: '10px 12px', border: '1px solid var(--stone-light)' }}>
+              <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--brown-mid)', textTransform: 'capitalize', display: 'block', marginBottom: '6px' }}>
+                {cat.replace(/-/g, ' ')}
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <input
+                  type="number" min="0" max="100" step="1"
+                  value={catDiscounts[cat] ?? 0}
+                  onChange={e => setCatDiscounts(p => ({ ...p, [cat]: Number(e.target.value) || 0 }))}
+                  onWheel={e => (e.target as HTMLInputElement).blur()}
+                  style={{ width: '64px', background: 'white', border: '1px solid var(--stone-light)', borderRadius: '8px', padding: '5px 8px', fontSize: '13px', color: 'var(--brown-dark)', outline: 'none', fontFamily: 'Poppins, sans-serif' }}
+                />
+                <span style={{ fontSize: '13px', color: 'var(--brown-mid)', fontWeight: 600 }}>%</span>
+                {(catDiscounts[cat] ?? 0) > 0 && (
+                  <span style={{ fontSize: '10px', background: '#dcfce7', color: '#16a34a', padding: '2px 6px', borderRadius: '6px', fontWeight: 700 }}>ON</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Search + filter bar */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
@@ -392,24 +514,38 @@ export default function AdminMenuPage() {
       {/* Result count */}
       {(search || catFilter !== 'all') && (
         <p style={{ fontSize: '12px', color: 'var(--brown-mid)', marginBottom: '10px' }}>
-          {filtered.length === 0
+          {displayItems.length === 0
             ? 'No items match'
-            : <>{filtered.length} of {items.length} item{items.length !== 1 ? 's' : ''}</>}
+            : <>{displayItems.length} of {items.length} item{items.length !== 1 ? 's' : ''}</>}
         </p>
       )}
 
       {/* Mobile card list */}
       {!loading && (
         <div className="menu-card-list">
-          {filtered.length === 0 && (
+          {isDirty && (
+            <p style={{ fontSize: '12px', color: '#16a34a', fontWeight: 600, marginBottom: '8px', textAlign: 'center' }}>
+              ↕ Order changed — click Save Order to apply
+            </p>
+          )}
+          {displayItems.length === 0 && (
             <p style={{ textAlign: 'center', color: 'var(--brown-mid)', fontSize: '13px', padding: '32px 0' }}>
               {search ? 'No items match your search' : 'No menu items yet'}
             </p>
           )}
-          {filtered.map(item => (
-            <div key={item._id} className="menu-list-item">
+          {displayItems.map((item, idx) => (
+            <div
+              key={item._id}
+              className="menu-list-item"
+              draggable
+              onDragStart={() => onDragStart(idx)}
+              onDragOver={e => onDragOver(e, idx, displayItems)}
+              onDragEnd={onDragEnd}
+              style={{ cursor: 'grab' }}
+            >
               {/* Row 1: image + name/desc + toggle */}
               <div className="menu-list-row1">
+                <GripVertical size={16} color="var(--stone-light)" style={{ flexShrink: 0, cursor: 'grab' }} />
                 {item.primaryImage ? (
                   <img src={item.primaryImage} alt={item.name} style={{ width: '48px', height: '48px', borderRadius: '10px', objectFit: 'cover', flexShrink: 0 }} />
                 ) : (
@@ -462,14 +598,26 @@ export default function AdminMenuPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '640px' }}>
             <thead style={{ background: '#f9f5f0' }}>
               <tr>
-                {['Item', 'Category', 'Price / Sizes', 'Available', 'Actions'].map(h => (
+                {['', 'Item', 'Category', 'Price / Sizes', 'Available', 'Actions'].map(h => (
                   <th key={h} style={{ padding: '12px 14px', textAlign: 'left', fontSize: '11px', fontWeight: 600, color: 'var(--brown-mid)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {filtered.map(item => (
-                <tr key={item._id} style={{ borderTop: '1px solid var(--stone-light)' }}>
+              {displayItems.map((item, idx) => (
+                <tr
+                  key={item._id}
+                  draggable
+                  onDragStart={() => onDragStart(idx)}
+                  onDragOver={e => onDragOver(e, idx, displayItems)}
+                  onDragEnd={onDragEnd}
+                  style={{ borderTop: '1px solid var(--stone-light)', cursor: 'grab', transition: 'background 0.1s' }}
+                  onDragEnter={e => (e.currentTarget.style.background = '#fef9f0')}
+                  onDragLeave={e => (e.currentTarget.style.background = '')}
+                >
+                  <td style={{ padding: '12px 8px 12px 14px', width: '24px' }}>
+                    <GripVertical size={16} color="var(--stone-light)" />
+                  </td>
                   <td style={{ padding: '12px 14px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       {item.primaryImage && (
@@ -517,8 +665,8 @@ export default function AdminMenuPage() {
                   </td>
                 </tr>
               ))}
-              {filtered.length === 0 && (
-                <tr><td colSpan={5} style={{ padding: '40px', textAlign: 'center', color: 'var(--brown-mid)', fontSize: '13px' }}>{search ? 'No items match your search' : 'No menu items yet'}</td></tr>
+              {displayItems.length === 0 && (
+                <tr><td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: 'var(--brown-mid)', fontSize: '13px' }}>{search ? 'No items match your search' : 'No menu items yet'}</td></tr>
               )}
             </tbody>
           </table>
@@ -594,7 +742,7 @@ export default function AdminMenuPage() {
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 500, color: 'var(--brown-mid)', display: 'block', marginBottom: '5px' }}>Cuisine</label>
                 <select value={form.cuisine} onChange={e => setForm((f: any) => ({ ...f, cuisine: e.target.value }))} style={inp}>
-                  {['korean', 'bangladeshi', 'both'].map(c => <option key={c}>{c}</option>)}
+                  {['korean', 'bangladeshi', 'both', 'drinks'].map(c => <option key={c}>{c}</option>)}
                 </select>
               </div>
             </div>
