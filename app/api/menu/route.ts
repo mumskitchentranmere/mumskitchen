@@ -12,11 +12,13 @@ export async function GET(req: NextRequest) {
     const featured = searchParams.get('featured');
     const session  = await auth();
     const isAdmin  = (session?.user as any)?.role === 'admin';
-    const query: any = isAdmin ? {} : { isAvailable: true };
+    // featured requests (homepage) only show available items
+    const query: any = (featured === 'true') ? { isAvailable: true } : {};
     if (category && category !== 'all') query.category = category;
     if (cuisine  && cuisine  !== 'all') query.cuisine = { $in: [cuisine, 'both'] };
     if (featured === 'true') query.isFeatured = true;
-    const items = await MenuItem.find(query).sort({ sortOrder: 1, name: 1 }).lean();
+    // Sort: available items first (isAvailable: -1), then by admin-set sortOrder, then name
+    const items = await MenuItem.find(query).sort({ isAvailable: -1, sortOrder: 1, name: 1 }).lean();
     const res = NextResponse.json(items);
     if (!isAdmin) res.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
     return res;
