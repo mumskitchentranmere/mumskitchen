@@ -125,10 +125,11 @@ function SizeManager({ sizes, onChange }: { sizes: SizeEntry[]; onChange: (s: Si
 }
 
 // ── Category drag-sort section ────────────────────────────────────────────────
-function CategoryOrderPanel({ allCats, order, onSave }: {
+function CategoryOrderPanel({ allCats, order, onSave, onDelete }: {
   allCats: string[];
   order: string[];
   onSave: (o: string[]) => void;
+  onDelete: (cat: string) => boolean;
 }) {
   const merged = [...new Set([...order, ...allCats])];
   const [list, setList] = useState(merged);
@@ -158,6 +159,10 @@ function CategoryOrderPanel({ allCats, order, onSave }: {
     setList(next);
     onSave(next);
     setNewCat('');
+  };
+
+  const removeCat = (cat: string) => {
+    if (onDelete(cat)) setList(list.filter(c => c !== cat));
   };
 
   return (
@@ -192,6 +197,13 @@ function CategoryOrderPanel({ allCats, order, onSave }: {
           >
             <GripVertical size={12} color="var(--brown-mid)" />
             {cat}
+            <button
+              onClick={() => removeCat(cat)}
+              title="Remove category"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--brown-mid)', padding: '2px', marginLeft: '2px', borderRadius: '4px' }}
+            >
+              <X size={12} />
+            </button>
           </div>
         ))}
       </div>
@@ -295,6 +307,20 @@ export default function AdminMenuPage() {
       .then(() => toast.success('Category order saved'));
   };
 
+  // Shared delete guard — used by both the Category Order panel and the item form's Category field.
+  // Returns true if the category was actually removed.
+  const deleteCategory = (cat: string) => {
+    const count = items.filter((i: any) => i.category === cat).length;
+    if (count > 0) {
+      toast.error(`Can't remove "${cat}" — ${count} item${count !== 1 ? 's' : ''} still use it`);
+      return false;
+    }
+    // Save the full remaining list (not just catOrder) so a never-customized default category
+    // is recorded as removed too, instead of reappearing via the DEFAULT_CATS fallback.
+    saveOrder(allCats.filter(c => c !== cat));
+    return true;
+  };
+
   const openAdd = () => {
     setEditing(null);
     setForm({ ...EMPTY, sizes: [] });
@@ -396,7 +422,10 @@ export default function AdminMenuPage() {
     outline: 'none', fontFamily: 'Poppins, sans-serif', boxSizing: 'border-box',
   };
 
-  const allCats = [...new Set([...catOrder, ...DEFAULT_CATS, ...items.map((i: any) => i.category).filter(Boolean)])];
+  // Once a category order has been saved, it's the source of truth (so a deleted category stays
+  // deleted) — DEFAULT_CATS only seeds the list on a fresh install where nothing's been saved yet.
+  // Categories still in use by an item are always included so that item stays editable.
+  const allCats = [...new Set([...(catOrder.length ? catOrder : DEFAULT_CATS), ...items.map((i: any) => i.category).filter(Boolean)])];
 
   const q = search.toLowerCase().trim();
   // Always filter from dragItems (which holds the current custom order)
@@ -436,7 +465,7 @@ export default function AdminMenuPage() {
       </div>
 
       {/* Category drag-sort */}
-      <CategoryOrderPanel allCats={allCats} order={catOrder} onSave={saveOrder} />
+      <CategoryOrderPanel allCats={allCats} order={catOrder} onSave={saveOrder} onDelete={deleteCategory} />
 
       {/* Category Discounts */}
       <div style={{ background: 'white', borderRadius: '14px', border: '1px solid var(--stone-light)', padding: '20px', marginBottom: '24px' }}>
@@ -750,7 +779,7 @@ export default function AdminMenuPage() {
             {/* Category row with inline new-category creator */}
             <div style={{ marginBottom: '14px' }}>
               <label style={{ fontSize: '12px', fontWeight: 500, color: 'var(--brown-mid)', display: 'block', marginBottom: '5px' }}>Category</label>
-              <div style={{ display: 'flex', gap: '6px' }}>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                 <select
                   value={allCats.includes(form.category) ? form.category : '__new__'}
                   onChange={e => { if (e.target.value !== '__new__') setForm((f: any) => ({ ...f, category: e.target.value })); }}
@@ -759,6 +788,22 @@ export default function AdminMenuPage() {
                   {allCats.map((c: string) => <option key={c} value={c}>{c}</option>)}
                   <option value="__new__">+ New category…</option>
                 </select>
+                {allCats.includes(form.category) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cat = form.category;
+                      if (deleteCategory(cat)) {
+                        const fallback = allCats.find((c: string) => c !== cat) ?? DEFAULT_CATS[0];
+                        setForm((f: any) => ({ ...f, category: fallback }));
+                      }
+                    }}
+                    title="Delete this category"
+                    style={{ background: 'none', border: '1px solid #fecaca', borderRadius: '10px', padding: '0 10px', cursor: 'pointer', color: '#ef4444', display: 'flex', alignItems: 'center', flexShrink: 0 }}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
                 <input
                   type="text"
                   placeholder="Type new category"

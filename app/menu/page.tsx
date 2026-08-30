@@ -11,7 +11,6 @@ const CUISINES = [
 
 const SUBCATS: Record<string, { id: string; label: string }[]> = {
   korean: [
-    { id: 'all',           label: 'All Korean' },
     { id: 'snack',         label: 'Snacks & Street Food' },
     { id: 'rice-bowl',     label: 'Rice Bowls' },
     { id: 'noodle',        label: 'Noodles & Rice' },
@@ -22,7 +21,6 @@ const SUBCATS: Record<string, { id: string; label: string }[]> = {
     { id: 'set-menu',      label: 'Set Menu' },
   ],
   bangladeshi: [
-    { id: 'all',                label: 'All Bangladeshi' },
     { id: 'bangladeshi-main',   label: 'Mains' },
     { id: 'bangladeshi-snack',  label: 'Snacks' },
     { id: 'biryani',            label: 'Biryani' },
@@ -35,7 +33,7 @@ export default function MenuPage() {
   const [items,        setItems]        = useState<any[]>([]);
   const [loading,      setLoading]      = useState(true);
   const [cuisine,      setCuisine]      = useState('korean');
-  const [cat,          setCat]          = useState('all');
+  const [cat,          setCat]          = useState(SUBCATS.korean[0].id);
   const [search,       setSearch]       = useState('');
   const [discount,     setDiscount]     = useState(0);
   const [catDiscounts, setCatDiscounts] = useState<Record<string,number>>({});
@@ -62,8 +60,13 @@ export default function MenuPage() {
     return () => window.removeEventListener('focus', fetchDiscount);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Reset subcategory whenever cuisine changes
-  const selectCuisine = (c: string) => { setCuisine(c); setCat('all'); };
+  // Reset subcategory whenever cuisine changes — land on the first available subcategory
+  const selectCuisine = (c: string) => {
+    setCuisine(c);
+    if (c === 'drinks') return;
+    const opts = SUBCATS[c].filter(s => activeCats.length === 0 || activeCats.includes(s.id));
+    setCat((opts[0] ?? SUBCATS[c][0]).id);
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -72,7 +75,7 @@ export default function MenuPage() {
       params.set('category', 'drink');
     } else {
       if (cuisine !== 'all') params.set('cuisine', cuisine);
-      if (cat !== 'all')     params.set('category', cat);
+      params.set('category', cat);
     }
     const q = params.toString() ? `?${params}` : '';
     fetch(`/api/menu${q}`)
@@ -141,7 +144,7 @@ export default function MenuPage() {
         {/* Level 2 — Subcategory tabs (not shown for Drinks) */}
         {cuisine !== 'drinks' && (
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '28px', paddingLeft: '4px', borderLeft: '3px solid var(--red-korean)', paddingTop: '4px', paddingBottom: '4px' }}>
-            {SUBCATS[cuisine].filter(c => c.id === 'all' || activeCats.length === 0 || activeCats.includes(c.id)).map(c => (
+            {SUBCATS[cuisine].filter(c => activeCats.length === 0 || activeCats.includes(c.id)).map(c => (
               <button key={c.id} onClick={() => setCat(c.id)} style={tabBtn(cat === c.id)}>
                 {c.label}
               </button>

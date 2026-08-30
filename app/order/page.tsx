@@ -11,7 +11,6 @@ const CUISINES = [
 
 const SUBCATS: Record<string, { id: string; label: string }[]> = {
   korean: [
-    { id: 'all',           label: 'All Korean' },
     { id: 'snack',         label: 'Snacks' },
     { id: 'rice-bowl',     label: 'Rice Bowls' },
     { id: 'noodle',        label: 'Noodles & Rice' },
@@ -22,7 +21,6 @@ const SUBCATS: Record<string, { id: string; label: string }[]> = {
     { id: 'set-menu',      label: 'Set Menu' },
   ],
   bangladeshi: [
-    { id: 'all',               label: 'All Bangladeshi' },
     { id: 'bangladeshi-main',  label: 'Mains' },
     { id: 'bangladeshi-snack', label: 'Snacks' },
     { id: 'biryani',           label: 'Biryani' },
@@ -35,13 +33,19 @@ export default function OrderPage() {
   const [items,        setItems]        = useState<any[]>([]);
   const [loading,      setLoading]      = useState(true);
   const [cuisine,      setCuisine]      = useState('korean');
-  const [cat,          setCat]          = useState('all');
+  const [cat,          setCat]          = useState(SUBCATS.korean[0].id);
   const [catOrder,     setCatOrder]     = useState<string[]>([]);
   const [catDiscounts, setCatDiscounts] = useState<Record<string,number>>({});
   const [globalDisc,   setGlobalDisc]   = useState(0);
   const [activeCats,   setActiveCats]   = useState<string[]>([]);
 
-  const selectCuisine = (c: string) => { setCuisine(c); setCat('all'); };
+  // Reset subcategory whenever cuisine changes — land on the first available subcategory
+  const selectCuisine = (c: string) => {
+    setCuisine(c);
+    if (c === 'drinks') return;
+    const opts = SUBCATS[c].filter(s => activeCats.length === 0 || activeCats.includes(s.id));
+    setCat((opts[0] ?? SUBCATS[c][0]).id);
+  };
 
   useEffect(() => {
     fetch('/api/settings').then(r => r.json()).then(d => {
@@ -62,7 +66,7 @@ export default function OrderPage() {
       params.set('category', 'drink');
     } else {
       if (cuisine !== 'all') params.set('cuisine', cuisine);
-      if (cat !== 'all')     params.set('category', cat);
+      params.set('category', cat);
     }
     fetch(`/api/menu${params.toString() ? `?${params}` : ''}`)
       .then(r => r.json())
@@ -75,13 +79,11 @@ export default function OrderPage() {
   const sortedSubcats = (cuis: string) => {
     const base = SUBCATS[cuis] ?? [];
     if (!catOrder.length) return base;
-    const [all, rest] = [base.filter(s => s.id === 'all'), base.filter(s => s.id !== 'all')];
-    rest.sort((a, b) => {
+    return [...base].sort((a, b) => {
       const ai = catOrder.indexOf(a.id);
       const bi = catOrder.indexOf(b.id);
       return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
     });
-    return [...all, ...rest];
   };
 
   const tabBtn = (active: boolean): React.CSSProperties => ({
@@ -132,7 +134,7 @@ export default function OrderPage() {
         {/* Level 2 — Subcategories (hidden for Drinks tab) */}
         {cuisine !== 'drinks' && (
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '24px', borderLeft: '3px solid var(--red-korean)', paddingLeft: '12px' }}>
-            {sortedSubcats(cuisine).filter(c => c.id === 'all' || activeCats.length === 0 || activeCats.includes(c.id)).map(c => (
+            {sortedSubcats(cuisine).filter(c => activeCats.length === 0 || activeCats.includes(c.id)).map(c => (
               <button key={c.id} onClick={() => setCat(c.id)} style={tabBtn(cat === c.id)}>
                 {c.label}
               </button>
