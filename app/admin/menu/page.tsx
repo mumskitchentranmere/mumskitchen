@@ -249,13 +249,18 @@ export default function AdminMenuPage() {
 
   const saveCatDiscounts = async () => {
     setSavingDisc(true);
-    await fetch('/api/settings', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ categoryDiscounts: catDiscounts }),
-    });
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ categoryDiscounts: catDiscounts }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({})))?.error || 'Save failed');
+      toast.success('Category discounts saved');
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to save category discounts');
+    }
     setSavingDisc(false);
-    toast.success('Category discounts saved');
   };
 
   // ── Drag-and-drop sort ──────────────────────────────────────────────────────
@@ -287,24 +292,33 @@ export default function AdminMenuPage() {
 
   const saveItemOrder = async () => {
     setSavingOrder(true);
-    await Promise.all(
+    const results = await Promise.all(
       dragItems.map((item, i) =>
         fetch(`/api/menu/${item._id}`, {
           method:  'PUT',
           headers: { 'Content-Type': 'application/json' },
           body:    JSON.stringify({ sortOrder: i * 10 }),
-        })
+        }).then(r => r.ok).catch(() => false)
       )
     );
-    toast.success('Menu order saved!');
+    if (results.every(Boolean)) toast.success('Menu order saved!');
+    else toast.error(`Failed to save ${results.filter(ok => !ok).length} item(s) — try again`);
     await load();
     setSavingOrder(false);
   };
 
   const saveOrder = (order: string[]) => {
+    const previous = catOrder;
     setCatOrder(order);
     fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ categoryOrder: order }) })
-      .then(() => toast.success('Category order saved'));
+      .then(res => {
+        if (!res.ok) throw new Error('Save failed');
+        toast.success('Category order saved');
+      })
+      .catch(() => {
+        setCatOrder(previous); // roll back the optimistic update — it never actually persisted
+        toast.error('Failed to save category order');
+      });
   };
 
   // Shared delete guard — used by both the Category Order panel and the item form's Category field.

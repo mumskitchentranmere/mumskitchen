@@ -15,11 +15,14 @@ export async function GET() {
         globalDiscount:    s?.globalDiscount ?? 0,
         categoryOrder:     s?.categoryOrder ?? [],
         dineInEnabled:     s?.dineInEnabled ?? true,
-        categoryDiscounts: Object.fromEntries(s?.categoryDiscounts ?? new Map()),
+        // .lean() returns Map-typed fields as plain objects already, not Map instances —
+        // Object.fromEntries() would throw on a plain object (it needs an iterable).
+        categoryDiscounts: s?.categoryDiscounts ?? {},
       },
       { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } }
     );
-  } catch {
+  } catch (err) {
+    console.error('[Settings GET]', err);
     return NextResponse.json(
       { globalDiscount: 0, categoryOrder: [], dineInEnabled: true, categoryDiscounts: {} },
       { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } }
